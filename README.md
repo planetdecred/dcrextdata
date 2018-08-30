@@ -20,5 +20,5 @@ sqlboiler postgres
 ### Run the project
 
 ```
-go run main.go bittrex.go poloniex.go POS.go POW.go 
+go run main.go bittrex.go poloniex.go pos.go pow.go 
 ```

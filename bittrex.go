@@ -125,8 +125,9 @@ func (b *Bittrex) getBittrexData(currencyPair string) {
 
 		// fmt.Print(data.Result[i].Filltype)
 		err := p.Insert(db)
-
-		panic(err.Error())
+		if err != nil {
+			panic(err.Error())
+		}
 	}
 	return
 
