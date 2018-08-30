@@ -4,30 +4,39 @@ package main
 
 import (
 	"database/sql"
-	"dcrextdata/models"
 	"fmt"
 	"net/http"
 
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
 	"github.com/vattle/sqlboiler/boil"
-	"github.com/vattle/sqlboiler/queries/qm"
 	log15 "gopkg.in/inconshreveable/log15.v2"
 )
 
 // Open handle to database like normal
 var log = log15.New()
-var psqlInfo = fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable", viper.Get("Database.pghost"), viper.Get("Database.pgport"), viper.Get("Database.pguser"), viper.Get("Database.pgpass"), viper.Get("Database.pgdbname"))
-var db, err = sql.Open("postgres", psqlInfo)
+var psqlInfo string
+var db *sql.DB
+var err error
 
-func main() {
-
+func init() {
 	//Set and read the config file
 
 	viper.SetConfigFile("./config.json")
 	if err := viper.ReadInConfig(); err != nil {
 		panic(err)
 	}
+
+	psqlInfo = fmt.Sprintf("host=%s port=%s user=%s "+"password=%s dbname=%s sslmode=disable",
+		viper.Get("Database.pghost"),
+		viper.Get("Database.pgport"),
+		viper.Get("Database.pguser"),
+		viper.Get("Database.pgpass"),
+		viper.Get("Database.pgdbname"))
+	db, err = sql.Open("postgres", psqlInfo)
+}
+
+func main() {
 
 	// Set default value for pow and exchange
 	viper.SetDefault("pow", "http://api.f2pool.com/decred/address")
@@ -47,13 +56,13 @@ func main() {
 	// fetchHistoricData("date")
 }
 
-func fetchHistoricData(date string) {
+// func fetchHistoricData(date string) {
 
-	Result, err := models.HistoricDatum(qm.Where("created_on=?", date)).One(ctx, db)
+// 	Result, err := models.HistoricDatum(qm.Where("created_on=?", date)).One(ctx, db)
 
-	fmt.Print(Result)
+// 	fmt.Print(Result)
 
-}
+// }
 
 // Function to get Proof of Stake Data
 
@@ -70,13 +79,13 @@ func getPosData() {
 // @parameters - PoolID integer 0 to 7
 
 func getPowData(PoolID int, apiKey string) {
-
 	user := pow{
 		client: &http.Client{},
 	}
 
-	fmt.Print(viper.GetString("pow" + "[" + string(PoolID) + "]"))
-	user.getPow(PoolID, viper.GetString("pow"+"["+string(PoolID)+"]"), apiKey)
+	powString := fmt.Sprintf("pow.%+v", PoolID)
+	fmt.Print(viper.GetString(powString))
+	user.getPow(PoolID, viper.GetString(powString), apiKey)
 
 }
 

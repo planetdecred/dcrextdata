@@ -1,11 +1,12 @@
 package main
 
 import (
-	"dcrextdata/models"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/raedahgroup/dcrextdata/models"
 
 	null "gopkg.in/nullbio/null.v6"
 )
@@ -137,25 +138,27 @@ func (p *pow) getPow(id int, url string, api_key string) {
 	for i := 0; i < 15; i++ {
 
 		var p1 models.PowDatum
-
 		p1.Hashrate = data.hashrate
 		p1.Efficiency = data.dataVal.efficiency
 		p1.Progress = data.dataVal.progress
-		p1.Workers = data.globalStats[0].workers
+		if data.globalStats != nil {
+			fmt.Printf("{{%+v}}\n", data.globalStats)
+			p1.Workers = data.globalStats[0].workers
+			p1.Esttime = data.globalStats[0].time
+			p1.Nethashrate = data.globalStats[0].networkHashrate
+			p1.Networkdifficulty = data.globalStats[0].networkDifficulty
+			p1.Coinprice = data.globalStats[0].coinPrice
+			p1.Btcprice = data.globalStats[0].btcPrice
+		}
 		p1.Currentnetworkblock = data.dataVal.currentnetworkblock
 		p1.Nextnetworkblock = data.dataVal.nextnetworkblock
 		p1.Lastblock = data.dataVal.lastblock
 		p1.Networkdiff = data.dataVal.networkdiff
-		p1.Esttime = data.globalStats[0].time
 		p1.Estshare = data.dataVal.estshares
 		p1.Timesincelast = data.dataVal.timesincelast
-		p1.Nethashrate = data.globalStats[0].networkHashrate
 		p1.Blocksfound = data.blocksfound
 		p1.Totalminers = data.totalminers
 		// p1.Time = data.globalStats[0].time
-		p1.Networkdifficulty = data.globalStats[0].networkDifficulty
-		p1.Coinprice = data.globalStats[0].coinPrice
-		p1.Btcprice = data.globalStats[0].btcPrice
 		p1.Est = data.dcr.estimate
 		// p1.Date = data.date
 		p1.Blocksper = data.blocksper
@@ -183,8 +186,10 @@ func (p *pow) getPow(id int, url string, api_key string) {
 		p1.Dev = data.blockReward.dev
 
 		err := p1.Insert(db)
+		if err != nil {
+			panic(err.Error())
+		}
 
-		panic(err.Error())
 	}
 
 }

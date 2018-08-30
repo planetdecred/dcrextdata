@@ -2,11 +2,12 @@ package main
 
 import (
 	"database/sql"
-	"dcrextdata/models"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/raedahgroup/dcrextdata/models"
 
 	"github.com/spf13/viper"
 	"github.com/vattle/sqlboiler/boil"

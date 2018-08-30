@@ -2,11 +2,12 @@ package main
 
 import (
 	"database/sql"
-	"dcrextdata/models"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/raedahgroup/dcrextdata/models"
 
 	"github.com/spf13/viper"
 
@@ -125,8 +126,9 @@ func (b *Bittrex) getBittrexData(currencyPair string) {
 
 		// fmt.Print(data.Result[i].Filltype)
 		err := p.Insert(db)
-
-		panic(err.Error())
+		if err != nil {
+			panic(err.Error())
+		}
 	}
 	return
 
