@@ -1,6 +1,6 @@
-[postgres]
+[psql]
 dbname="data_feed_processor"
 user="postgres"
 pass="alisha"
 host="localhost"
-
+sslmode="disable"

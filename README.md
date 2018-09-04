@@ -13,7 +13,7 @@ go generate
 ```
 
 ```
-sqlboiler postgres
+sqlboiler psql
 ```
 
 
