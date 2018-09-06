@@ -1,16 +1,18 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/raedahgroup/dcrextdata/models"
+	"github.com/volatiletech/null"
+	"github.com/volatiletech/sqlboiler/boil"
+	"github.com/volatiletech/sqlboiler/types"
 
 	"github.com/spf13/viper"
-
-	null "gopkg.in/nullbio/null.v6"
 )
 
 type pos struct {
@@ -18,21 +20,21 @@ type pos struct {
 }
 
 type posData struct {
-	APIEnabled           null.String  `json:"APIEnabled"`
-	APIVersionsSupported []string     `json:"APIVersionsSupported"`
-	Network              null.String  `json:"Network"`
-	URL                  null.String  `json:"URL"`
-	Launched             null.String  `json:"Launched"`
-	LastUpdated          null.String  `json:"LastUpdated"`
-	Immature             null.String  `json:"Immature"`
-	Live                 null.String  `json:"Live"`
-	Voted                null.Float64 `json:"Voted"`
-	Missed               null.Float64 `json:"Missed"`
-	PoolFees             null.Float64 `json:"PoolFees"`
-	ProportionLive       null.Float64 `json:"ProportionLive"`
-	ProportionMissed     null.Float64 `json:"ProportionMissed"`
-	UserCount            null.Float64 `json:"UserCount"`
-	UserCountActive      null.Float64 `json:"UserCountActive"`
+	APIEnabled           null.String       `json:"APIEnabled"`
+	APIVersionsSupported []string          `json:"APIVersionsSupported"`
+	Network              null.String       `json:"Network"`
+	URL                  null.String       `json:"URL"`
+	Launched             null.String       `json:"Launched"`
+	LastUpdated          null.String       `json:"LastUpdated"`
+	Immature             null.String       `json:"Immature"`
+	Live                 null.String       `json:"Live"`
+	Voted                types.NullDecimal `json:"Voted"`
+	Missed               types.NullDecimal `json:"Missed"`
+	PoolFees             types.NullDecimal `json:"PoolFees"`
+	ProportionLive       types.NullDecimal `json:"ProportionLive"`
+	ProportionMissed     types.NullDecimal `json:"ProportionMissed"`
+	UserCount            types.NullDecimal `json:"UserCount"`
+	UserCountActive      types.NullDecimal `json:"UserCountActive"`
 }
 
 type Data map[string]posData
@@ -54,6 +56,12 @@ func (p *pos) getPos() {
 	json.Unmarshal(body, &data)
 
 	fmt.Printf("Results: %v\n", data)
+
+	ctx := context.Background()
+	tx, err := boil.BeginTx(ctx, nil)
+	if err != nil {
+		panic(err)
+	}
 
 	//Loop over the entire list to insert data into the table
 
@@ -79,10 +87,11 @@ func (p *pos) getPos() {
 		p1.Proportionmissed = value.ProportionMissed
 		p1.Usercount = value.UserCount
 		p1.Usercountactive = value.UserCountActive
-		err := p1.Insert(db)
 
-		panic(err.Error())
-
+		err := p1.Insert(ctx, tx, boil.Infer())
+		if err != nil {
+			panic(err.Error())
+		}
 	}
 
 }

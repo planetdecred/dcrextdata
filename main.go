@@ -1,6 +1,6 @@
 package main
 
-// go:generate sqlboiler postgres
+// go:generate sqlboiler psql
 
 import (
 	"database/sql"

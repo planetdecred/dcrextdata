@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -11,8 +12,9 @@ import (
 
 	"github.com/spf13/viper"
 
-	boil "github.com/vattle/sqlboiler/boil"
-	null "gopkg.in/nullbio/null.v6"
+	"github.com/volatiletech/null"
+	boil "github.com/volatiletech/sqlboiler/boil"
+	"github.com/volatiletech/sqlboiler/types"
 )
 
 //Bittrex ash
@@ -35,24 +37,24 @@ type ticksData struct {
 }
 
 type tickDataArray struct {
-	O  null.Float64 `json:"O"`
-	H  null.Float64 `json:"H"`
-	L  null.Float64 `json:"L"`
-	C  null.Float64 `json:"C"`
-	V  null.Float64 `json:"V"`
-	T  null.String  `json:"T"`
-	BV null.Float64 `json:"BV"`
+	O  types.NullDecimal `json:"O"`
+	H  types.NullDecimal `json:"H"`
+	L  null.Float64      `json:"L"`
+	C  types.NullDecimal `json:"C"`
+	V  types.NullDecimal `json:"V"`
+	T  null.String       `json:"T"`
+	BV types.NullDecimal `json:"BV"`
 }
 
 //ResultArray Export the values to ResultArray struct
 type ResultArray struct {
-	ID        null.Float64 `json:"Id"`
-	Timestamp null.String  `json:"TimeStamp"`
-	Quantity  null.Float64 `json:"Quantity"`
-	Price     null.Float64 `json:"Price"`
-	Total     null.Float64 `json:"Total"`
-	Filltype  null.String  `json:"FillType"`
-	Ordertype null.String  `json:"OrderType"`
+	ID        types.NullDecimal `json:"Id"`
+	Timestamp null.String       `json:"TimeStamp"`
+	Quantity  types.NullDecimal `json:"Quantity"`
+	Price     types.NullDecimal `json:"Price"`
+	Total     types.NullDecimal `json:"Total"`
+	Filltype  null.String       `json:"FillType"`
+	Ordertype null.String       `json:"OrderType"`
 }
 
 //Function to Return Historic Pricing Data from Bittrex Exchange
@@ -64,9 +66,7 @@ func (b *Bittrex) getBittrexData(currencyPair string) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable", viper.Get("Database.pghost"), 5432, viper.Get("Database.pguser"), viper.Get("Database.pgpass"), viper.Get("Database.pgdbname"))
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
-
 		panic(err.Error())
-
 	}
 
 	boil.SetDB(db)
@@ -75,7 +75,6 @@ func (b *Bittrex) getBittrexData(currencyPair string) {
 
 	req, err := http.NewRequest("GET", url.(string), nil)
 	if err != nil {
-
 		panic(err.Error())
 	}
 	q := req.URL.Query()
@@ -98,7 +97,6 @@ func (b *Bittrex) getBittrexData(currencyPair string) {
 	//Store the response in body variable as a byte array
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-
 		panic(err.Error())
 	}
 
@@ -107,6 +105,12 @@ func (b *Bittrex) getBittrexData(currencyPair string) {
 
 	json.Unmarshal(body, &data)
 	// fmt.Printf("Results: %v\n", data.Result)
+
+	ctx := context.Background()
+	tx, err := boil.BeginTx(ctx, nil)
+	if err != nil {
+		panic(err)
+	}
 
 	//Loop over array of struct and store them in the table
 
@@ -125,7 +129,7 @@ func (b *Bittrex) getBittrexData(currencyPair string) {
 		p.CreatedOn = data.Result[i].Timestamp
 
 		// fmt.Print(data.Result[i].Filltype)
-		err := p.Insert(db)
+		err := p.Insert(ctx, tx, boil.Infer())
 		if err != nil {
 			panic(err.Error())
 		}
@@ -176,6 +180,12 @@ func (b *Bittrex) getChartData(currencyPair string) {
 	json.Unmarshal(body, &data)
 	fmt.Printf("Results: %v\n", data.Result)
 
+	ctx := context.Background()
+	tx, err := boil.BeginTx(ctx, nil)
+	if err != nil {
+		panic(err)
+	}
+
 	//Loop over array of struct and stores the response in table
 
 	for i := range data.Result {
@@ -189,8 +199,11 @@ func (b *Bittrex) getChartData(currencyPair string) {
 		p1.Opening = data.Result[i].C
 		p1.Closing = data.Result[i].V
 		p1.Quotevolume = data.Result[i].BV
-		err := p1.Insert(db)
-		panic(err.Error())
+
+		err := p1.Insert(ctx, tx, boil.Infer())
+		if err != nil {
+			panic(err.Error())
+		}
 
 	}
 	return

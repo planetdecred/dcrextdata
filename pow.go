@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -8,7 +9,9 @@ import (
 
 	"github.com/raedahgroup/dcrextdata/models"
 
-	null "gopkg.in/nullbio/null.v6"
+	"github.com/volatiletech/null"
+	"github.com/volatiletech/sqlboiler/boil"
+	"github.com/volatiletech/sqlboiler/types"
 )
 
 type pow struct {
@@ -18,93 +21,93 @@ type pow struct {
 type powdata struct {
 	date          null.Float64        `json : "date"`
 	hashper       null.String         `json : "hashper" `
-	blocksper     null.Float64        `json:"blocksper"`
-	luck          null.Float64        `json:"luck"`
+	blocksper     types.NullDecimal   `json:"blocksper"`
+	luck          types.NullDecimal   `json:"luck"`
 	miners        null.String         `json:"miners"`
 	pphash        null.String         `json:"pphash"`
-	ppshare       null.Float64        `json:"ppshare"`
-	totalKickback null.Float64        `json:"total_kickback"`
+	ppshare       types.NullDecimal   `json:"ppshare"`
+	totalKickback types.NullDecimal   `json:"total_kickback"`
 	price         null.String         `json:"price"`
-	hashrate      null.Float64        `json:"hashrate"`
-	blocksfound   null.Float64        `json:"blocksfound"`
-	totalminers   null.Float64        `json:"totalminers"`
+	hashrate      types.NullDecimal   `json:"hashrate"`
+	blocksfound   types.NullDecimal   `json:"blocksfound"`
+	totalminers   types.NullDecimal   `json:"totalminers"`
 	globalStats   []globalStatsValues `json:"globalStats"`
 	dataVal       dataVal             `json:"data"`
 	decred        altpool             `json:"decred"`
 	dcr           altpoolCurrency     `json:"DCR"`
 	success       null.String         `json:"success"`
-	lastUpdate    null.Float64        `json:"lastUpdate"`
+	lastUpdate    types.NullDecimal   `json:"lastUpdate"`
 	mainnet       mainnet             `json:"mainnet"`
 	blockReward   blockReward         `json:"blockReward"`
 }
 
 type mainnet struct {
-	currentHeight     null.Float64 `json:"currentHeight"`
-	networkHashrate   null.String  `json:"networkHashrate"`
-	networkDifficulty null.String  `json:"networkDifficulty"`
+	currentHeight     types.NullDecimal `json:"currentHeight"`
+	networkHashrate   null.String       `json:"networkHashrate"`
+	networkDifficulty null.String       `json:"networkDifficulty"`
 }
 
 type blockReward struct {
-	total null.Float64 `json:"total"`
-	pow   null.Float64 `json:"pow"`
-	pos   null.Float64 `json:"pos"`
-	dev   null.Float64 `json:"dev"`
+	total types.NullDecimal `json:"total"`
+	pow   types.NullDecimal `json:"pow"`
+	pos   types.NullDecimal `json:"pos"`
+	dev   types.NullDecimal `json:"dev"`
 }
 
 type globalStatsValues struct {
-	time              null.Float64 `json:"time"`
-	networkHashrate   null.Float64 `json:"network_hashrate"`
-	poolHashrate      null.String  `json:"pool_hashrate"`
-	workers           null.Float64 `json:"workers"`
-	networkDifficulty null.Float64 `json:"network_difficulty"`
-	coinPrice         null.Float64 `json:"coin_price"`
-	btcPrice          null.Float64 `json:"btc_price"`
+	time              types.NullDecimal `json:"time"`
+	networkHashrate   types.NullDecimal `json:"network_hashrate"`
+	poolHashrate      null.String       `json:"pool_hashrate"`
+	workers           types.NullDecimal `json:"workers"`
+	networkDifficulty types.NullDecimal `json:"network_difficulty"`
+	coinPrice         types.NullDecimal `json:"coin_price"`
+	btcPrice          types.NullDecimal `json:"btc_price"`
 }
 
 type dataVal struct {
-	poolName            null.String  `json:"pool_name"`
-	hashrate            float64      `json:"hashrate"`
-	efficiency          null.Float64 `json:'efficiency"`
-	progress            null.Float64 `json:"progress"`
-	workers             null.String  `json:"workers"`
-	currentnetworkblock null.Float64 `json:"currentnetworkblock"`
-	nextnetworkblock    null.Float64 `json:"nextnetworkblock"`
-	lastblock           null.Float64 `json:"lastblock"`
-	networkdiff         null.Float64 `json:"networkdiff"`
-	esttime             null.String  `json:"esttime"`
-	estshares           null.Float64 `json:"estshares"`
-	timesincelast       null.Float64 `json:"timesincelast"`
-	nethashrate         int64        `json:"nethashrate"`
+	poolName            null.String       `json:"pool_name"`
+	hashrate            float64           `json:"hashrate"`
+	efficiency          types.NullDecimal `json:'efficiency"`
+	progress            types.NullDecimal `json:"progress"`
+	workers             null.String       `json:"workers"`
+	currentnetworkblock types.NullDecimal `json:"currentnetworkblock"`
+	nextnetworkblock    types.NullDecimal `json:"nextnetworkblock"`
+	lastblock           types.NullDecimal `json:"lastblock"`
+	networkdiff         types.NullDecimal `json:"networkdiff"`
+	esttime             null.String       `json:"esttime"`
+	estshares           types.NullDecimal `json:"estshares"`
+	timesincelast       types.NullDecimal `json:"timesincelast"`
+	nethashrate         int64             `json:"nethashrate"`
 }
 
 type altpool struct {
-	name             null.String  `json:"name"`
-	port             null.Float64 `json:"port"`
-	coins            int64        `json:"coins"`
-	fees             null.Float64 `json:"fees"`
-	hashrate         int64        `json:"hashrate"`
-	workers          int64        `json:"workers"`
-	estimate_current null.Float64 `json:"estimate_current"`
-	estimate_last24h null.Float64 `json"estimate_last24h"`
-	actual_last24h   float64      `json:"actual_last24h"`
-	mbtc_mh_factor   null.Float64 `json:"mbtc_mh_factor"`
-	hashrate_last24h null.Float64 `json:"hashrate_last24h"`
-	rental_current   null.Float64 `json:"rental_current"`
+	name             null.String       `json:"name"`
+	port             types.NullDecimal `json:"port"`
+	coins            int64             `json:"coins"`
+	fees             types.NullDecimal `json:"fees"`
+	hashrate         int64             `json:"hashrate"`
+	workers          int64             `json:"workers"`
+	estimate_current types.NullDecimal `json:"estimate_current"`
+	estimate_last24h types.NullDecimal `json"estimate_last24h"`
+	actual_last24h   float64           `json:"actual_last24h"`
+	mbtc_mh_factor   types.NullDecimal `json:"mbtc_mh_factor"`
+	hashrate_last24h types.NullDecimal `json:"hashrate_last24h"`
+	rental_current   types.NullDecimal `json:"rental_current"`
 }
 
 type altpoolCurrency struct {
-	algo          null.String  `json:"algo"`
-	port          null.String  `json:"port"`
-	name          null.String  `json:"name"`
-	height        null.Float64 `json:"height"`
-	workers       null.String  `json:"workers"`
-	shares        null.String  `json:"shares"`
-	hashrate      null.String  `json:"hashrate"`
-	estimate      null.Float64 `json:"estimate"`
-	blocks24h     null.Float64 `json:"24h_blocks"`
-	btc24h        null.Float64 `json:"24h_btc"`
-	lastblock     null.String  `json:"lastblock"`
-	timesincelast null.String  `json:"timesincelast"`
+	algo          null.String       `json:"algo"`
+	port          null.String       `json:"port"`
+	name          null.String       `json:"name"`
+	height        types.NullDecimal `json:"height"`
+	workers       null.String       `json:"workers"`
+	shares        null.String       `json:"shares"`
+	hashrate      null.String       `json:"hashrate"`
+	estimate      types.NullDecimal `json:"estimate"`
+	blocks24h     types.NullDecimal `json:"24h_blocks"`
+	btc24h        types.NullDecimal `json:"24h_btc"`
+	lastblock     null.String       `json:"lastblock"`
+	timesincelast null.String       `json:"timesincelast"`
 }
 
 func (p *pow) getPow(id int, url string, api_key string) {
@@ -133,6 +136,12 @@ func (p *pow) getPow(id int, url string, api_key string) {
 	fmt.Println(string(body))
 
 	fmt.Printf("Results: %v\n", data)
+
+	ctx := context.Background()
+	tx, err := boil.BeginTx(ctx, nil)
+	if err != nil {
+		panic(err)
+	}
 
 	//Loop over the entire list to insert data into the table
 	for i := 0; i < 15; i++ {
@@ -185,7 +194,7 @@ func (p *pow) getPow(id int, url string, api_key string) {
 		p1.Pow = data.blockReward.pow
 		p1.Dev = data.blockReward.dev
 
-		err := p1.Insert(db)
+		err := p1.Insert(ctx, tx, boil.Infer())
 		if err != nil {
 			panic(err.Error())
 		}

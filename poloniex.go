@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -10,8 +11,9 @@ import (
 	"github.com/raedahgroup/dcrextdata/models"
 
 	"github.com/spf13/viper"
-	"github.com/vattle/sqlboiler/boil"
-	null "gopkg.in/nullbio/null.v6"
+	"github.com/volatiletech/null"
+	"github.com/volatiletech/sqlboiler/boil"
+	"github.com/volatiletech/sqlboiler/types"
 )
 
 // Structure containing Poloniex client data
@@ -24,13 +26,13 @@ type Poloniex struct {
 
 type poloniexData struct {
 	Result []struct {
-		GlobalTradeID null.Float64 `json:"globalTradeID"`
-		TradeID       null.Float64 `json:"tradeID"`
-		Date          null.String  `json:"date"`
-		Types         null.String  `json:"type"`
-		Rate          null.Float64 `json:"rate"`
-		Amount        null.Float64 `json:"amount"`
-		Total         null.Float64 `json:"total"`
+		GlobalTradeID types.NullDecimal `json:"globalTradeID"`
+		TradeID       types.NullDecimal `json:"tradeID"`
+		Date          null.String       `json:"date"`
+		Types         null.String       `json:"type"`
+		Rate          types.NullDecimal `json:"rate"`
+		Amount        types.NullDecimal `json:"amount"`
+		Total         types.NullDecimal `json:"total"`
 	}
 }
 
@@ -38,14 +40,14 @@ type poloniexData struct {
 
 type chartData struct {
 	Result []struct {
-		Date            null.String  `json:"date"`
-		High            null.Float64 `json:"high"`
-		Low             null.Float64 `json:"low"`
-		Open            null.Float64 `json:"open"`
-		Close           null.Float64 `json:"close"`
-		Volume          null.Float64 `json:"volume"`
-		QuoteVolume     null.Float64 `json:"quoteVolume"`
-		WeightedAverage null.Float64 `json:"weightedAverage"`
+		Date            null.String       `json:"date"`
+		High            types.NullDecimal `json:"high"`
+		Low             types.NullDecimal `json:"low"`
+		Open            types.NullDecimal `json:"open"`
+		Close           types.NullDecimal `json:"close"`
+		Volume          types.NullDecimal `json:"volume"`
+		QuoteVolume     types.NullDecimal `json:"quoteVolume"`
+		WeightedAverage types.NullDecimal `json:"weightedAverage"`
 	}
 }
 
@@ -100,6 +102,12 @@ func (p *Poloniex) getPoloniexData(currencyPair string, start string, end string
 	var data poloniexData
 	json.Unmarshal(body, &data)
 
+	ctx := context.Background()
+	tx, err := boil.BeginTx(ctx, nil)
+	if err != nil {
+		panic(err)
+	}
+
 	fmt.Printf("Results: %v\n", data)
 
 	for i := range data.Result {
@@ -113,9 +121,11 @@ func (p *Poloniex) getPoloniexData(currencyPair string, start string, end string
 		p1.Price = data.Result[i].Rate
 		p1.Total = data.Result[i].Total
 		p1.OrderType = data.Result[i].Types
-		err := p1.Insert(db)
 
-		panic(err.Error())
+		err := p1.Insert(ctx, tx, boil.Infer())
+		if err != nil {
+			panic(err.Error())
+		}
 	}
 
 	return "Saved poloneix historic data!"
@@ -161,6 +171,12 @@ func (p *Poloniex) getChartData(currencyPair string, start string, end string, p
 	json.Unmarshal(body, &data)
 	fmt.Printf("Results: %v\n", data)
 
+	ctx := context.Background()
+	tx, err := boil.BeginTx(ctx, nil)
+	if err != nil {
+		panic(err)
+	}
+
 	//Loop over the entire data and store it in the table
 	for i := range data.Result {
 
@@ -176,9 +192,10 @@ func (p *Poloniex) getChartData(currencyPair string, start string, end string, p
 		p2.Quotevolume = data.Result[i].QuoteVolume
 		p2.Weightedaverage = data.Result[i].WeightedAverage
 
-		err := p2.Insert(db)
-		panic(err.Error())
-
+		err := p2.Insert(ctx, tx, boil.Infer())
+		if err != nil {
+			panic(err.Error())
+		}
 	}
 
 }
