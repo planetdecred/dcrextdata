@@ -102,12 +102,6 @@ func (p *Poloniex) getPoloniexData(currencyPair string, start string, end string
 	var data poloniexData
 	json.Unmarshal(body, &data)
 
-	ctx := context.Background()
-	tx, err := boil.BeginTx(ctx, nil)
-	if err != nil {
-		panic(err)
-	}
-
 	fmt.Printf("Results: %v\n", data)
 
 	for i := range data.Result {
@@ -122,7 +116,7 @@ func (p *Poloniex) getPoloniexData(currencyPair string, start string, end string
 		p1.Total = data.Result[i].Total
 		p1.OrderType = data.Result[i].Types
 
-		err := p1.Insert(ctx, tx, boil.Infer())
+		err := p1.Insert(context.Background(), db, boil.Infer())
 		if err != nil {
 			panic(err.Error())
 		}
@@ -171,12 +165,6 @@ func (p *Poloniex) getChartData(currencyPair string, start string, end string, p
 	json.Unmarshal(body, &data)
 	fmt.Printf("Results: %v\n", data)
 
-	ctx := context.Background()
-	tx, err := boil.BeginTx(ctx, nil)
-	if err != nil {
-		panic(err)
-	}
-
 	//Loop over the entire data and store it in the table
 	for i := range data.Result {
 
@@ -192,7 +180,7 @@ func (p *Poloniex) getChartData(currencyPair string, start string, end string, p
 		p2.Quotevolume = data.Result[i].QuoteVolume
 		p2.Weightedaverage = data.Result[i].WeightedAverage
 
-		err := p2.Insert(ctx, tx, boil.Infer())
+		err := p2.Insert(context.Background(), db, boil.Infer())
 		if err != nil {
 			panic(err.Error())
 		}

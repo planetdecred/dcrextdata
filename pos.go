@@ -57,12 +57,6 @@ func (p *pos) getPos() {
 
 	fmt.Printf("Results: %v\n", data)
 
-	ctx := context.Background()
-	tx, err := boil.BeginTx(ctx, nil)
-	if err != nil {
-		panic(err)
-	}
-
 	//Loop over the entire list to insert data into the table
 
 	for key, value := range data {
@@ -88,7 +82,7 @@ func (p *pos) getPos() {
 		p1.Usercount = value.UserCount
 		p1.Usercountactive = value.UserCountActive
 
-		err := p1.Insert(ctx, tx, boil.Infer())
+		err := p1.Insert(context.Background(), db, boil.Infer())
 		if err != nil {
 			panic(err.Error())
 		}

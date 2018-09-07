@@ -137,12 +137,6 @@ func (p *pow) getPow(id int, url string, api_key string) {
 
 	fmt.Printf("Results: %v\n", data)
 
-	ctx := context.Background()
-	tx, err := boil.BeginTx(ctx, nil)
-	if err != nil {
-		panic(err)
-	}
-
 	//Loop over the entire list to insert data into the table
 	for i := 0; i < 15; i++ {
 
@@ -194,7 +188,7 @@ func (p *pow) getPow(id int, url string, api_key string) {
 		p1.Pow = data.blockReward.pow
 		p1.Dev = data.blockReward.dev
 
-		err := p1.Insert(ctx, tx, boil.Infer())
+		err := p1.Insert(context.Background(), db, boil.Infer())
 		if err != nil {
 			panic(err.Error())
 		}

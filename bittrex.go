@@ -106,12 +106,6 @@ func (b *Bittrex) getBittrexData(currencyPair string) {
 	json.Unmarshal(body, &data)
 	// fmt.Printf("Results: %v\n", data.Result)
 
-	ctx := context.Background()
-	tx, err := boil.BeginTx(ctx, nil)
-	if err != nil {
-		panic(err)
-	}
-
 	//Loop over array of struct and store them in the table
 
 	fmt.Print(data.Result[99].Filltype)
@@ -129,7 +123,7 @@ func (b *Bittrex) getBittrexData(currencyPair string) {
 		p.CreatedOn = data.Result[i].Timestamp
 
 		// fmt.Print(data.Result[i].Filltype)
-		err := p.Insert(ctx, tx, boil.Infer())
+		err := p.Insert(context.Background(), db, boil.Infer())
 		if err != nil {
 			panic(err.Error())
 		}
@@ -180,12 +174,6 @@ func (b *Bittrex) getChartData(currencyPair string) {
 	json.Unmarshal(body, &data)
 	fmt.Printf("Results: %v\n", data.Result)
 
-	ctx := context.Background()
-	tx, err := boil.BeginTx(ctx, nil)
-	if err != nil {
-		panic(err)
-	}
-
 	//Loop over array of struct and stores the response in table
 
 	for i := range data.Result {
@@ -200,7 +188,7 @@ func (b *Bittrex) getChartData(currencyPair string) {
 		p1.Closing = data.Result[i].V
 		p1.Quotevolume = data.Result[i].BV
 
-		err := p1.Insert(ctx, tx, boil.Infer())
+		err := p1.Insert(context.Background(), db, boil.Infer())
 		if err != nil {
 			panic(err.Error())
 		}
