@@ -568,7 +568,7 @@ func testChartDataSelect(t *testing.T) {
 }
 
 var (
-	chartDatumDBTypes = map[string]string{`Basevolume`: `numeric`, `Closing`: `numeric`, `CreatedOn`: `character varying`, `ExchangeName`: `character varying`, `High`: `numeric`, `ID`: `integer`, `Low`: `numeric`, `Opening`: `numeric`, `Quotevolume`: `numeric`, `Volume`: `numeric`, `Weightedaverage`: `numeric`}
+	chartDatumDBTypes = map[string]string{`Basevolume`: `double precision`, `Closing`: `double precision`, `CreatedOn`: `timestamp without time zone`, `ExchangeName`: `character varying`, `High`: `double precision`, `ID`: `integer`, `Low`: `double precision`, `Opening`: `double precision`, `Quotevolume`: `double precision`, `Volume`: `double precision`, `Weightedaverage`: `double precision`}
 	_                 = bytes.MinRead
 )
 

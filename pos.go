@@ -20,21 +20,21 @@ type pos struct {
 }
 
 type posData struct {
-	APIEnabled           null.String       `json:"APIEnabled"`
-	APIVersionsSupported []string          `json:"APIVersionsSupported"`
-	Network              null.String       `json:"Network"`
-	URL                  null.String       `json:"URL"`
-	Launched             null.String       `json:"Launched"`
-	LastUpdated          null.String       `json:"LastUpdated"`
-	Immature             null.String       `json:"Immature"`
-	Live                 null.String       `json:"Live"`
-	Voted                types.NullDecimal `json:"Voted"`
-	Missed               types.NullDecimal `json:"Missed"`
-	PoolFees             types.NullDecimal `json:"PoolFees"`
-	ProportionLive       types.NullDecimal `json:"ProportionLive"`
-	ProportionMissed     types.NullDecimal `json:"ProportionMissed"`
-	UserCount            types.NullDecimal `json:"UserCount"`
-	UserCountActive      types.NullDecimal `json:"UserCountActive"`
+	APIEnabled           null.Bool        `json:"APIEnabled"`
+	APIVersionsSupported types.Int64Array `json:"APIVersionsSupported"`
+	Network              null.String      `json:"Network"`
+	URL                  null.String      `json:"URL"`
+	Launched             null.Int64       `json:"Launched"`
+	LastUpdated          null.Int64       `json:"LastUpdated"`
+	Immature             null.Int         `json:"Immature"`
+	Live                 null.Int         `json:"Live"`
+	Voted                null.Int         `json:"Voted"`
+	Missed               null.Int         `json:"Missed"`
+	PoolFees             null.Float64     `json:"PoolFees"`
+	ProportionLive       null.Float64     `json:"ProportionLive"`
+	ProportionMissed     null.Float64     `json:"ProportionMissed"`
+	UserCount            null.Int         `json:"UserCount"`
+	UserCountActive      null.Int         `json:"UserCountActive"`
 }
 
 type Data map[string]posData
@@ -42,9 +42,12 @@ type Data map[string]posData
 func (p *pos) getPos() {
 
 	url := viper.Get("pos").(string)
-	request, err := http.NewRequest("GET", url, nil)
 
+	request, err := http.NewRequest("GET", url, nil)
 	res, _ := p.client.Do(request)
+
+	// To check the status code of response
+	fmt.Printf("POS: %+v - %+v\n", url, res.StatusCode)
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
@@ -52,13 +55,14 @@ func (p *pos) getPos() {
 	}
 
 	var data Data
-
-	json.Unmarshal(body, &data)
-
-	fmt.Printf("Results: %v\n", data)
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		fmt.Printf("POS ERROR: %+v\n", err)
+	}
+	// fmt.Printf("Results: %v\n", data)
+	fmt.Printf("len: %v\n", len(data))
 
 	//Loop over the entire list to insert data into the table
-
 	for key, value := range data {
 
 		fmt.Println(key)
@@ -86,6 +90,7 @@ func (p *pos) getPos() {
 		if err != nil {
 			panic(err.Error())
 		}
+
 	}
 
 }

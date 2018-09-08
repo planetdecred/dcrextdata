@@ -568,7 +568,7 @@ func testPosDataSelect(t *testing.T) {
 }
 
 var (
-	posDatumDBTypes = map[string]string{`Apienabled`: `character varying`, `Apiversionssupported`: `ARRAYcharacter varying`, `CreatedOn`: `time without time zone`, `ID`: `integer`, `Immature`: `character varying`, `LastUpdated`: `character varying`, `Launched`: `character varying`, `Live`: `character varying`, `Missed`: `numeric`, `Network`: `character varying`, `NetworkURL`: `character varying`, `Poolfees`: `numeric`, `Posid`: `character varying`, `Proportionlive`: `numeric`, `Proportionmissed`: `numeric`, `Usercount`: `numeric`, `Usercountactive`: `numeric`, `Voted`: `numeric`}
+	posDatumDBTypes = map[string]string{`Apienabled`: `boolean`, `Apiversionssupported`: `ARRAYinteger`, `CreatedOn`: `date`, `ID`: `integer`, `Immature`: `integer`, `LastUpdated`: `bigint`, `Launched`: `bigint`, `Live`: `integer`, `Missed`: `integer`, `Network`: `character varying`, `NetworkURL`: `character varying`, `Poolfees`: `double precision`, `Posid`: `character varying`, `Proportionlive`: `double precision`, `Proportionmissed`: `double precision`, `Usercount`: `integer`, `Usercountactive`: `integer`, `Voted`: `integer`}
 	_               = bytes.MinRead
 )
 

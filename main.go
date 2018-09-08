@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"time"
 
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
@@ -79,12 +80,12 @@ func getPosData() {
 // @parameters - PoolID integer 0 to 7
 
 func getPowData(PoolID int, apiKey string) {
+
 	user := pow{
 		client: &http.Client{},
 	}
 
 	powString := fmt.Sprintf("pow.%+v", PoolID)
-	fmt.Print(viper.GetString(powString))
 	user.getPow(PoolID, viper.GetString(powString), apiKey)
 
 }
@@ -132,4 +133,18 @@ func getChartData(exchangeName string, currencyPair string, startTime string, en
 
 	}
 
+}
+
+func convertStringTime(timestamp string) time.Time {
+	last := len(timestamp) - 1
+	if timestamp[last] == 'Z' {
+		timestamp = timestamp[:last]
+	}
+
+	dt, err := time.Parse("2006-01-02T15:04:05", timestamp)
+	if err != nil {
+		fmt.Printf("CONVERT TIME ERROR: %+v\n", err)
+	}
+
+	return dt
 }

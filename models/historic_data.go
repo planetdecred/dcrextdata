@@ -19,21 +19,20 @@ import (
 	"github.com/volatiletech/sqlboiler/queries"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 	"github.com/volatiletech/sqlboiler/strmangle"
-	"github.com/volatiletech/sqlboiler/types"
 )
 
 // HistoricDatum is an object representing the database table.
 type HistoricDatum struct {
-	ID            int               `boil:"id" json:"id" toml:"id" yaml:"id"`
-	ExchangeName  null.String       `boil:"exchange_name" json:"exchange_name,omitempty" toml:"exchange_name" yaml:"exchange_name,omitempty"`
-	Globaltradeid types.NullDecimal `boil:"globaltradeid" json:"globaltradeid,omitempty" toml:"globaltradeid" yaml:"globaltradeid,omitempty"`
-	Tradeid       types.NullDecimal `boil:"tradeid" json:"tradeid,omitempty" toml:"tradeid" yaml:"tradeid,omitempty"`
-	CreatedOn     null.String       `boil:"created_on" json:"created_on,omitempty" toml:"created_on" yaml:"created_on,omitempty"`
-	Quantity      types.NullDecimal `boil:"quantity" json:"quantity,omitempty" toml:"quantity" yaml:"quantity,omitempty"`
-	Price         types.NullDecimal `boil:"price" json:"price,omitempty" toml:"price" yaml:"price,omitempty"`
-	Total         types.NullDecimal `boil:"total" json:"total,omitempty" toml:"total" yaml:"total,omitempty"`
-	FillType      null.String       `boil:"fill_type" json:"fill_type,omitempty" toml:"fill_type" yaml:"fill_type,omitempty"`
-	OrderType     null.String       `boil:"order_type" json:"order_type,omitempty" toml:"order_type" yaml:"order_type,omitempty"`
+	ID            int          `boil:"id" json:"id" toml:"id" yaml:"id"`
+	ExchangeName  null.String  `boil:"exchange_name" json:"exchange_name,omitempty" toml:"exchange_name" yaml:"exchange_name,omitempty"`
+	Globaltradeid null.Float64 `boil:"globaltradeid" json:"globaltradeid,omitempty" toml:"globaltradeid" yaml:"globaltradeid,omitempty"`
+	Tradeid       null.Float64 `boil:"tradeid" json:"tradeid,omitempty" toml:"tradeid" yaml:"tradeid,omitempty"`
+	Quantity      null.Float64 `boil:"quantity" json:"quantity,omitempty" toml:"quantity" yaml:"quantity,omitempty"`
+	Price         null.Float64 `boil:"price" json:"price,omitempty" toml:"price" yaml:"price,omitempty"`
+	Total         null.Float64 `boil:"total" json:"total,omitempty" toml:"total" yaml:"total,omitempty"`
+	FillType      null.String  `boil:"fill_type" json:"fill_type,omitempty" toml:"fill_type" yaml:"fill_type,omitempty"`
+	OrderType     null.String  `boil:"order_type" json:"order_type,omitempty" toml:"order_type" yaml:"order_type,omitempty"`
+	CreatedOn     null.Time    `boil:"created_on" json:"created_on,omitempty" toml:"created_on" yaml:"created_on,omitempty"`
 
 	R *historicDatumR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L historicDatumL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -44,23 +43,23 @@ var HistoricDatumColumns = struct {
 	ExchangeName  string
 	Globaltradeid string
 	Tradeid       string
-	CreatedOn     string
 	Quantity      string
 	Price         string
 	Total         string
 	FillType      string
 	OrderType     string
+	CreatedOn     string
 }{
 	ID:            "id",
 	ExchangeName:  "exchange_name",
 	Globaltradeid: "globaltradeid",
 	Tradeid:       "tradeid",
-	CreatedOn:     "created_on",
 	Quantity:      "quantity",
 	Price:         "price",
 	Total:         "total",
 	FillType:      "fill_type",
 	OrderType:     "order_type",
+	CreatedOn:     "created_on",
 }
 
 // HistoricDatumRels is where relationship names are stored.
@@ -80,8 +79,8 @@ func (*historicDatumR) NewStruct() *historicDatumR {
 type historicDatumL struct{}
 
 var (
-	historicDatumColumns               = []string{"id", "exchange_name", "globaltradeid", "tradeid", "created_on", "quantity", "price", "total", "fill_type", "order_type"}
-	historicDatumColumnsWithoutDefault = []string{"exchange_name", "globaltradeid", "tradeid", "created_on", "quantity", "price", "total", "fill_type", "order_type"}
+	historicDatumColumns               = []string{"id", "exchange_name", "globaltradeid", "tradeid", "quantity", "price", "total", "fill_type", "order_type", "created_on"}
+	historicDatumColumnsWithoutDefault = []string{"exchange_name", "globaltradeid", "tradeid", "quantity", "price", "total", "fill_type", "order_type", "created_on"}
 	historicDatumColumnsWithDefault    = []string{"id"}
 	historicDatumPrimaryKeyColumns     = []string{"id"}
 )

@@ -19,22 +19,21 @@ import (
 	"github.com/volatiletech/sqlboiler/queries"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 	"github.com/volatiletech/sqlboiler/strmangle"
-	"github.com/volatiletech/sqlboiler/types"
 )
 
 // ChartDatum is an object representing the database table.
 type ChartDatum struct {
-	ID              int               `boil:"id" json:"id" toml:"id" yaml:"id"`
-	ExchangeName    null.String       `boil:"exchange_name" json:"exchange_name,omitempty" toml:"exchange_name" yaml:"exchange_name,omitempty"`
-	CreatedOn       null.String       `boil:"created_on" json:"created_on,omitempty" toml:"created_on" yaml:"created_on,omitempty"`
-	High            types.NullDecimal `boil:"high" json:"high,omitempty" toml:"high" yaml:"high,omitempty"`
-	Low             types.NullDecimal `boil:"low" json:"low,omitempty" toml:"low" yaml:"low,omitempty"`
-	Opening         types.NullDecimal `boil:"opening" json:"opening,omitempty" toml:"opening" yaml:"opening,omitempty"`
-	Closing         types.NullDecimal `boil:"closing" json:"closing,omitempty" toml:"closing" yaml:"closing,omitempty"`
-	Volume          types.NullDecimal `boil:"volume" json:"volume,omitempty" toml:"volume" yaml:"volume,omitempty"`
-	Quotevolume     types.NullDecimal `boil:"quotevolume" json:"quotevolume,omitempty" toml:"quotevolume" yaml:"quotevolume,omitempty"`
-	Basevolume      types.NullDecimal `boil:"basevolume" json:"basevolume,omitempty" toml:"basevolume" yaml:"basevolume,omitempty"`
-	Weightedaverage types.NullDecimal `boil:"weightedaverage" json:"weightedaverage,omitempty" toml:"weightedaverage" yaml:"weightedaverage,omitempty"`
+	ID              int          `boil:"id" json:"id" toml:"id" yaml:"id"`
+	ExchangeName    null.String  `boil:"exchange_name" json:"exchange_name,omitempty" toml:"exchange_name" yaml:"exchange_name,omitempty"`
+	High            null.Float64 `boil:"high" json:"high,omitempty" toml:"high" yaml:"high,omitempty"`
+	Low             null.Float64 `boil:"low" json:"low,omitempty" toml:"low" yaml:"low,omitempty"`
+	Opening         null.Float64 `boil:"opening" json:"opening,omitempty" toml:"opening" yaml:"opening,omitempty"`
+	Closing         null.Float64 `boil:"closing" json:"closing,omitempty" toml:"closing" yaml:"closing,omitempty"`
+	Volume          null.Float64 `boil:"volume" json:"volume,omitempty" toml:"volume" yaml:"volume,omitempty"`
+	Quotevolume     null.Float64 `boil:"quotevolume" json:"quotevolume,omitempty" toml:"quotevolume" yaml:"quotevolume,omitempty"`
+	Basevolume      null.Float64 `boil:"basevolume" json:"basevolume,omitempty" toml:"basevolume" yaml:"basevolume,omitempty"`
+	Weightedaverage null.Float64 `boil:"weightedaverage" json:"weightedaverage,omitempty" toml:"weightedaverage" yaml:"weightedaverage,omitempty"`
+	CreatedOn       null.Time    `boil:"created_on" json:"created_on,omitempty" toml:"created_on" yaml:"created_on,omitempty"`
 
 	R *chartDatumR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L chartDatumL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -43,7 +42,6 @@ type ChartDatum struct {
 var ChartDatumColumns = struct {
 	ID              string
 	ExchangeName    string
-	CreatedOn       string
 	High            string
 	Low             string
 	Opening         string
@@ -52,10 +50,10 @@ var ChartDatumColumns = struct {
 	Quotevolume     string
 	Basevolume      string
 	Weightedaverage string
+	CreatedOn       string
 }{
 	ID:              "id",
 	ExchangeName:    "exchange_name",
-	CreatedOn:       "created_on",
 	High:            "high",
 	Low:             "low",
 	Opening:         "opening",
@@ -64,6 +62,7 @@ var ChartDatumColumns = struct {
 	Quotevolume:     "quotevolume",
 	Basevolume:      "basevolume",
 	Weightedaverage: "weightedaverage",
+	CreatedOn:       "created_on",
 }
 
 // ChartDatumRels is where relationship names are stored.
@@ -83,8 +82,8 @@ func (*chartDatumR) NewStruct() *chartDatumR {
 type chartDatumL struct{}
 
 var (
-	chartDatumColumns               = []string{"id", "exchange_name", "created_on", "high", "low", "opening", "closing", "volume", "quotevolume", "basevolume", "weightedaverage"}
-	chartDatumColumnsWithoutDefault = []string{"exchange_name", "created_on", "high", "low", "opening", "closing", "volume", "quotevolume", "basevolume", "weightedaverage"}
+	chartDatumColumns               = []string{"id", "exchange_name", "high", "low", "opening", "closing", "volume", "quotevolume", "basevolume", "weightedaverage", "created_on"}
+	chartDatumColumnsWithoutDefault = []string{"exchange_name", "high", "low", "opening", "closing", "volume", "quotevolume", "basevolume", "weightedaverage", "created_on"}
 	chartDatumColumnsWithDefault    = []string{"id"}
 	chartDatumPrimaryKeyColumns     = []string{"id"}
 )

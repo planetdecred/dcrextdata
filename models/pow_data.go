@@ -19,56 +19,55 @@ import (
 	"github.com/volatiletech/sqlboiler/queries"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 	"github.com/volatiletech/sqlboiler/strmangle"
-	"github.com/volatiletech/sqlboiler/types"
 )
 
 // PowDatum is an object representing the database table.
 type PowDatum struct {
-	ID                  int               `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Powid               types.NullDecimal `boil:"powid" json:"powid,omitempty" toml:"powid" yaml:"powid,omitempty"`
-	Hashrate            types.NullDecimal `boil:"hashrate" json:"hashrate,omitempty" toml:"hashrate" yaml:"hashrate,omitempty"`
-	Efficiency          types.NullDecimal `boil:"efficiency" json:"efficiency,omitempty" toml:"efficiency" yaml:"efficiency,omitempty"`
-	Progress            types.NullDecimal `boil:"progress" json:"progress,omitempty" toml:"progress" yaml:"progress,omitempty"`
-	Workers             types.NullDecimal `boil:"workers" json:"workers,omitempty" toml:"workers" yaml:"workers,omitempty"`
-	Currentnetworkblock types.NullDecimal `boil:"currentnetworkblock" json:"currentnetworkblock,omitempty" toml:"currentnetworkblock" yaml:"currentnetworkblock,omitempty"`
-	Nextnetworkblock    types.NullDecimal `boil:"nextnetworkblock" json:"nextnetworkblock,omitempty" toml:"nextnetworkblock" yaml:"nextnetworkblock,omitempty"`
-	Lastblock           types.NullDecimal `boil:"lastblock" json:"lastblock,omitempty" toml:"lastblock" yaml:"lastblock,omitempty"`
-	Networkdiff         types.NullDecimal `boil:"networkdiff" json:"networkdiff,omitempty" toml:"networkdiff" yaml:"networkdiff,omitempty"`
-	Esttime             types.NullDecimal `boil:"esttime" json:"esttime,omitempty" toml:"esttime" yaml:"esttime,omitempty"`
-	Estshare            types.NullDecimal `boil:"estshare" json:"estshare,omitempty" toml:"estshare" yaml:"estshare,omitempty"`
-	Timesincelast       types.NullDecimal `boil:"timesincelast" json:"timesincelast,omitempty" toml:"timesincelast" yaml:"timesincelast,omitempty"`
-	Nethashrate         types.NullDecimal `boil:"nethashrate" json:"nethashrate,omitempty" toml:"nethashrate" yaml:"nethashrate,omitempty"`
-	Blocksfound         types.NullDecimal `boil:"blocksfound" json:"blocksfound,omitempty" toml:"blocksfound" yaml:"blocksfound,omitempty"`
-	Totalminers         types.NullDecimal `boil:"totalminers" json:"totalminers,omitempty" toml:"totalminers" yaml:"totalminers,omitempty"`
-	CreatedTime         types.NullDecimal `boil:"created_time" json:"created_time,omitempty" toml:"created_time" yaml:"created_time,omitempty"`
-	Networkdifficulty   types.NullDecimal `boil:"networkdifficulty" json:"networkdifficulty,omitempty" toml:"networkdifficulty" yaml:"networkdifficulty,omitempty"`
-	Coinprice           types.NullDecimal `boil:"coinprice" json:"coinprice,omitempty" toml:"coinprice" yaml:"coinprice,omitempty"`
-	Btcprice            types.NullDecimal `boil:"btcprice" json:"btcprice,omitempty" toml:"btcprice" yaml:"btcprice,omitempty"`
-	Est                 types.NullDecimal `boil:"est" json:"est,omitempty" toml:"est" yaml:"est,omitempty"`
-	CreatedOn           types.NullDecimal `boil:"created_on" json:"created_on,omitempty" toml:"created_on" yaml:"created_on,omitempty"`
-	Blocksper           types.NullDecimal `boil:"blocksper" json:"blocksper,omitempty" toml:"blocksper" yaml:"blocksper,omitempty"`
-	Luck                types.NullDecimal `boil:"luck" json:"luck,omitempty" toml:"luck" yaml:"luck,omitempty"`
-	Ppshare             types.NullDecimal `boil:"ppshare" json:"ppshare,omitempty" toml:"ppshare" yaml:"ppshare,omitempty"`
-	Totalkickback       types.NullDecimal `boil:"totalkickback" json:"totalkickback,omitempty" toml:"totalkickback" yaml:"totalkickback,omitempty"`
-	Success             null.String       `boil:"success" json:"success,omitempty" toml:"success" yaml:"success,omitempty"`
-	Lastupdate          types.NullDecimal `boil:"lastupdate" json:"lastupdate,omitempty" toml:"lastupdate" yaml:"lastupdate,omitempty"`
-	Name                null.String       `boil:"name" json:"name,omitempty" toml:"name" yaml:"name,omitempty"`
-	Port                types.NullDecimal `boil:"port" json:"port,omitempty" toml:"port" yaml:"port,omitempty"`
-	Fees                types.NullDecimal `boil:"fees" json:"fees,omitempty" toml:"fees" yaml:"fees,omitempty"`
-	Estimatecurrent     types.NullDecimal `boil:"estimatecurrent" json:"estimatecurrent,omitempty" toml:"estimatecurrent" yaml:"estimatecurrent,omitempty"`
-	Estimatelast24h     types.NullDecimal `boil:"estimatelast24h" json:"estimatelast24h,omitempty" toml:"estimatelast24h" yaml:"estimatelast24h,omitempty"`
-	Actual124h          types.NullDecimal `boil:"actual124h" json:"actual124h,omitempty" toml:"actual124h" yaml:"actual124h,omitempty"`
-	Mbtcmhfactor        types.NullDecimal `boil:"mbtcmhfactor" json:"mbtcmhfactor,omitempty" toml:"mbtcmhfactor" yaml:"mbtcmhfactor,omitempty"`
-	Hashratelast24h     types.NullDecimal `boil:"hashratelast24h" json:"hashratelast24h,omitempty" toml:"hashratelast24h" yaml:"hashratelast24h,omitempty"`
-	Rentalcurrent       types.NullDecimal `boil:"rentalcurrent" json:"rentalcurrent,omitempty" toml:"rentalcurrent" yaml:"rentalcurrent,omitempty"`
-	Height              types.NullDecimal `boil:"height" json:"height,omitempty" toml:"height" yaml:"height,omitempty"`
-	Blocks24h           types.NullDecimal `boil:"blocks24h" json:"blocks24h,omitempty" toml:"blocks24h" yaml:"blocks24h,omitempty"`
-	BTC24H              types.NullDecimal `boil:"btc24h" json:"btc24h,omitempty" toml:"btc24h" yaml:"btc24h,omitempty"`
-	Currentheight       types.NullDecimal `boil:"currentheight" json:"currentheight,omitempty" toml:"currentheight" yaml:"currentheight,omitempty"`
-	Total               types.NullDecimal `boil:"total" json:"total,omitempty" toml:"total" yaml:"total,omitempty"`
-	Pos                 types.NullDecimal `boil:"pos" json:"pos,omitempty" toml:"pos" yaml:"pos,omitempty"`
-	Pow                 types.NullDecimal `boil:"pow" json:"pow,omitempty" toml:"pow" yaml:"pow,omitempty"`
-	Dev                 types.NullDecimal `boil:"dev" json:"dev,omitempty" toml:"dev" yaml:"dev,omitempty"`
+	ID                  int          `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Powid               null.Float64 `boil:"powid" json:"powid,omitempty" toml:"powid" yaml:"powid,omitempty"`
+	Hashrate            null.Float64 `boil:"hashrate" json:"hashrate,omitempty" toml:"hashrate" yaml:"hashrate,omitempty"`
+	Efficiency          null.Float64 `boil:"efficiency" json:"efficiency,omitempty" toml:"efficiency" yaml:"efficiency,omitempty"`
+	Progress            null.Float64 `boil:"progress" json:"progress,omitempty" toml:"progress" yaml:"progress,omitempty"`
+	Workers             null.Float64 `boil:"workers" json:"workers,omitempty" toml:"workers" yaml:"workers,omitempty"`
+	Currentnetworkblock null.Float64 `boil:"currentnetworkblock" json:"currentnetworkblock,omitempty" toml:"currentnetworkblock" yaml:"currentnetworkblock,omitempty"`
+	Nextnetworkblock    null.Float64 `boil:"nextnetworkblock" json:"nextnetworkblock,omitempty" toml:"nextnetworkblock" yaml:"nextnetworkblock,omitempty"`
+	Lastblock           null.Float64 `boil:"lastblock" json:"lastblock,omitempty" toml:"lastblock" yaml:"lastblock,omitempty"`
+	Networkdiff         null.Float64 `boil:"networkdiff" json:"networkdiff,omitempty" toml:"networkdiff" yaml:"networkdiff,omitempty"`
+	Esttime             null.Time    `boil:"esttime" json:"esttime,omitempty" toml:"esttime" yaml:"esttime,omitempty"`
+	Estshare            null.Float64 `boil:"estshare" json:"estshare,omitempty" toml:"estshare" yaml:"estshare,omitempty"`
+	Timesincelast       null.Float64 `boil:"timesincelast" json:"timesincelast,omitempty" toml:"timesincelast" yaml:"timesincelast,omitempty"`
+	Nethashrate         null.Float64 `boil:"nethashrate" json:"nethashrate,omitempty" toml:"nethashrate" yaml:"nethashrate,omitempty"`
+	Blocksfound         null.Float64 `boil:"blocksfound" json:"blocksfound,omitempty" toml:"blocksfound" yaml:"blocksfound,omitempty"`
+	Totalminers         null.Float64 `boil:"totalminers" json:"totalminers,omitempty" toml:"totalminers" yaml:"totalminers,omitempty"`
+	Networkdifficulty   null.Float64 `boil:"networkdifficulty" json:"networkdifficulty,omitempty" toml:"networkdifficulty" yaml:"networkdifficulty,omitempty"`
+	Coinprice           null.String  `boil:"coinprice" json:"coinprice,omitempty" toml:"coinprice" yaml:"coinprice,omitempty"`
+	Btcprice            null.String  `boil:"btcprice" json:"btcprice,omitempty" toml:"btcprice" yaml:"btcprice,omitempty"`
+	Est                 null.Float64 `boil:"est" json:"est,omitempty" toml:"est" yaml:"est,omitempty"`
+	CreatedOn           null.Float64 `boil:"created_on" json:"created_on,omitempty" toml:"created_on" yaml:"created_on,omitempty"`
+	Blocksper           null.Float64 `boil:"blocksper" json:"blocksper,omitempty" toml:"blocksper" yaml:"blocksper,omitempty"`
+	Luck                null.Float64 `boil:"luck" json:"luck,omitempty" toml:"luck" yaml:"luck,omitempty"`
+	Ppshare             null.Float64 `boil:"ppshare" json:"ppshare,omitempty" toml:"ppshare" yaml:"ppshare,omitempty"`
+	Totalkickback       null.Float64 `boil:"totalkickback" json:"totalkickback,omitempty" toml:"totalkickback" yaml:"totalkickback,omitempty"`
+	Success             null.String  `boil:"success" json:"success,omitempty" toml:"success" yaml:"success,omitempty"`
+	Lastupdate          null.Float64 `boil:"lastupdate" json:"lastupdate,omitempty" toml:"lastupdate" yaml:"lastupdate,omitempty"`
+	Name                null.String  `boil:"name" json:"name,omitempty" toml:"name" yaml:"name,omitempty"`
+	Port                null.Float64 `boil:"port" json:"port,omitempty" toml:"port" yaml:"port,omitempty"`
+	Fees                null.Float64 `boil:"fees" json:"fees,omitempty" toml:"fees" yaml:"fees,omitempty"`
+	Estimatecurrent     null.Float64 `boil:"estimatecurrent" json:"estimatecurrent,omitempty" toml:"estimatecurrent" yaml:"estimatecurrent,omitempty"`
+	Estimatelast24h     null.Float64 `boil:"estimatelast24h" json:"estimatelast24h,omitempty" toml:"estimatelast24h" yaml:"estimatelast24h,omitempty"`
+	Actual124h          null.Float64 `boil:"actual124h" json:"actual124h,omitempty" toml:"actual124h" yaml:"actual124h,omitempty"`
+	Mbtcmhfactor        null.Float64 `boil:"mbtcmhfactor" json:"mbtcmhfactor,omitempty" toml:"mbtcmhfactor" yaml:"mbtcmhfactor,omitempty"`
+	Hashratelast24h     null.Float64 `boil:"hashratelast24h" json:"hashratelast24h,omitempty" toml:"hashratelast24h" yaml:"hashratelast24h,omitempty"`
+	Rentalcurrent       null.Float64 `boil:"rentalcurrent" json:"rentalcurrent,omitempty" toml:"rentalcurrent" yaml:"rentalcurrent,omitempty"`
+	Height              null.Float64 `boil:"height" json:"height,omitempty" toml:"height" yaml:"height,omitempty"`
+	Blocks24h           null.Float64 `boil:"blocks24h" json:"blocks24h,omitempty" toml:"blocks24h" yaml:"blocks24h,omitempty"`
+	BTC24H              null.Float64 `boil:"btc24h" json:"btc24h,omitempty" toml:"btc24h" yaml:"btc24h,omitempty"`
+	Currentheight       null.Float64 `boil:"currentheight" json:"currentheight,omitempty" toml:"currentheight" yaml:"currentheight,omitempty"`
+	Total               null.Float64 `boil:"total" json:"total,omitempty" toml:"total" yaml:"total,omitempty"`
+	Pos                 null.Float64 `boil:"pos" json:"pos,omitempty" toml:"pos" yaml:"pos,omitempty"`
+	Pow                 null.Float64 `boil:"pow" json:"pow,omitempty" toml:"pow" yaml:"pow,omitempty"`
+	Dev                 null.Float64 `boil:"dev" json:"dev,omitempty" toml:"dev" yaml:"dev,omitempty"`
+	CreatedTime         null.Time    `boil:"created_time" json:"created_time,omitempty" toml:"created_time" yaml:"created_time,omitempty"`
 
 	R *powDatumR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L powDatumL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -91,7 +90,6 @@ var PowDatumColumns = struct {
 	Nethashrate         string
 	Blocksfound         string
 	Totalminers         string
-	CreatedTime         string
 	Networkdifficulty   string
 	Coinprice           string
 	Btcprice            string
@@ -120,6 +118,7 @@ var PowDatumColumns = struct {
 	Pos                 string
 	Pow                 string
 	Dev                 string
+	CreatedTime         string
 }{
 	ID:                  "id",
 	Powid:               "powid",
@@ -137,7 +136,6 @@ var PowDatumColumns = struct {
 	Nethashrate:         "nethashrate",
 	Blocksfound:         "blocksfound",
 	Totalminers:         "totalminers",
-	CreatedTime:         "created_time",
 	Networkdifficulty:   "networkdifficulty",
 	Coinprice:           "coinprice",
 	Btcprice:            "btcprice",
@@ -166,6 +164,7 @@ var PowDatumColumns = struct {
 	Pos:                 "pos",
 	Pow:                 "pow",
 	Dev:                 "dev",
+	CreatedTime:         "created_time",
 }
 
 // PowDatumRels is where relationship names are stored.
@@ -185,8 +184,8 @@ func (*powDatumR) NewStruct() *powDatumR {
 type powDatumL struct{}
 
 var (
-	powDatumColumns               = []string{"id", "powid", "hashrate", "efficiency", "progress", "workers", "currentnetworkblock", "nextnetworkblock", "lastblock", "networkdiff", "esttime", "estshare", "timesincelast", "nethashrate", "blocksfound", "totalminers", "created_time", "networkdifficulty", "coinprice", "btcprice", "est", "created_on", "blocksper", "luck", "ppshare", "totalkickback", "success", "lastupdate", "name", "port", "fees", "estimatecurrent", "estimatelast24h", "actual124h", "mbtcmhfactor", "hashratelast24h", "rentalcurrent", "height", "blocks24h", "btc24h", "currentheight", "total", "pos", "pow", "dev"}
-	powDatumColumnsWithoutDefault = []string{"powid", "hashrate", "efficiency", "progress", "workers", "currentnetworkblock", "nextnetworkblock", "lastblock", "networkdiff", "esttime", "estshare", "timesincelast", "nethashrate", "blocksfound", "totalminers", "created_time", "networkdifficulty", "coinprice", "btcprice", "est", "created_on", "blocksper", "luck", "ppshare", "totalkickback", "success", "lastupdate", "name", "port", "fees", "estimatecurrent", "estimatelast24h", "actual124h", "mbtcmhfactor", "hashratelast24h", "rentalcurrent", "height", "blocks24h", "btc24h", "currentheight", "total", "pos", "pow", "dev"}
+	powDatumColumns               = []string{"id", "powid", "hashrate", "efficiency", "progress", "workers", "currentnetworkblock", "nextnetworkblock", "lastblock", "networkdiff", "esttime", "estshare", "timesincelast", "nethashrate", "blocksfound", "totalminers", "networkdifficulty", "coinprice", "btcprice", "est", "created_on", "blocksper", "luck", "ppshare", "totalkickback", "success", "lastupdate", "name", "port", "fees", "estimatecurrent", "estimatelast24h", "actual124h", "mbtcmhfactor", "hashratelast24h", "rentalcurrent", "height", "blocks24h", "btc24h", "currentheight", "total", "pos", "pow", "dev", "created_time"}
+	powDatumColumnsWithoutDefault = []string{"powid", "hashrate", "efficiency", "progress", "workers", "currentnetworkblock", "nextnetworkblock", "lastblock", "networkdiff", "esttime", "estshare", "timesincelast", "nethashrate", "blocksfound", "totalminers", "networkdifficulty", "coinprice", "btcprice", "est", "created_on", "blocksper", "luck", "ppshare", "totalkickback", "success", "lastupdate", "name", "port", "fees", "estimatecurrent", "estimatelast24h", "actual124h", "mbtcmhfactor", "hashratelast24h", "rentalcurrent", "height", "blocks24h", "btc24h", "currentheight", "total", "pos", "pow", "dev", "created_time"}
 	powDatumColumnsWithDefault    = []string{"id"}
 	powDatumPrimaryKeyColumns     = []string{"id"}
 )
