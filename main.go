@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/raedahgroup/dcrextdata/version"
+	"github.com/raedahgroup/dcrextdata/vsp"
 )
 
 // const dcrlaunchtime int64 = 1454889600
@@ -75,6 +76,17 @@ func main() {
 		log.Info("CTRL+C hit. Closing goroutines.")
 		close(quit)
 	}()
+
+	if cfg.VSPEnabled {
+		log.Info("Starting VSP data collection")
+		vspCollector, err := vsp.NewVspCollector(cfg.VSPInterval)
+		if err == nil {
+			wg.Add(1)
+			go vspCollector.Run(db, quit, wg)
+		} else {
+			log.Error(err)
+		}
+	}
 
 	if cfg.ExchangesEnabled {
 		wg.Add(1)

@@ -8,8 +8,10 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/raedahgroup/dcrextdata/vsp"
 )
 
 const (
@@ -17,6 +19,43 @@ const (
 	LastExchangeEntryTime   = `SELECT time FROM exchange_data WHERE exchange=$1 ORDER BY time DESC LIMIT 1`
 	InsertExchangeDataTick  = `INSERT INTO exchange_data (high, low, open, close, time, exchange) VALUES ($1, $2, $3, $4, $5, $6)`
 	CreateExchangeDataTable = `CREATE TABLE IF NOT EXISTS exchange_data (high FLOAT8, low FLOAT8, open FLOAT8, close FLOAT8, time INT, exchange VARCHAR(25), CONSTRAINT tick PRIMARY KEY (time, exchange))`
+
+	createVSPInfoTable = `CREATE TABLE IF NOT EXITS vsp (
+		id SERIAL PRIMARY KEY,
+		name TEXT,
+		api_enabled INT8[],
+		api_versions_supported TEXT,
+		network TEXT,
+		url TEXT,
+		launched TIMESTAMPTZ
+	);`
+
+	createVSPDataTable = `CREATE TABLE IF NOT EXITS vsp_data (
+		id SERIAL PRIMARY KEY,
+		name TEXT,
+		last_updated TIMESTAMPTZ,
+		immature INT8,
+		live INT8,
+		voted INT8,
+		missed INT8,
+		pool_fees FLOAT8,
+		proportion_live FLOAT32,
+		proportion_missed FLOAT32,
+		user_count INT8,
+		users_active INT8 
+	);`
+
+	insertVSPInfo = `INSERT INTO vsp (
+		name, api_enabled, api_versions_supported,
+		network, url, launched)
+	VALUES ($1,$2,$3,$4,$5,$6);`
+
+	insertVSPData = `INSERT INTO vsp_data(
+		name, last_updated, immature, live, voted, missed, pool_fees,
+		proportion_live, proportion_missed, user_count, users_active)
+	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11);`
+
+	selectIDFromVSP = `SELECT id FROM vsp WHERE name=$1;`
 )
 
 type PgDb struct {
@@ -122,3 +161,18 @@ func (pg *PgDb) ExchangeDataTableExits() bool {
 	exists, _ := pg.tableExists("exchange_data")
 	return exists
 }
+
+// VSP
+
+//
+func (pg *PgDb) StoreVSP(t time.Time, data vsp.Response) error {
+	pqLog.Infof("%s, %+v", t.String(), data["Golf"])
+
+	return nil
+}
+
+// func (pg *PgDb) vspPoolExits() {}
+
+// func (pg *PgDb) addVSPINFO(data vsp.ResponseData) error {
+
+// }

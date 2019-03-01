@@ -40,6 +40,10 @@ type config struct {
 	CollectionInterval int64    `short:"i" long:"collectioninterval" description:"Interval in seconds between successive ticker entries. Valid options are 300 and 1800"`
 	ExchangesEnabled   bool     `long:"exchangesON" description:"Enables collection of ticker data from exchanges"`
 	Exchanges          []string `long:"exchange" description:"Exchange to be tracked"`
+
+	// VSP
+	VSPEnabled  bool  `long:"vsp" description:"Enables periodic voting service pool status collection"`
+	VSPInterval int64 `long:"vspI" description:"Collection interval for vsp"`
 }
 
 var defaultCfg = config{

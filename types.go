@@ -4,6 +4,9 @@
 
 package main
 
+// Exchanges
+
+// DataTick represents an exchange data tick
 type DataTick struct {
 	High     float64
 	Low      float64

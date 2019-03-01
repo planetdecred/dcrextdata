@@ -10,6 +10,7 @@ import (
 
 	"github.com/decred/slog"
 	"github.com/jrick/logrotate/rotator"
+	"github.com/raedahgroup/dcrextdata/vsp"
 )
 
 // logWriter implements an io.Writer that outputs to both standard output and
@@ -35,6 +36,7 @@ var (
 	excLog      = backendLog.Logger("EXCH")
 	pqLog       = backendLog.Logger("PSQL")
 	requestsLog = backendLog.Logger("RQST")
+	vspLog      = backendLog.Logger("VSPC")
 )
 
 // subsystemLoggers maps each subsystem identifier to its associated logger.
@@ -43,6 +45,11 @@ var subsystemLoggers = map[string]slog.Logger{
 	"EXCH": excLog,
 	"PSQL": pqLog,
 	"RQST": requestsLog,
+	"VSPC": vspLog,
+}
+
+func init() {
+	vsp.UseLogger(vspLog)
 }
 
 // initLogRotator initializes the logging rotater to write logs to logFile and
