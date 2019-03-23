@@ -33,3 +33,19 @@ type bittrexDataTick struct {
 type bittrexAPIResponse struct {
 	Result []bittrexDataTick `json:"result"`
 }
+
+type bleutradeDataTick struct {
+	High   string `json:"high"`
+	Low    string `json:"low"`
+	Open   string `json:"open"`
+	Close  string `json:"close"`
+	Volume string `json:"volume"`
+	Time   string `json:"TimeStamp"`
+}
+
+type bleutradeAPIResponse struct {
+	Result []bleutradeDataTick `json:"result"`
+}
+
+type binanceAPIResponse []binanceDataTick
+type binanceDataTick []interface{}
