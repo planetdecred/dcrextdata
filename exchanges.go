@@ -24,6 +24,7 @@ const (
 	binanceVolumeLimit  int64 = 1000
 	poloniexVolumeLimit int64 = 20000
 	apprxPoloniexStart  int64 = 1463364000
+	apprxBinanceStart   int64 = 154035360
 )
 
 var ExchangeConstructors = map[string]func(*http.Client, int64, int64) (Exchange, error){
@@ -47,7 +48,9 @@ type CommonExchange struct {
 	baseUrl    string
 }
 
-func (ex *CommonExchange) LastUpdateTime() int64 { return ex.lastUpdate }
+func (ex *CommonExchange) LastUpdateTime() int64 {
+	return ex.lastUpdate
+}
 
 type BittrexExchange struct {
 	CommonExchange
@@ -235,7 +238,7 @@ type BleutradeExchange struct {
 }
 
 var bleutradeIntervals = map[int64]string{
-	300:  "5m",
+	300:  "15m",
 	1800: "30m",
 }
 
@@ -248,7 +251,7 @@ func NewBleutrade(client *http.Client, lastUpdate int64, period int64) (Exchange
 			client:     client,
 			lastUpdate: lastUpdate,
 			period:     period,
-			baseUrl:    PoloniexUrl,
+			baseUrl:    BleutradeUrl,
 		},
 	}, nil
 }
@@ -259,7 +262,7 @@ func (ex *BleutradeExchange) Collect(data chan []DataTick) error {
 	resp := new(bleutradeAPIResponse)
 
 	requestUrl, err := addParams(ex.baseUrl, map[string]interface{}{
-		"market": "BTC-DCR",
+		"market": "DCR_BTC",
 		"period": bleutradeIntervals[ex.period],
 		"count":  "999999",
 	})
@@ -269,7 +272,7 @@ func (ex *BleutradeExchange) Collect(data chan []DataTick) error {
 	err = GetResponse(ex.client, requestUrl, resp)
 
 	if err != nil {
-		log.Errorf("bleutrade: %v", err)
+		excLog.Errorf("bleutrade: %v", err)
 		return err
 	}
 
@@ -294,22 +297,22 @@ func (ex *BleutradeExchange) respToDataTicks(resp *bleutradeAPIResponse, start i
 		// conversion of types to match exchangeDataTick
 		high, err := strconv.ParseFloat(v.High, 64)
 		if err != nil {
-			log.Error("Failed to convert to float: ", err.Error())
+			excLog.Error("Failed to convert to float: ", err.Error())
 			return nil
 		}
 		low, err := strconv.ParseFloat(v.Low, 64)
 		if err != nil {
-			log.Error("Failed to convert to float: ", err.Error())
+			excLog.Error("Failed to convert to float: ", err.Error())
 			return nil
 		}
 		open, err := strconv.ParseFloat(v.Open, 64)
 		if err != nil {
-			log.Error("Failed to convert to float: ", err.Error())
+			excLog.Error("Failed to convert to float: ", err.Error())
 			return nil
 		}
 		close, err := strconv.ParseFloat(v.Close, 64)
 		if err != nil {
-			log.Error("Failed to convert to float: ", err.Error())
+			excLog.Error("Failed to convert to float: ", err.Error())
 			return nil
 		}
 
@@ -339,7 +342,12 @@ func NewBinance(client *http.Client, lastUpdate int64, period int64) (Exchange, 
 	if client == nil {
 		return nil, new(NilClientError)
 	}
-	return &BleutradeExchange{
+
+	if lastUpdate == 0 {
+		lastUpdate = apprxBinanceStart
+	}
+
+	return &BinanceExchange{
 		CommonExchange: CommonExchange{
 			client:     client,
 			lastUpdate: lastUpdate,
@@ -352,12 +360,12 @@ func NewBinance(client *http.Client, lastUpdate int64, period int64) (Exchange, 
 func (ex *BinanceExchange) Historic(data chan []DataTick) error {
 	now := time.Now().Unix()
 
-	if now-ex.lastUpdate < ex.period {
+	if now-(ex.lastUpdate) < ex.period {
 		return new(CollectionIntervalTooShort)
 	}
 
-	for (now-ex.lastUpdate)/ex.period >= poloniexVolumeLimit {
-		end := ex.lastUpdate + poloniexVolumeLimit*ex.period
+	for (now-ex.lastUpdate)/ex.period >= binanceVolumeLimit {
+		end := ex.lastUpdate + binanceVolumeLimit*ex.period
 
 		resp, last, err := ex.fetch(ex.lastUpdate, end, ex.period)
 
@@ -390,9 +398,10 @@ func (ex *BinanceExchange) fetch(start, end, period int64) ([]DataTick, int64, e
 	//?symbol=DCRBTC&interval=30m&limit=%d&startTime=%d
 	requestURL, err := addParams(ex.baseUrl, map[string]interface{}{
 		"symbol":    "DCRBTC",
-		"startTime": start,
-		"endTime":   end,
-		"limit":     period,
+		"startTime": start * 1000,
+		"endTime":   end * 1000,
+		"limit":     poloniexVolumeLimit,
+		"interval":  binanceIntervals[ex.period],
 	})
 
 	if err != nil {
@@ -406,22 +415,22 @@ func (ex *BinanceExchange) fetch(start, end, period int64) ([]DataTick, int64, e
 	for _, j := range res {
 		high, err := strconv.ParseFloat(j[2].(string), 64)
 		if err != nil {
-			log.Error("Failed to convert to float: ", err.Error())
+			excLog.Error("Failed to convert to float: ", err.Error())
 			return nil, 0, err
 		}
 		low, err := strconv.ParseFloat(j[3].(string), 64)
 		if err != nil {
-			log.Error("Failed to convert to float: ", err.Error())
+			excLog.Error("Failed to convert to float: ", err.Error())
 			return nil, 0, err
 		}
 		open, err := strconv.ParseFloat(j[1].(string), 64)
 		if err != nil {
-			log.Error("Failed to convert to float: ", err.Error())
+			excLog.Error("Failed to convert to float: ", err.Error())
 			return nil, 0, err
 		}
 		close, err := strconv.ParseFloat(j[4].(string), 64)
 		if err != nil {
-			log.Error("Failed to convert to float: ", err.Error())
+			excLog.Error("Failed to convert to float: ", err.Error())
 			return nil, 0, err
 		}
 
