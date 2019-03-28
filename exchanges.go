@@ -24,7 +24,7 @@ const (
 	binanceVolumeLimit  int64 = 1000
 	poloniexVolumeLimit int64 = 20000
 	apprxPoloniexStart  int64 = 1463364000
-	apprxBinanceStart   int64 = 154035360
+	apprxBinanceStart   int64 = 1540353600
 )
 
 var ExchangeConstructors = map[string]func(*http.Client, int64, int64) (Exchange, error){
@@ -264,7 +264,6 @@ func (ex *BleutradeExchange) Collect(data chan []DataTick) error {
 	requestUrl, err := addParams(ex.baseUrl, map[string]interface{}{
 		"market": "DCR_BTC",
 		"period": bleutradeIntervals[ex.period],
-		"count":  "999999",
 	})
 	if err != nil {
 		return err
@@ -400,12 +399,10 @@ func (ex *BinanceExchange) fetch(start, end, period int64) ([]DataTick, int64, e
 		"symbol":    "DCRBTC",
 		"startTime": start * 1000,
 		"endTime":   end * 1000,
-		"limit":     poloniexVolumeLimit,
 		"interval":  binanceIntervals[ex.period],
 	})
 
 	if err != nil {
-
 		return nil, 0, err
 	}
 	err = GetResponse(ex.client, requestURL, resp)
