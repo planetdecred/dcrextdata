@@ -256,6 +256,8 @@ func NewBleutrade(client *http.Client, lastUpdate int64, period int64) (Exchange
 	}, nil
 }
 
+func (*BleutradeExchange) Name() string { return Bleutrade }
+
 func (ex *BleutradeExchange) Historic(data chan []DataTick) error { return ex.Collect(data) }
 
 func (ex *BleutradeExchange) Collect(data chan []DataTick) error {
@@ -355,6 +357,8 @@ func NewBinance(client *http.Client, lastUpdate int64, period int64) (Exchange, 
 		},
 	}, nil
 }
+
+func (*BinanceExchange) Name() string { return Binance }
 
 func (ex *BinanceExchange) Historic(data chan []DataTick) error {
 	now := time.Now().Unix()
