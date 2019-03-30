@@ -404,6 +404,7 @@ func (ex *BinanceExchange) fetch(start, end, period int64) ([]DataTick, int64, e
 		"startTime": start * 1000,
 		"endTime":   end * 1000,
 		"interval":  binanceIntervals[ex.period],
+		"limit": binanceVolumeLimit,
 	})
 
 	if err != nil {
