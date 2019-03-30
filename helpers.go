@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -19,7 +18,8 @@ const (
 // the destination
 func GetResponse(client *http.Client, url string, destination interface{}) error {
 	resp := new(http.Response)
-	for i := 0; i < maxRetryAttempts; i++ {
+
+	for i := 1; i <= maxRetryAttempts; i++ {
 		res, err := client.Get(url)
 		requestsLog.Tracef("GET %s", url)
 		if err != nil {
@@ -37,11 +37,6 @@ func GetResponse(client *http.Client, url string, destination interface{}) error
 		break
 	}
 
-	if resp == nil {
-		// requestsLog.Debug("Response nil")
-		return fmt.Errorf("Empty response")
-	}
-
 	err := json.NewDecoder(resp.Body).Decode(destination)
 	if err != nil {
 		return err
@@ -52,7 +47,6 @@ func GetResponse(client *http.Client, url string, destination interface{}) error
 }
 
 func addParams(base string, params map[string]interface{}) (string, error) {
-	// TODO: implement addparams
 	var strBuilder strings.Builder
 
 	_, err := strBuilder.WriteString(base)
@@ -77,6 +71,7 @@ func addParams(base string, params map[string]interface{}) (string, error) {
 
 		strBuilder.WriteString("&")
 	}
+
 	str := strBuilder.String()
 	return str[:len(str)-1], nil
 }

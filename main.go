@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
 	"sync"
+
+	"github.com/raedahgroup/dcrextdata/version"
 )
 
 // const dcrlaunchtime int64 = 1454889600
@@ -22,8 +25,17 @@ func main() {
 		}
 	}()
 
+	// Display app version.
+	log.Infof("%s version %v (Go version %s)", version.AppName,
+		version.Version(), runtime.Version())
+
 	db, err := NewPgDb(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPass, cfg.DBName)
 	defer db.Close()
+
+	if err != nil {
+		log.Error(err)
+		return
+	}
 
 	if cfg.Reset {
 		log.Info("Dropping tables")
@@ -34,7 +46,6 @@ func main() {
 			return
 		} else {
 			log.Info("Tables dropped")
-			// return err
 		}
 	}
 
@@ -86,6 +97,7 @@ func main() {
 			for _, err = range errs {
 				excLog.Error(err)
 			}
+			excLog.Error("Historic sync failed")
 			close(quit)
 			return
 		}

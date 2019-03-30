@@ -79,7 +79,6 @@ func (ex *BittrexExchange) Collect(data chan []DataTick) error {
 	err = GetResponse(ex.client, requestUrl, resp)
 
 	if err != nil {
-		log.Errorf("bittrex: %v", err)
 		return err
 	}
 
