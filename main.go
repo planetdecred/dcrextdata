@@ -49,9 +49,8 @@ func main() {
 			db.Close()
 			log.Error("Could not drop tables: ", err)
 			return
-		} else {
-			log.Info("Tables dropped")
 		}
+		log.Info("Tables dropped")
 	}
 
 	resultChan := make(chan []DataTick)

@@ -46,7 +46,7 @@ const (
 
 	createVSPDataTable = `CREATE TABLE IF NOT EXISTS vsp_data (
 		id SERIAL PRIMARY KEY,
-		name TEXT,
+		vsp_id INT REFERENCES vsp(id),
 		last_updated TIMESTAMPTZ,
 		immature INT8,
 		live INT8,
@@ -63,12 +63,13 @@ const (
 	insertVSPInfo = `INSERT INTO vsp (
 		name, api_enabled, api_versions_supported,
 		network, url, launched)
-	VALUES ($1,$2,$3,$4,$5,$6);`
+	VALUES ($1,$2,$3,$4,$5,$6)
+	RETURNING id;`
 
 	insertVSPData = `INSERT INTO vsp_data(
-		name, last_updated, immature, live, voted, missed, pool_fees,
+		vsp_id, last_updated, immature, live, voted, missed, pool_fees,
 		proportion_live, proportion_missed, user_count, users_active, time)
-	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, $12);`
+	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12);`
 
 	selectIDFromVSP = `SELECT id FROM vsp WHERE name=$1 LIMIT 1;`
 )
@@ -119,10 +120,10 @@ func (pg *PgDb) dropTable(name string) error {
 }
 
 func (pg *PgDb) DropAllTables() error {
-	if err := pg.dropTable("vsp"); err != nil {
+	if err := pg.dropTable("vsp_data"); err != nil {
 		return err
 	}
-	if err := pg.dropTable("vsp_data"); err != nil {
+	if err := pg.dropTable("vsp"); err != nil {
 		return err
 	}
 	return pg.dropTable("exchange_data")
@@ -203,17 +204,21 @@ func (pg *PgDb) CreateVSPTables() error {
 func (pg *PgDb) StoreVSP(t time.Time, data vsp.Response) error {
 	names := []string{}
 	for name, stat := range data {
-		if !pg.vspPoolExits(name) {
+		id, err := pg.selectVSPID(name)
+		if err != nil {
+			if err != sql.ErrNoRows {
+				return err
+			}
+
 			launched, err := pg.getPQTime(stat.Launched)
 			if err != nil {
 				return err
 			}
-			_, err = pg.db.Exec(insertVSPInfo, name, stat.APIEnabled, pq.Array(stat.APIVersionsSupported), stat.Network,
-				stat.URL, launched)
+			err = pg.db.QueryRow(insertVSPInfo, name, stat.APIEnabled, pq.Array(stat.APIVersionsSupported), stat.Network,
+				stat.URL, launched).Scan(&id)
 			if err != nil {
 				return err
 			}
-
 		}
 
 		lastUpdated, err := pg.getPQTime(stat.LastUpdated)
@@ -226,7 +231,7 @@ func (pg *PgDb) StoreVSP(t time.Time, data vsp.Response) error {
 			return err
 		}
 
-		_, err = pg.db.Exec(insertVSPData, name, lastUpdated, stat.Immature, stat.Live, stat.Voted,
+		_, err = pg.db.Exec(insertVSPData, id, lastUpdated, stat.Immature, stat.Live, stat.Voted,
 			stat.Missed, stat.PoolFees, stat.ProportionLive, stat.ProportionMissed, stat.UserCount,
 			stat.UserCountActive, timeRetrieved)
 
@@ -244,19 +249,14 @@ func (pg *PgDb) getPQTime(t int) (string, error) {
 	ts := ""
 	err := tsRes.Scan(&ts)
 	if err != nil {
-		fmt.Errorf("Could not convert UNIX time %d to postgresql TIMESTAMPTZ", t)
+		return "", fmt.Errorf("Could not convert UNIX time %d to postgresql TIMESTAMPTZ", t)
 	}
 	return ts, nil
 }
 
-func (pg *PgDb) vspPoolExits(name string) bool {
-	res := pg.db.QueryRow(selectIDFromVSP, name)
-	id := -1
-	err := res.Scan(&id)
-	if err == nil {
-		return true
-	}
-	return false
+func (pg *PgDb) selectVSPID(name string) (id int, err error) {
+	err = pg.db.QueryRow(selectIDFromVSP, name).Scan(&id)
+	return
 }
 
 // func (pg *PgDb) addVSPINFO(data vsp.ResponseData) error {
