@@ -54,14 +54,6 @@ func main() {
 		}
 	}
 
-	if exists := db.ExchangeDataTableExits(); !exists {
-		log.Info("Creating new exchange data table")
-		if err := db.CreateExchangeDataTable(); err != nil {
-			log.Error("Error creating exchange data table: ", err)
-			return
-		}
-	}
-
 	resultChan := make(chan []DataTick)
 
 	quit := make(chan struct{})
@@ -79,16 +71,22 @@ func main() {
 
 	if cfg.VSPEnabled {
 		log.Info("Starting VSP data collection")
-		vspCollector, err := vsp.NewVspCollector(cfg.VSPInterval)
+		vspCollector, err := vsp.NewVspCollector(cfg.VSPInterval, db)
 		if err == nil {
 			wg.Add(1)
-			go vspCollector.Run(db, quit, wg)
+			go vspCollector.Run(quit, wg)
 		} else {
 			log.Error(err)
 		}
 	}
 
 	if cfg.ExchangesEnabled {
+		if exists := db.ExchangeDataTableExits(); !exists {
+			if err := db.CreateExchangeDataTable(); err != nil {
+				log.Error("Error creating exchange data table: ", err)
+				return
+			}
+		}
 		wg.Add(1)
 		log.Info("Starting exchange storage goroutine")
 		go storeExchangeData(db, resultChan, quit, wg)

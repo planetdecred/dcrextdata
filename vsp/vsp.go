@@ -34,25 +34,33 @@ type ResposeData struct {
 	UserCountActive      int     `json:"UserCountActive"`
 }
 
-type Store interface {
+type DataStore interface {
 	StoreVSP(time.Time, Response) error
+	CreateVSPTables() error
 }
 type Collector struct {
-	client  *http.Client
-	period  time.Duration
-	request *http.Request
+	client    *http.Client
+	period    time.Duration
+	request   *http.Request
+	dataStore DataStore
 }
 
-func NewVspCollector(period int64) (*Collector, error) {
+func NewVspCollector(period int64, store DataStore) (*Collector, error) {
 	request, err := http.NewRequest(http.MethodGet, requestURL, nil)
 	if err != nil {
 		return nil, err
 	}
 
+	err = store.CreateVSPTables()
+
+	if err != nil {
+		return nil, err
+	}
 	return &Collector{
-		client:  &http.Client{Timeout: 300 * time.Second},
-		period:  time.Duration(period),
-		request: request,
+		client:    &http.Client{Timeout: 300 * time.Second},
+		period:    time.Duration(period),
+		request:   request,
+		dataStore: store,
 	}, nil
 }
 
@@ -72,11 +80,15 @@ func (vsp *Collector) fetch(response interface{}) error {
 	return nil
 }
 
-func (vsp *Collector) Run(dataStore Store, quit chan struct{}, wg *sync.WaitGroup) {
-	resp := new(Response)
+func (vsp *Collector) Run(quit chan struct{}, wg *sync.WaitGroup) {
+	if err := vsp.CollectAndStore(time.Now()); err != nil {
+		log.Error("Could not start collection: %v", err)
+	}
+
 	ticker := time.NewTicker(vsp.period * time.Second)
 
 	defer func(wg *sync.WaitGroup) {
+		log.Info("Stopping collector")
 		ticker.Stop()
 		wg.Done()
 	}(wg)
@@ -84,16 +96,27 @@ func (vsp *Collector) Run(dataStore Store, quit chan struct{}, wg *sync.WaitGrou
 	for {
 		select {
 		case t := <-ticker.C:
-			err := vsp.fetch(resp)
+			err := vsp.CollectAndStore(t)
 			if err != nil {
 				log.Error(err)
-				continue
-			}
-			if resp != nil {
-				dataStore.StoreVSP(t, *resp)
 			}
 		case <-quit:
 			return
 		}
 	}
+}
+
+func (vsp *Collector) CollectAndStore(t time.Time) error {
+	resp := new(Response)
+	err := vsp.fetch(resp)
+	if err != nil {
+		return err
+	}
+	if resp != nil {
+		err := vsp.dataStore.StoreVSP(t, *resp)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
