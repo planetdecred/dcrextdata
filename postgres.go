@@ -16,7 +16,7 @@ import (
 
 const (
 	// Helpers
-	getPQTimestamp = `SELECT TIMESTAMP 'epoch' + $1 * INTERVAL '1 second';`
+	getPQTimestamp = `SELECT to_timestamp($1)`
 
 	// Exchange Table
 	LastExchangeEntryTime = `SELECT time FROM exchange_data WHERE exchange=$1 ORDER BY time DESC LIMIT 1`
