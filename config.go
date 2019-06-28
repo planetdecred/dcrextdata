@@ -77,6 +77,7 @@ func defaultFileOptions() configFileOptions {
 		DebugLevel:      defaultLogLevel,
 		VSPInterval:     300,
 		PowInterval:     300,
+		DcrdRpcServer:	 "localhost:9109",
 		DcrdNetworkType: "mainnet",
 	}
 }
