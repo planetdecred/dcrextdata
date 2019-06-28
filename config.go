@@ -59,10 +59,10 @@ type configFileOptions struct {
 
 	// Mempool
 	DisableMempool  bool   `long:"disablemempool" description:"Disable mempool data collection"`
-	DcrdRpcServer   string `long:"dcrdrpcserver"`
-	DcrdNetworkType string `long:"dcrdnetworktype"`
-	DcrdRpcUser     string `long:"dcrdrpcuser"`
-	DcrdRpcPassword string `long:"dcrdrpcpaswword"`
+	DcrdRpcServer   string `long:"dcrdrpcserver" description:"Hostname/IP and port of dcrd RPC server to connect to (default localhost:9109, testnet: localhost:19109, simnet: localhost:19556)"`
+	DcrdNetworkType string `long:"dcrdnetworktype" description:"The network type of the dcrd server to connect to (default: mainnet)"`
+	DcrdRpcUser     string `long:"dcrdrpcuser" description:"Daemon RPC user name"`
+	DcrdRpcPassword string `long:"dcrdrpcpaswword" description:"Daemon RPC password"`
 }
 
 // CommandLineOptions holds the top-level options/flags that are displayed on the command-line menu

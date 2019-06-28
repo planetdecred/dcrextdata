@@ -9,6 +9,7 @@
 ## Requirements
 - [Go](golang.org/dl) 1.11
 - [Postgresql](postgresql.org/download)
+- Running `dcrd` synchronized to the current best block on the network.
 
 ## Building
 
