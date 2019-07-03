@@ -204,6 +204,7 @@ func _main(ctx context.Context) error {
 				User:         cfg.DcrdRpcUser,
 				Pass:         cfg.DcrdRpcPassword,
 				Certificates: certs,
+				DisableTLS: true,
 			}
 
 			collector := mempool.NewCollector(connCfg, netParams(cfg.DcrdNetworkType), db)
