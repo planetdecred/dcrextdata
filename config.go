@@ -19,6 +19,9 @@ const (
 	defaultLogFilename    = "dcrextdata.log"
 	defaultLogLevel       = "info"
 	hint                  = `Run dcrextdata --mode=http to start http server or just dcrextdata`
+
+	defaultDcrdServer 	   = "localhost:9109"
+	defaultDcrdNetworkType = "mainnet"
 )
 
 type config struct {
@@ -77,8 +80,8 @@ func defaultFileOptions() configFileOptions {
 		DebugLevel:      defaultLogLevel,
 		VSPInterval:     300,
 		PowInterval:     300,
-		DcrdRpcServer:	 "localhost:9109",
-		DcrdNetworkType: "mainnet",
+		DcrdRpcServer:	 defaultDcrdServer,
+		DcrdNetworkType: defaultDcrdNetworkType,
 	}
 }
 
