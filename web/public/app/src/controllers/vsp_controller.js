@@ -8,9 +8,10 @@ var opt = 'table'
 export default class extends Controller {
   static get targets () {
     return [
-      'selectedFilter', 'vspTicksTable', 'numPageWrapper',
+      'selectedFilterWrapper', 'selectedFilter', 'vspTicksTable', 'numPageWrapper',
       'previousPageButton', 'totalPageCount', 'nextPageButton',
       'vspRowTemplate', 'currentPage', 'selectedNum', 'vspTableWrapper',
+      'graphTypeWrapper', 'graphType',
       'chartWrapper', 'labels', 'chartsView', 'viewOption'
     ]
   }
@@ -18,9 +19,11 @@ export default class extends Controller {
   setTable () {
     opt = 'table'
     this.setActiveOptionBtn(opt, this.viewOptionTargets)
-    this.chartWrapperTarget.classList.add('d-hide')
-    this.vspTableWrapperTarget.classList.remove('d-hide')
-    this.numPageWrapperTarget.classList.remove('d-hide')
+    hide(this.chartWrapperTarget)
+    hide(this.graphTypeWrapperTarget)
+    show(this.selectedFilterWrapperTarget)
+    show(this.vspTableWrapperTarget)
+    show(this.numPageWrapperTarget)
     this.vspTicksTableTarget.innerHTML = ''
     this.nextPage = 1
     this.fetchExchange('table')
@@ -28,10 +31,12 @@ export default class extends Controller {
 
   setChart () {
     opt = 'chart'
-    this.numPageWrapperTarget.classList.add('d-hide')
-    this.vspTableWrapperTarget.classList.add('d-hide')
+    hide(this.numPageWrapperTarget)
+    hide(this.vspTableWrapperTarget)
+    hide(this.selectedFilterWrapperTarget)
+    show(this.graphTypeWrapperTarget)
+    show(this.chartWrapperTarget)
     this.setActiveOptionBtn(opt, this.viewOptionTargets)
-    this.chartWrapperTarget.classList.remove('d-hide')
     this.nextPage = 1
     this.fetchExchange('chart')
   }

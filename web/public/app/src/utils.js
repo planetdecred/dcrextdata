@@ -6,6 +6,7 @@ export const hide = (el) => {
 
 export const show = (el) => {
   el.classList.remove('d-none')
+  el.classList.remove('d-hide')
 }
 
 export function date (date) {
