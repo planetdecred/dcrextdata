@@ -2,9 +2,12 @@ package web
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/raedahgroup/dcrextdata/exchanges/ticks"
 	"github.com/raedahgroup/dcrextdata/vsp"
@@ -260,6 +263,59 @@ func (s *Server) getFilteredVspTicks(res http.ResponseWriter, req *http.Request)
 	if int64(totalTxLoaded) < totalCount {
 		data["nextPage"] = int(pageToLoad + 1)
 	}
+}
+
+// vspchartdata
+func (s *Server) vspChartData(res http.ResponseWriter, req *http.Request) {
+	req.ParseForm()
+	sources := req.FormValue("sources")
+	selectedAttribute := req.FormValue("selectedAttribute")
+
+	vsps := strings.Split(sources, "|")
+
+	ctx := context.Background()
+	dates, err := s.db.GetVspTickDistinctDates(ctx, vsps)
+	if err != nil {
+		s.renderErrorJSON(fmt.Sprintf("Error is getting dates from VSP table, %s", err.Error()), res)
+		return
+	}
+
+	var resultMap = map[time.Time][]interface{}{}
+	for _, date := range dates {
+		resultMap[date] = []interface{}{date}
+	}
+
+	for index, source := range vsps {
+		points, err := s.db.FetchChartData(ctx, selectedAttribute, source)
+		if err != nil {
+			s.renderErrorJSON(fmt.Sprintf("Error in fetching %s records for %s: %s", selectedAttribute, source, err.Error()), res)
+			return
+		}
+
+		for _, point := range points {
+			if _, found := resultMap[point.Date]; found {
+				resultMap[point.Date] = append(resultMap[point.Date], point.Record)
+			}
+		}
+
+		for date, points := range resultMap {
+			if len(points) < index + 1 {
+				if len(points) == 0 {
+					resultMap[date] = append(resultMap[date], 0)
+				} else {
+					resultMap[date] = append(resultMap[date], resultMap[date][len(points)-1])
+				}
+			}
+		}
+	}
+
+
+	var chartData [][]interface{}
+	for _, points := range resultMap {
+		chartData = append(chartData, points)
+	}
+
+	s.renderJSON(chartData, res)
 }
 
 // /PoW

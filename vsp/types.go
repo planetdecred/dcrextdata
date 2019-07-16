@@ -76,3 +76,10 @@ func (err PoolTickTimeExistsError) Error() string {
 	return fmt.Sprintf("Tick time at %s for %s already exists with the same data",
 		err.TickTime, err.PoolName)
 }
+
+type ChartPoints []interface{}
+
+type ChartData struct {
+	Date time.Time
+	Record  string
+}

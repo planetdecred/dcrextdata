@@ -8,6 +8,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -268,4 +269,63 @@ func (pg *PgDb) LastVspTickEntryTime() (time time.Time) {
 	rows := pg.db.QueryRow(lastVspTickEntryTime)
 	_ = rows.Scan(&time)
 	return
+}
+
+func (pg *PgDb) FetchChartData(ctx context.Context, attribute string, vspName string) (records []vsp.ChartData, err error) {
+	vspInfo, err := models.VSPS(models.VSPWhere.Name.EQ(null.StringFrom(vspName))).One(ctx, pg.db)
+	if err != nil {
+		return nil, err
+	}
+	query := fmt.Sprintf("SELECT time as date, %s as record FROM vsp_tick where %s = %d ORDER BY time",
+		attribute, models.VSPTickColumns.VSPID, vspInfo.ID)
+	rows, err := pg.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var rec vsp.ChartData
+		err = rows.Scan(&rec.Date, &rec.Record)
+		if err != nil {
+			return nil, err
+		}
+		records = append(records, rec)
+	}
+	return
+}
+
+func (pg *PgDb) GetVspTickDistinctDates(ctx context.Context, vsps []string) ([]time.Time, error) {
+	var vspIds []string
+	for _, vspName := range vsps {
+		id, err := pg.vspIdByName(ctx, vspName)
+		if err != nil {
+			return nil, err
+		}
+		vspIds = append(vspIds, strconv.Itoa(id))
+	}
+
+	query := fmt.Sprintf("SELECT DISTINCT time FROM vsp_tick WHERE vsp_id IN ('%s') ORDER BY time", strings.Join(vspIds, "', '"))
+	rows, err := pg.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	var dates []time.Time
+
+	for rows.Next() {
+		var date time.Time
+		err = rows.Scan(&date)
+		if err != nil {
+			return nil, err
+		}
+		dates = append(dates, date)
+	}
+	return dates, nil
+}
+
+func (pg *PgDb) vspIdByName(ctx  context.Context, name string) (id int, err error) {
+	vspModel, err := models.VSPS(models.VSPWhere.Name.EQ(null.StringFrom(name))).One(ctx, pg.db)
+	if err != nil {
+		return 0, err
+	}
+	return vspModel.ID, nil
 }

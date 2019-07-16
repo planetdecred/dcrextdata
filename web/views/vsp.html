@@ -20,23 +20,23 @@
                         </select>
                     </div>
 
-                    <div data-target="vsp.graphTypeWrapper" class="col-md-3 col-sm-12 mb-2 d-none">
-                        <div class="control-label">Graph Type</div>
+                    <div data-target="vsp.graphTypeWrapper" class="col-md-2 col-sm-12 mb-2 d-none">
+                        <div class="control-label">Attribute</div>
                         <select data-target="vsp.graphType" data-action="change->vsp#graphTypeChanged"
                                 class="form-control" style="width: 150px;">
                             <option value="Immature">Immature</option>
                             <option value="Live">Live</option>
                             <option value="Voted">Voted</option>
                             <option value="Missed">Missed</option>
-                            <option value="PoolFees">Pool Fees</option>
-                            <option value="ProportionLive">Proportion Live</option>
-                            <option value="ProportionMissed">Proportion Missed</option>
-                            <option value="UserCount">User Count</option>
-                            <option value="UsersActive">Users Active</option>
+                            <option value="Pool_Fees">Pool Fees</option>
+                            <option value="Proportion_Live">Proportion Live</option>
+                            <option value="Proportion_Missed">Proportion Missed</option>
+                            <option value="User_Count">User Count</option>
+                            <option value="Users_Active">Users Active</option>
                         </select>
                     </div>
 
-                    <div class="chart-control-wrapper col-md-5 mb-2" data-target="vsp.chartSelector">
+                    <div class="chart-control-wrapper col-md-3 mb-2" data-target="vsp.chartSelector">
                         <div class="control-label">VIEW</div>
                         <div class="chart-control">
                             <ul
@@ -64,10 +64,21 @@
                     </div>
                     </div>
 
+                    <div class="col-sm-7 d-none" data-target="vsp.chartSourceWrapper">
+                        {{ range $index, $filter := .allVspData}}
+                            <div class="form-check form-check-inline">
+                                <input data-target="vsp.chartSource" data-action="click->vsp#chartSourceCheckChanged"
+                                       class="form-check-input" type="checkbox" id="inlineCheckbox-{{$filter.Name}}"
+                                       value="{{$filter.Name}}">
+                                <label class="form-check-label" for="inlineCheckbox-{{$filter.Name}}">{{$filter.Name}}</label>
+                            </div>
+                        {{ end }}
+                    </div>
+
                    <div data-target="vsp.numPageWrapper" class="col d-flex  align-items-center justify-content-between float-md-right">
                         <div class=" mb-2 float-md-right">
                             <div class="control-label">ROWS</div>
-                            <select data-target="vsp.selectedNum" data-action="change->vsp#NumberOfRowsChanged" class="form-control mr-5" style="width: 70px;">
+                            <select data-target="vsp.selectedNum" data-action="change->vsp#numberOfRowsChanged" class="form-control mr-5" style="width: 70px;">
                                 <option value="20">20</option>
                                 <option value="30">30</option>
                                 <option value="50">50</option>
@@ -137,6 +148,7 @@
                     </tr>
                 </template>
             </div>
+
             <div data-target="vsp.chartWrapper" class="chart-wrapper pl-2 pr-2 mb-5 d-none">
                 <div id="chart"
                 data-target="vsp.chartsView"

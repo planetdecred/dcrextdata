@@ -2,6 +2,7 @@ import dompurify from 'dompurify'
 
 export const hide = (el) => {
   el.classList.add('d-none')
+  el.classList.add('d-hide')
 }
 
 export const show = (el) => {
@@ -68,4 +69,13 @@ export var options = {
   labelsSeparateLines: true,
   highlightCircleSize: 4,
   yLabelWidth: 20
+}
+
+export function getRandomColor () {
+  var letters = '0123456789ABCDEF'
+  var color = '#'
+  for (var i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)]
+  }
+  return color
 }
