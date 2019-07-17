@@ -165,6 +165,7 @@ export default class extends Controller {
   }
   // vsp chart
   plotGraph (dataSet) {
+    dataSet = Object.values(dataSet)
     for (let i = 0; i < dataSet.length; i++) {
       if (!Array.isArray(dataSet[i])) continue
       for (let j = 0; j < dataSet[i].length; j++) {

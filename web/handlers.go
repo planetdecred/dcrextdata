@@ -285,37 +285,41 @@ func (s *Server) vspChartData(res http.ResponseWriter, req *http.Request) {
 		resultMap[date] = []interface{}{date}
 	}
 
-	for index, source := range vsps {
+	for _, source := range vsps {
 		points, err := s.db.FetchChartData(ctx, selectedAttribute, source)
 		if err != nil {
 			s.renderErrorJSON(fmt.Sprintf("Error in fetching %s records for %s: %s", selectedAttribute, source, err.Error()), res)
 			return
 		}
 
+		var vspPointMap = map[time.Time]interface{}{}
 		for _, point := range points {
-			if _, found := resultMap[point.Date]; found {
-				resultMap[point.Date] = append(resultMap[point.Date], point.Record)
-			}
+			vspPointMap[point.Date] = point.Record
 		}
 
-		for date, points := range resultMap {
-			if len(points) < index + 1 {
-				if len(points) == 0 {
-					resultMap[date] = append(resultMap[date], 0)
+		var previousDate time.Time
+		for date, _ := range resultMap {
+			if record, found := vspPointMap[date]; found {
+				resultMap[date] = append(resultMap[date], record)
+				previousDate = date
+			} else {
+				if record, found := vspPointMap[previousDate]; found {
+					resultMap[date] = append(resultMap[date], record)
 				} else {
-					resultMap[date] = append(resultMap[date], resultMap[date][len(points)-1])
+					fmt.Println(fmt.Sprintf("not found and %s not seen before", previousDate.String()))
+					resultMap[date] = append(resultMap[date], 0)
 				}
 			}
 		}
 	}
 
-
+/*
 	var chartData [][]interface{}
 	for _, points := range resultMap {
 		chartData = append(chartData, points)
-	}
+	}*/
 
-	s.renderJSON(chartData, res)
+	s.renderJSON(resultMap, res)
 }
 
 // /PoW
