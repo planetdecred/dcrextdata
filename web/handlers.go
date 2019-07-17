@@ -297,18 +297,19 @@ func (s *Server) vspChartData(res http.ResponseWriter, req *http.Request) {
 			vspPointMap[point.Date] = point.Record
 		}
 
-		var previousDate time.Time
+		//var previousDate time.Time
 		for date, _ := range resultMap {
 			if record, found := vspPointMap[date]; found {
 				resultMap[date] = append(resultMap[date], record)
-				previousDate = date
+				//previousDate = date
 			} else {
-				if record, found := vspPointMap[previousDate]; found {
+				resultMap[date] = append(resultMap[date], 0)
+				/*if record, found := vspPointMap[previousDate]; found {
 					resultMap[date] = append(resultMap[date], record)
 				} else {
 					fmt.Println(fmt.Sprintf("not found and %s not seen before", previousDate.String()))
 					resultMap[date] = append(resultMap[date], 0)
-				}
+				}*/
 			}
 		}
 	}
