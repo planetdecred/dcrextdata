@@ -69,7 +69,7 @@
                             <div class="form-check form-check-inline">
                                 <input data-target="vsp.chartSource" data-action="click->vsp#chartSourceCheckChanged"
                                        class="form-check-input" type="checkbox" id="inlineCheckbox-{{$filter.Name}}"
-                                       value="{{$filter.Name}}">
+                                       value="{{$filter.Name}}" {{ if eq $index 0 }} checked {{ end }}>
                                 <label class="form-check-label" for="inlineCheckbox-{{$filter.Name}}">{{$filter.Name}}</label>
                             </div>
                         {{ end }}
