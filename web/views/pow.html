@@ -69,7 +69,7 @@
         </div>
 
         <div class="row">
-            <div class="col-md-10 offset-1">
+            <div class="col-md-10">
                 <div class="" data-target="pow.powTableWrapper">
                     <table class="table">
                         <thead>
@@ -77,6 +77,7 @@
                             <th style="width: 110px;">Pool</th>
                             <th style="text-align: right; width: 150px;">Pool Hashrate (Th/s)</th>
                             <th style="text-align: right;width: 150px;">Workers</th>
+                            <th style="width: 50px;"></th>
                             <th>Time (UTC)</th>
                         </tr>
                         </thead>
@@ -86,6 +87,7 @@
                                 <td>{{$powdata.Source}}</td>
                                 <td style="text-align: right;">{{$powdata.PoolHashrateTh}}</td>
                                 <td style="text-align: right;">{{$powdata.Workers}}</td>
+                                <td></td>
                                 <td>{{$powdata.Time}}</td>
                             </tr>
                         {{end}}
@@ -97,6 +99,7 @@
                             <td></td>
                             <td style="text-align: right;"></td>
                             <td style="text-align: right;"></td>
+                            <td></td>
                             <td></td>
                         </tr>
                     </template>

@@ -119,7 +119,7 @@ export default class extends Controller {
       fields[0].innerText = pow.source
       fields[1].innerText = pow.pool_hashrate_th
       fields[2].innerHTML = pow.workers
-      fields[3].innerHTML = pow.time
+      fields[4].innerHTML = pow.time
 
       _this.powTableTarget.appendChild(powRow)
     })
