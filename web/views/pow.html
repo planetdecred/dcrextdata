@@ -35,7 +35,7 @@
             </div>
             <div class="row align-items-center">
                 <div class="col-md-4 col-sm-12 mb-2">
-                    <div class="control-label">Source:</div>
+                    <div class="control-label">Pool:</div>
                     <select data-target="pow.selectedFilter" data-action="change->pow#selectedFilterChanged"
                         class="form-control" style="width: 110px;">
 
@@ -74,9 +74,9 @@
                     <table class="table">
                         <thead>
                         <tr>
-                            <th>Source</th>
-                            <th>Pool Hashrate (Th/s)</th>
-                            <th>Workers</th>
+                            <th>Pool</th>
+                            <th style="text-align: right;">Pool Hashrate (Th/s)</th>
+                            <th style="text-align: right;">Workers</th>
                             <th>Time (UTC)</th>
                         </tr>
                         </thead>
@@ -84,8 +84,8 @@
                         {{range $index, $powdata := .powData}}
                             <tr>
                                 <td>{{$powdata.Source}}</td>
-                                <td>{{$powdata.PoolHashrateTh}}</td>
-                                <td>{{$powdata.Workers}}</td>
+                                <td style="text-align: right;">{{$powdata.PoolHashrateTh}}</td>
+                                <td style="text-align: right;">{{$powdata.Workers}}</td>
                                 <td>{{$powdata.Time}}</td>
                             </tr>
                         {{end}}
@@ -95,8 +95,8 @@
                     <template data-target="pow.powRowTemplate">
                         <tr>
                             <td></td>
-                            <td></td>
-                            <td></td>
+                            <td style="text-align: right;"></td>
+                            <td style="text-align: right;"></td>
                             <td></td>
                         </tr>
                     </template>
