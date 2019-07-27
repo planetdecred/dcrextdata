@@ -1,123 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 {{ template "html-head" }}
+
 <body>
     <div class="body" data-controller="pow">
         {{ template "header" }}
         <div class="content">
-            <div class="container">
+            <div class="container-fluid">
                 <div class="control-wrapper">
-                   <div class="chart-control-wrapper mb-2" data-target="pow.chartSelector">
-                       <div class="chart-control">
-                        <ul
-                        class="nav nav-pills"
-                        >
-                        <li class="nav-item">
-                            <a
-                            class="nav-link active"
-                            href="javascript:void(0);"
-                            data-target="pow.viewOption"
-                            data-action="click->pow#setTable"
-                            data-option="table"
-                            >Table</a>
-                        </li>
-                        <li class="nav-item">
-                            <a
-                            class="nav-link"
-                            href="javascript:void(0);"
-                            data-target="pow.viewOption"
-                            data-action="click->pow#setChart"
-                            data-option="chart"
-                            >Chart</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            <div class="d-flex flex-row">
-                <div class="control-div p-0">
-                    <div class="control-label">Pool:</div>
-                    <select data-target="pow.selectedFilter" data-action="change->pow#selectedFilterChanged"
-                        class="form-control" style="width: 110px;">
+                    <div class="chart-control-wrapper mb-2" data-target="pow.chartSelector">
+                        <div class="chart-control">
+                            <ul class="nav nav-pills">
+                                <li class="nav-item">
+                                    <a class="nav-link active" href="javascript:void(0);" data-target="pow.viewOption"
+                                        data-action="click->pow#setTable" data-option="table">Table</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="javascript:void(0);" data-target="pow.viewOption"
+                                        data-action="click->pow#setChart" data-option="chart">Chart</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-row">
+                        <div class="control-div p-0">
+                            <div class="control-label">Pool:</div>
+                            <select data-target="pow.selectedFilter" data-action="change->pow#selectedFilterChanged"
+                                class="form-control" style="width: 110px;">
 
-                        <option value="All" selected>All</option>
-                        {{ range $index, $filter := .powSource}}
-                        <option value="{{$filter.Source}}">{{$filter.Source}}</option>
-                        {{ end }}
-                    </select>
-                </div>
-                <div data-target="pow.numPageWrapper" class="control-div p-0 ml-auto">
-                    <div class=" mb-2 float-md-right">
-                        <div class="control-label">Page Size:</div>
-                        <select data-target="pow.selectedNum" data-action="change->pow#numberOfRowsChanged" class="form-control mr-5" style="width: 70px;">
-                            <option value="20" selected>20</option>
-                            <option value="30">30</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                            <option value="150">150</option>
-                        </select>
-                    </div>
-                    </div>
+                                <option value="All" selected>All</option>
+                                {{ range $index, $filter := .powSource}}
+                                <option value="{{$filter.Source}}">{{$filter.Source}}</option>
+                                {{ end }}
+                            </select>
+                        </div>
+                        <div data-target="pow.numPageWrapper" class="control-div p-0 ml-auto">
+                            <div class=" mb-2 float-md-right">
+                                <div class="control-label">Page Size:</div>
+                                <select data-target="pow.selectedNum" data-action="change->pow#numberOfRowsChanged"
+                                    class="form-control mr-5" style="width: 70px;">
+                                    <option value="20" selected>20</option>
+                                    <option value="30">30</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                    <option value="150">150</option>
+                                </select>
+                            </div>
+                        </div>
                         <div data-target="pow.pageSizeWrapper" class="d-flex">
-                            <a href="javascript:void(0)" data-target="pow.previousPageButton" data-action="click->pow#loadPreviousPage" data-next-page="{{ .previousPage }}" class="mr-2 {{ if lt .previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
+                            <a href="javascript:void(0)" data-target="pow.previousPageButton"
+                                data-action="click->pow#loadPreviousPage" data-next-page="{{ .previousPage }}"
+                                class="mr-2 {{ if lt .previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
 
-                            <p class="text-muted" style="white-space: nowrap;"> Page <span data-target="pow.currentPage" class="text-muted"> {{ .currentPage }}</span> of <span data-target="pow.totalPageCount" class="text-muted">{{ .totalPages }}</span>
-                            </p>    
-                            <a href="javascript:void(0)" data-target="pow.nextPageButton" data-action="click->pow#loadNextPage" data-total-page="{{ .totalPages }}" data-next-page="{{ .nextPage }}" class="ml-2 {{ if not .nextPage }}d-none{{ end }}"> Next&gt;</a>
+                            <p class="text-muted" style="white-space: nowrap;"> Page <span data-target="pow.currentPage"
+                                    class="text-muted"> {{ .currentPage }}</span> of <span
+                                    data-target="pow.totalPageCount" class="text-muted">{{ .totalPages }}</span>
+                            </p>
+                            <a href="javascript:void(0)" data-target="pow.nextPageButton"
+                                data-action="click->pow#loadNextPage" data-total-page="{{ .totalPages }}"
+                                data-next-page="{{ .nextPage }}" class="ml-2 {{ if not .nextPage }}d-none{{ end }}">
+                                Next&gt;</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="" data-target="pow.powTableWrapper">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 110px;">Pool</th>
+                                        <th style="text-align: right; width: 150px;">Pool Hashrate (Th/s)</th>
+                                        <th style="text-align: right;width: 150px;">Workers</th>
+                                        <th style="width: 50px;"></th>
+                                        <th>Time (UTC)</th>
+                                    </tr>
+                                </thead>
+                                <tbody data-target="pow.powTable">
+                                    {{range $index, $powdata := .powData}}
+                                    <tr>
+                                        <td>{{$powdata.Source}}</td>
+                                        <td style="text-align: right;">{{$powdata.PoolHashrateTh}}</td>
+                                        <td style="text-align: right;">{{$powdata.Workers}}</td>
+                                        <td></td>
+                                        <td>{{$powdata.Time}}</td>
+                                    </tr>
+                                    {{end}}
+                                </tbody>
+                            </table>
+
+                            <template data-target="pow.powRowTemplate">
+                                <tr>
+                                    <td></td>
+                                    <td style="text-align: right;"></td>
+                                    <td style="text-align: right;"></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <div data-target="pow.chartWrapper" class="chart-wrapper pl-2 pr-2 mb-5 d-hide">
+                    <div id="chart" data-target="pow.chartsView" style="width:100%; height:73vh; margin:0 auto;">
+                    </div>
+                    <div class="d-flex justify-content-center legend-wrapper">
+                        <div class="legend d-flex" data-target="pow.labels"></div>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-10 offset-1">
-                <div class="" data-target="pow.powTableWrapper">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th style="width: 110px;">Pool</th>
-                                <th style="text-align: right; width: 150px;">Pool Hashrate (Th/s)</th>
-                                <th style="text-align: right;width: 150px;">Workers</th>
-                                <th style="width: 50px;"></th>
-                                <th>Time (UTC)</th>
-                            </tr>
-                        </thead>
-                        <tbody data-target="pow.powTable">
-                            {{range $index, $powdata := .powData}}
-                            <tr>
-                                <td>{{$powdata.Source}}</td>
-                                <td style="text-align: right;">{{$powdata.PoolHashrateTh}}</td>
-                                <td style="text-align: right;">{{$powdata.Workers}}</td>
-                                <td></td>
-                                <td>{{$powdata.Time}}</td>
-                            </tr>
-                            {{end}}
-                        </tbody>
-                    </table>
-
-                    <template data-target="pow.powRowTemplate">
-                        <tr>
-                            <td></td>
-                            <td style="text-align: right;"></td>
-                            <td style="text-align: right;"></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                    </template>
-                </div>
-            </div>
-        </div>
-
-        <div data-target="pow.chartWrapper" class="chart-wrapper pl-2 pr-2 mb-5 d-hide">
-            <div id="chart"
-            data-target="pow.chartsView"
-            style="width:100%; height:73vh; margin:0 auto;">
-        </div>
-        <div class="d-flex justify-content-center legend-wrapper">
-            <div class="legend d-flex" data-target="pow.labels"></div>
         </div>
     </div>
-</div>
-</div>
-</div>
-{{ template "footer" }}
+    {{ template "footer" }}
 </body>
+
 </html>

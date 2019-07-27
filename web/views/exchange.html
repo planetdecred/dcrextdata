@@ -1,33 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 {{ template "html-head" }}
+
 <body>
     <div class="body" data-controller="exchange">
 
         {{ template "header" }}
         <div class="content">
-            <div class="container">
+            <div class="container-fluid">
                 <div class="control-wrapper">
                     <div class="row chart-control-wrapper mb-2" data-target="exchange.chartSelector">
                         <div class="chart-control">
                             <ul class="nav nav-pills">
                                 <li class="nav-item">
-                                    <a
-                                    class="nav-link active"
-                                    href="javascript:void(0);"
-                                    data-target="exchange.viewOption"
-                                    data-action="click->exchange#setTable"
-                                    data-option="table"
-                                    >Table</a>
+                                    <a class="nav-link active" href="javascript:void(0);"
+                                        data-target="exchange.viewOption" data-action="click->exchange#setTable"
+                                        data-option="table">Table</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a
-                                    class="nav-link"
-                                    href="javascript:void(0);"
-                                    data-target="exchange.viewOption"
-                                    data-action="click->exchange#setChart"
-                                    data-option="chart"
-                                    >Chart</a>
+                                    <a class="nav-link" href="javascript:void(0);" data-target="exchange.viewOption"
+                                        data-action="click->exchange#setChart" data-option="chart">Chart</a>
                                 </li>
                             </ul>
                         </div>
@@ -36,8 +28,9 @@
                     <div class="d-flex flex-row bottom-ctl">
                         <div class="control-div p-0">
                             <div class="control-label">Currency Pair:</div>
-                            <select data-target="exchange.selectedCurrencyPair" data-action="change->exchange#selectedCurrencyPairChanged"
-                                class="form-control" style="width: 105px;">
+                            <select data-target="exchange.selectedCurrencyPair"
+                                data-action="change->exchange#selectedCurrencyPairChanged" class="form-control"
+                                style="width: 105px;">
                                 <option data-target="exchange.currencyPairHideOption" value="All">All</option>
                                 {{ range $index, $cpair := .currencyPairs}}
                                 <option value="{{$cpair.CurrencyPair}}">{{$cpair.CurrencyPair}}</option>
@@ -46,8 +39,9 @@
                         </div>
                         <div data-target=exchange.sourceWrapper class="control-div p-0">
                             <div class="control-label">Exchanges:</div>
-                            <select data-target="exchange.selectedFilter" data-action="change->exchange#selectedFilterChanged"
-                                class="form-control" style="width: 100px;">
+                            <select data-target="exchange.selectedFilter"
+                                data-action="change->exchange#selectedFilterChanged" class="form-control"
+                                style="width: 100px;">
                                 <option data-target="exchange.hideOption" value="All" selected>All</option>
                                 {{ range $index, $filter := .allExData}}
                                 <option value="{{$filter.Name}}">{{$filter.Name}}</option>
@@ -56,8 +50,9 @@
                         </div>
                         <div data-target="exchange.intervalWapper" class="control-div p-0">
                             <div class="control-label">Interval:</div>
-                            <select data-target="exchange.selectedInterval" data-action="change->exchange#selectedIntervalChanged"
-                                class="form-control" style="width: 60px;">
+                            <select data-target="exchange.selectedInterval"
+                                data-action="change->exchange#selectedIntervalChanged" class="form-control"
+                                style="width: 60px;">
                                 <option data-target="exchange.hideIntervalOption" value="-1">All</option>
                                 <option value="5">5m</option>
                                 <option value="60">1h</option>
@@ -68,8 +63,9 @@
 
                         <div data-target="exchange.tickWapper" class="control-div  p-0 d-hide">
                             <div class="control-label">Data Ticks:</div>
-                            <select data-target="exchange.selectedTicks" data-action="change->exchange#selectedTicksChanged"
-                                class="form-control" style="width: 90px;">
+                            <select data-target="exchange.selectedTicks"
+                                data-action="change->exchange#selectedTicksChanged" class="form-control"
+                                style="width: 90px;">
                                 <option value="close">Close</option>
                                 <option value="high">High</option>
                                 <option value="open">Open</option>
@@ -79,7 +75,9 @@
 
                         <div data-target="exchange.numPageWrapper" class="control-div p-0 ml-auto">
                             <div class="control-label">Page Size:</div>
-                            <select data-target="exchange.selectedNum" data-action="change->exchange#NumberOfRowsChanged" class="form-control" style="width: 70px;">
+                            <select data-target="exchange.selectedNum"
+                                data-action="change->exchange#NumberOfRowsChanged" class="form-control"
+                                style="width: 70px;">
                                 <option value="20">20</option>
                                 <option value="30">30</option>
                                 <option value="50">50</option>
@@ -88,11 +86,19 @@
                             </select>
                         </div>
                         <div data-target="exchange.pageSizeWrapper" class="d-flex">
-                            <a href="javascript:void(0)" data-target="exchange.previousPageButton" data-action="click->exchange#loadPreviousPage" data-previous-page="{{ .previousPage }}" data-current-page="{{ .totalPages }}" class="mr-2 {{ if lt .previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
+                            <a href="javascript:void(0)" data-target="exchange.previousPageButton"
+                                data-action="click->exchange#loadPreviousPage" data-previous-page="{{ .previousPage }}"
+                                data-current-page="{{ .totalPages }}"
+                                class="mr-2 {{ if lt .previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
 
-                            <p class="text-muted" style="white-space: nowrap;"> Page <span data-target="exchange.currentPage" class="text-muted"> {{ .currentPage }}</span> of <span data-target="exchange.totalPageCount" class="text-muted">{{ .totalPages }}</span>
-                            </p>    
-                            <a href="javascript:void(0)" data-target="exchange.nextPageButton" data-action="click->exchange#loadNextPage" data-total-page="{{ .totalPages }}" data-current-page="{{ .totalPages }}" data-next-page="{{ .nextPage }}" class="ml-2 {{ if not .nextPage }}d-none{{ end }}"> Next&gt;</a>
+                            <p class="text-muted" style="white-space: nowrap;"> Page <span
+                                    data-target="exchange.currentPage" class="text-muted"> {{ .currentPage }}</span> of
+                                <span data-target="exchange.totalPageCount" class="text-muted">{{ .totalPages }}</span>
+                            </p>
+                            <a href="javascript:void(0)" data-target="exchange.nextPageButton"
+                                data-action="click->exchange#loadNextPage" data-total-page="{{ .totalPages }}"
+                                data-current-page="{{ .totalPages }}" data-next-page="{{ .nextPage }}"
+                                class="ml-2 {{ if not .nextPage }}d-none{{ end }}"> Next&gt;</a>
                         </div>
                     </div>
                 </div>
@@ -161,5 +167,6 @@
             </div>
         </div>
         {{ template "footer" }}
-    </body>
-    </html>
+</body>
+
+</html>
