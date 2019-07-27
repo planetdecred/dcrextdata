@@ -1,6 +1,6 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { legendFormatter, barChartPlotter, hide, show } from '../utils'
+import { legendFormatter, barChartPlotter, hide, show, setActiveOptionBtn } from '../utils'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
 
@@ -31,7 +31,7 @@ export default class extends Controller {
 
   setTable () {
     this.viewOption = 'table'
-    this.setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
+    setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
     hide(this.chartWrapperTarget)
     hide(this.chartDataTypeSelectorTarget)
     show(this.tableWrapperTarget)
@@ -47,7 +47,7 @@ export default class extends Controller {
     hide(this.tableWrapperTarget)
     var y = this.selectedMempoolOptTarget.options
     this.chartFilter = this.selectedMempoolOptTarget.value = y[0].value
-    this.setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
+    setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
     show(this.chartDataTypeSelectorTarget)
     hide(this.numPageWrapperTarget)
     show(this.chartWrapperTarget)
@@ -227,15 +227,5 @@ export default class extends Controller {
         }
       }
     )
-  }
-
-  setActiveOptionBtn (opt, optTargets) {
-    optTargets.forEach(li => {
-      if (li.dataset.option === this.viewOption) {
-        li.classList.add('active')
-      } else {
-        li.classList.remove('active')
-      }
-    })
   }
 }
