@@ -75,6 +75,11 @@ type VoteDto struct {
 	Validity              string `json:"validity"`
 }
 
+type PropagationChartData struct {
+	BlockNumber    int64   `json:"block_number"`
+	TimeDifference float64 `json:"time_difference"`
+}
+
 type DataStore interface {
 	StoreMempool(context.Context, Mempool) error
 	LastMempoolTime() (entryTime time.Time, err error)
