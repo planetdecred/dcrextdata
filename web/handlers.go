@@ -156,7 +156,7 @@ func (s *Server) getFilteredExchangeTicks(res http.ResponseWriter, req *http.Req
 	}
 }
 
-func (s *Server) getChartData(res http.ResponseWriter, req *http.Request) {
+func (s *Server) getExchangeChartData(res http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 	selectedTick := req.FormValue("selectedTick")
 	selectedCurrencyPair := req.FormValue("selectedCurrencyPair")
@@ -665,6 +665,16 @@ func (s *Server) getPropagationData(res http.ResponseWriter, req *http.Request) 
 		}
 		return
 	}
+}
+
+// /propagationchartdata
+func (s *Server) propagationChartData(res http.ResponseWriter, req *http.Request) {
+	data, err := s.db.PropagationChartData(req.Context())
+	if err != nil {
+		s.renderErrorJSON(err.Error(), res)
+		return
+	}
+	s.renderJSON(data, res)
 }
 
 func (s *Server) fetchPropagationData(req *http.Request) (map[string]interface{}, error) {

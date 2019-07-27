@@ -52,6 +52,7 @@ type DataQuery interface {
 
 	Votes(ctx context.Context, offset int, limit int) ([]mempool.VoteDto, error)
 	VotesCount(ctx context.Context) (int64, error)
+	PropagationChartData(ctx context.Context) ([]mempool.PropagationChartData, error)
 }
 
 type Server struct {
@@ -109,7 +110,7 @@ func (s *Server) registerHandlers(r *chi.Mux) {
 	r.Get("/", s.homePage)
 	r.Get("/exchanges", s.getExchangeTicks)
 	r.Get("/filteredEx", s.getFilteredExchangeTicks)
-	r.Get("/chartExchange", s.getChartData)
+	r.Get("/chartExchange", s.getExchangeChartData)
 	r.Get("/vsp", s.getVspTicks)
 	r.Get("/vspchartdata", s.vspChartData)
 	r.Get("/filteredvspticks", s.getFilteredVspTicks)
@@ -120,6 +121,7 @@ func (s *Server) registerHandlers(r *chi.Mux) {
 	r.Get("/getmempool", s.getMempool)
 	r.Get("/propagation", s.propagation)
 	r.Get("/getpropagationdata", s.getPropagationData)
+	r.Get("/propagationchartdata", s.propagationChartData)
 	r.Get("/getblocks", s.getBlocks)
 	r.Get("/getvotes", s.getVotes)
 }
