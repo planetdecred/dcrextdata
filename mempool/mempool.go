@@ -94,18 +94,23 @@ func (c *Collector) DcrdHandlers(ctx context.Context) *rpcclient.NotificationHan
 					vote.Validity = "Invalid"
 				}
 
-				// wait for some time for the block to get added to the blockchain
-				time.Sleep(2 * time.Second)
+				var retries = 3
+				var targetedBlock *wire.MsgBlock
 
-				targetedBlock, err := c.dcrClient.GetBlock(&validation.Hash)
-				if err != nil {
-					log.Errorf("Error in getting validation targeted block: %s", err.Error())
-					return
+				// try to get the block from the blockchain until the number of retries has elapsed
+				for i := 0; i <= retries; i++ {
+					targetedBlock, err = c.dcrClient.GetBlock(&validation.Hash)
+					if err == nil {
+						break
+					}
+					time.Sleep(2 * time.Second)
 				}
 
-				vote.TargetedBlockTime = targetedBlock.Header.Timestamp.UTC()
-				// todo: check the db for this block and get the receive time if the block is the last to be received,
-				// then update the votes
+				// err is ignored since the vote will be updated when the block becomes available
+				if targetedBlock != nil {
+					vote.TargetedBlockTime = targetedBlock.Header.Timestamp.UTC()
+					vote.BlockHash = targetedBlock.Header.BlockHash().String()
+				}
 
 				if err = c.dataStore.SaveVote(ctx, vote); err != nil {
 					log.Error(err)

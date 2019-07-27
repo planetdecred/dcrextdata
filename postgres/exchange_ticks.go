@@ -281,7 +281,7 @@ func (pg *PgDb) ExchangeTicksChartData(ctx context.Context, selectedTick string,
 		qm.OrderBy(models.ExchangeTickColumns.Time),
 	}
 	if selectedInterval != -1 {
-		queryMods = append(queryMods, models.ExchangeTickWhere.Interval.EQ(selectedInterval),)
+		queryMods = append(queryMods, models.ExchangeTickWhere.Interval.EQ(selectedInterval))
 	}
 
 	exchangeFilterResult, err := models.ExchangeTicks(queryMods...).All(ctx, pg.db)

@@ -131,12 +131,13 @@ export default class extends Controller {
       const fields = exRow.querySelectorAll('td')
 
       fields[0].innerHTML = `<a target="_blank" href="https://explorer.dcrdata.org/block/${item.voting_on}">${item.voting_on}</a>`
-      fields[1].innerText = item.validator_id
-      fields[2].innerText = item.validity
-      fields[3].innerText = item.receive_time
-      fields[4].innerText = item.block_time_diff
-      fields[5].innerText = item.block_receive_time_diff
-      fields[6].innerHTML = `<a target="_blank" href="https://explorer.dcrdata.org/tx/${item.hash}">${item.hash}</a>`
+      fields[1].innerHTML = `<a target="_blank" href="https://explorer.dcrdata.org/block/${item.block_hash}">...${item.short_block_hash}</a>`
+      fields[2].innerText = item.validator_id
+      fields[3].innerText = item.validity
+      fields[4].innerText = item.receive_time
+      fields[5].innerText = item.block_time_diff
+      fields[6].innerText = item.block_receive_time_diff
+      fields[7].innerHTML = `<a target="_blank" href="https://explorer.dcrdata.org/tx/${item.hash}">${item.hash}</a>`
 
       _this.votesTableBodyTarget.appendChild(exRow)
     })
@@ -154,7 +155,8 @@ export default class extends Controller {
       if (block.votes) {
         block.votes.forEach(vote => {
           votesHtml += `<tr>
-                            <td>${vote.voting_on}</td>
+                            <td><a target="_blank" href="https://explorer.dcrdata.org/block/${vote.voting_on}">${vote.voting_on}</a></td>
+                            <td><a target="_blank" href="https://explorer.dcrdata.org/block/${vote.block_hash}">...${vote.short_block_hash}</a></td>
                             <td>${vote.validator_id}</td>
                             <td>${vote.validity}</td>
                             <td>${vote.receive_time}</td>
@@ -180,6 +182,7 @@ export default class extends Controller {
                         <tbody data-target="propagation.votesTbody" data-block-hash="${block.block_hash}">
                         <tr style="white-space: nowrap;">
                             <td style="width: 120px;">Voting On</td>
+                            <td style="width: 120px;">Block Hash</td>
                             <td style="width: 120px;">Validator ID</td>
                             <td style="width: 120px;">Validity</td>
                             <td style="width: 120px;">Received</td>
@@ -198,24 +201,5 @@ export default class extends Controller {
     show(this.tableTarget)
     hide(this.blocksTableTarget)
     hide(this.votesTableTarget)
-  }
-
-  showVotes (event) {
-    const blockHash = event.currentTarget.getAttribute('data-block-hash')
-    this.blockTbodyTargets.forEach(el => {
-      el.classList.remove('labels')
-    })
-    this.votesTbodyTargets.forEach(el => {
-      if (el.getAttribute('data-block-hash') === blockHash) {
-        if (isHidden(el)) {
-          show(el)
-          event.currentTarget.classList.add('labels')
-        } else {
-          hide(el)
-        }
-        return
-      }
-      hide(el)
-    })
   }
 }

@@ -82,14 +82,17 @@
                         <tbody data-target="propagation.votesTbody" data-block-hash="{{$block.BlockHash}}">
                             <tr style="white-space: nowrap;">
                                 <td style="width: 120px;">Voting On</td>
+                                <td style="width: 120px;">Block Hash</td>
                                 <td style="width: 120px;">Validator ID</td>
                                 <td style="width: 120px;">Validity</td>
+                                <td style="width: 120px;">Block Receive</td>
                                 <td style="width: 120px;">Block Receive Time Diff</td>
                                 <td style="width: 120px;">Hash</td>
                             </tr>
                             {{range $index, $vote := $block.Votes}}
                             <tr>
-                                <td>{{$vote.VotingOn}}</td>
+                                <td><a target="_blank" href="https://explorer.dcrdata.org/block/{{$vote.VotingOn}}">{{$vote.VotingOn}}</a></td>
+                                <td><a target="_blank" href="https://explorer.dcrdata.org/block/{{$vote.BlockHash}}">...{{$vote.ShortBlockHash}}</a></td>
                                 <td>{{$vote.ValidatorId}}</td>
                                 <td>{{$vote.Validity}}</td>
                                 <td>{{$vote.ReceiveTime}}</td>
@@ -135,6 +138,7 @@
                         <thead>
                             <tr style="white-space: nowrap;">
                                 <th>Voting On</th>
+                                <th>Block Hash</th>
                                 <th>Validator ID</th>
                                 <th>Validity</th>
                                 <th>Received</th>
@@ -149,6 +153,7 @@
 
                     <template data-target="propagation.votesRowTemplate">
                         <tr>
+                            <td></td>
                             <td></td>
                             <td></td>
                             <td></td>

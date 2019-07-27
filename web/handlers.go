@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	recordsPerPage  = 20
-	defaultInterval = -1 // All
+	recordsPerPage        = 20
+	defaultInterval       = -1 // All
 	exchangeTickIntervals = map[int]string{
 		-1:   "All",
 		5:    "5m",

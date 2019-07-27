@@ -31,6 +31,7 @@ type Vote struct {
 	TargetedBlockTime null.Time   `boil:"targeted_block_time" json:"targeted_block_time,omitempty" toml:"targeted_block_time" yaml:"targeted_block_time,omitempty"`
 	ValidatorID       null.Int    `boil:"validator_id" json:"validator_id,omitempty" toml:"validator_id" yaml:"validator_id,omitempty"`
 	Validity          null.String `boil:"validity" json:"validity,omitempty" toml:"validity" yaml:"validity,omitempty"`
+	BlockHash         null.String `boil:"block_hash" json:"block_hash,omitempty" toml:"block_hash" yaml:"block_hash,omitempty"`
 
 	R *voteR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L voteL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -44,6 +45,7 @@ var VoteColumns = struct {
 	TargetedBlockTime string
 	ValidatorID       string
 	Validity          string
+	BlockHash         string
 }{
 	Hash:              "hash",
 	VotingOn:          "voting_on",
@@ -52,6 +54,7 @@ var VoteColumns = struct {
 	TargetedBlockTime: "targeted_block_time",
 	ValidatorID:       "validator_id",
 	Validity:          "validity",
+	BlockHash:         "block_hash",
 }
 
 // Generated where
@@ -87,6 +90,7 @@ var VoteWhere = struct {
 	TargetedBlockTime whereHelpernull_Time
 	ValidatorID       whereHelpernull_Int
 	Validity          whereHelpernull_String
+	BlockHash         whereHelpernull_String
 }{
 	Hash:              whereHelperstring{field: "\"vote\".\"hash\""},
 	VotingOn:          whereHelpernull_Int64{field: "\"vote\".\"voting_on\""},
@@ -95,6 +99,7 @@ var VoteWhere = struct {
 	TargetedBlockTime: whereHelpernull_Time{field: "\"vote\".\"targeted_block_time\""},
 	ValidatorID:       whereHelpernull_Int{field: "\"vote\".\"validator_id\""},
 	Validity:          whereHelpernull_String{field: "\"vote\".\"validity\""},
+	BlockHash:         whereHelpernull_String{field: "\"vote\".\"block_hash\""},
 }
 
 // VoteRels is where relationship names are stored.
@@ -114,8 +119,8 @@ func (*voteR) NewStruct() *voteR {
 type voteL struct{}
 
 var (
-	voteAllColumns            = []string{"hash", "voting_on", "receive_time", "block_receive_time", "targeted_block_time", "validator_id", "validity"}
-	voteColumnsWithoutDefault = []string{"hash", "voting_on", "receive_time", "block_receive_time", "targeted_block_time", "validator_id", "validity"}
+	voteAllColumns            = []string{"hash", "voting_on", "receive_time", "block_receive_time", "targeted_block_time", "validator_id", "validity", "block_hash"}
+	voteColumnsWithoutDefault = []string{"hash", "voting_on", "receive_time", "block_receive_time", "targeted_block_time", "validator_id", "validity", "block_hash"}
 	voteColumnsWithDefault    = []string{}
 	votePrimaryKeyColumns     = []string{"hash"}
 )

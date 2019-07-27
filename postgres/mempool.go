@@ -108,6 +108,7 @@ func (pg *PgDb) SaveBlock(ctx context.Context, block mempool.Block) error {
 			voteModel, err := models.FindVote(ctx, pg.db, vote.Hash)
 			if err == nil {
 				voteModel.BlockReceiveTime = null.TimeFrom(block.BlockReceiveTime)
+				voteModel.BlockHash = null.StringFrom(block.BlockHash)
 				_, err = voteModel.Update(ctx, pg.db, boil.Infer())
 				if err != nil {
 					log.Errorf("Unable to fetch vote for block receive time update: %s", err.Error())
@@ -199,6 +200,7 @@ func (pg *PgDb) SaveVote(ctx context.Context, vote mempool.Vote) error {
 	voteModel := models.Vote{
 		Hash:              vote.Hash,
 		VotingOn:          null.Int64From(int64(vote.VotingOn)),
+		BlockHash:         null.StringFrom(vote.BlockHash),
 		ReceiveTime:       null.TimeFrom(vote.ReceiveTime),
 		TargetedBlockTime: null.TimeFrom(vote.TargetedBlockTime),
 		ValidatorID:       null.IntFrom(vote.ValidatorId),
@@ -256,6 +258,10 @@ func (pg *PgDb) votesByBlock(ctx context.Context, blockHeight int64) ([]mempool.
 func (pg *PgDb) voteModelToDto(vote *models.Vote) mempool.VoteDto {
 	timeDiff := vote.ReceiveTime.Time.Sub(vote.TargetedBlockTime.Time).Seconds()
 	blockReceiveTimeDiff := vote.ReceiveTime.Time.Sub(vote.BlockReceiveTime.Time).Seconds()
+	var shortBlockHash string
+	if len(vote.BlockHash.String) > 0 {
+		shortBlockHash = vote.BlockHash.String[len(vote.BlockHash.String)-8:]
+	}
 
 	return mempool.VoteDto{
 		Hash:                  vote.Hash,
@@ -263,6 +269,8 @@ func (pg *PgDb) voteModelToDto(vote *models.Vote) mempool.VoteDto {
 		TargetedBlockTimeDiff: fmt.Sprintf("%04.2f", timeDiff),
 		BlockReceiveTimeDiff:  fmt.Sprintf("%04.2f", blockReceiveTimeDiff),
 		VotingOn:              vote.VotingOn.Int64,
+		BlockHash:             vote.BlockHash.String,
+		ShortBlockHash:        shortBlockHash,
 		ValidatorId:           vote.ValidatorID.Int,
 		Validity:              vote.Validity.String,
 	}

@@ -95,6 +95,7 @@ const (
 	createVoteTable = `CREATE TABLE IF NOT EXISTS vote (
 		hash VARCHAR(128),
 		voting_on INT8,
+		block_hash VARCHAR(128)
 		receive_time timestamp,
 		block_receive_time timestamp,
 		targeted_block_time timestamp,
