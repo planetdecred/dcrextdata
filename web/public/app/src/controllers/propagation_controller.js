@@ -1,6 +1,7 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
 import { hide, show } from '../utils'
+import { hide, isHidden, show, setActiveOptionBtn } from '../utils'
 
 export default class extends Controller {
   static get targets () {
@@ -9,7 +10,8 @@ export default class extends Controller {
       'selectedRecordSet', 'selectedNum', 'numPageWrapper',
       'table', 'blocksTbody', 'votesTbody',
       'blocksTable', 'blocksTableBody', 'blocksRowTemplate', 'votesTable', 'votesTableBody', 'votesRowTemplate',
-      'totalPageCount', 'currentPage'
+      'totalPageCount', 'currentPage',
+      'chartSelector', 'viewOption'
     ]
   }
 
@@ -26,6 +28,17 @@ export default class extends Controller {
       this.currentPage = 1
     }
     this.selectedRecordSet = 'both'
+  }
+
+  setTable () {
+    this.viewOption = 'table'
+    setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
+    hide(this.chartWrapperTarget)
+  }
+
+  setChart () {
+    this.viewOption = 'chart'
+    hide(this.btnWrapperTarget)
   }
 
   selectedRecordSetChanged () {
