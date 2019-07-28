@@ -8,103 +8,107 @@
         <div class="content">
             <div class="container-fluid">
                 <div class="control-wrapper">
-                    <div class="d-block">
+                    <!-- <div class="d-block text-center">
                         <h4>Mempool</h4>
+                    </div> -->
+                    
+                    <div class="chart-control-wrapper mr-3 mb-3" data-target="mempool.chartSelector">
+                        <div class="chart-control mx-auto">
+                            <ul class="nav nav-pills">
+                                <li class="nav-item">
+                                    <a class="nav-link active" href="javascript:void(0);"
+                                        data-target="mempool.viewOption" data-action="click->mempool#setTable"
+                                        data-option="table">Table</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="javascript:void(0);" data-target="mempool.viewOption"
+                                        data-action="click->mempool#setChart" data-option="chart">Chart</a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                     <div class="d-flex flex-row">
-                        <div class="chart-control-wrapper mr-3" data-target="mempool.chartSelector">
-                            <div class="chart-control ">
-                                <ul class="nav nav-pills">
-                                    <li class="nav-item">
-                                        <a class="nav-link active" href="javascript:void(0);"
-                                            data-target="mempool.viewOption" data-action="click->mempool#setTable"
-                                            data-option="table">Table</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="javascript:void(0);" data-target="mempool.viewOption"
-                                            data-action="click->mempool#setChart" data-option="chart">Chart</a>
-                                    </li>
-                                </ul>
+                        <div class="d-flex mx-auto">
+
+                            <div data-target="mempool.chartOptions" class="control-div p-0 d-hide">
+                                <div class="control-label ">Mempool Charts:</div>
+
+                                <select data-target="mempool.selectedMempoolOpt"
+                                    data-action="change->mempool#MempoolOptionChanged" class="form-control mr-5 "
+                                    style="width: 200px;">
+                                    <option value="size">Size Chart</option>
+                                    <option value="total_fee">Total fees Chart</option>
+                                    <option value="number_of_transactions">Number of Transactions</option>
+                                </select>
+                            </div>
+
+                            <div class="chart-control-wrapper control-div p-0 d-none"
+                                data-target="mempool.chartDataTypeSelector">
+                                <div class="chart-control mempool-control mx-auto">
+                                    <ul class="nav nav-pills">
+                                        <li class="nav-item">
+                                            <a data-target="mempool.chartDataType"
+                                                data-action="click->mempool#setSizeDataType" class="nav-link active"
+                                                href="javascript:void(0);" data-option="table">Size</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a data-target="mempool.chartDataType"
+                                                data-action="click->mempool#setFeesDataType" class="nav-link"
+                                                href="javascript:void(0);" data-option="table">Fees</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a data-target="mempool.chartDataType"
+                                                data-action="click->mempool#setTransactionsDataType" class="nav-link"
+                                                href="javascript:void(0);" data-option="table">Transactions</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div data-target="mempool.numPageWrapper" class="control-div p-0">
+                                <div class="control-label">Page Size:</div>
+
+                                <select data-target="mempool.selectedNum" data-action="change->mempool#NumberOfRowsChanged"
+                                    class="form-control" style="width: 70px;">
+                                    <option value="20">20</option>
+                                    <option value="30">30</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                    <option value="150">150</option>
+                                </select>
+                            </div>
+                            <div class="d-flex">
+                                <div data-target="mempool.btnWrapper" class="float-md-right">
+                                    <button data-target="mempool.previousPageButton"
+                                        data-action="click->mempool#gotoPreviousPage"
+                                        data-previous-page="{{ .mempool.previousPage}}"
+                                        class="btn btn-link {{ if lt .mempool.previousPage 1 }}d-none{{ end }}">
+                                        &lt; Previous
+                                    </button>
+
+                                    <span data-target="mempool.pageReport" class="text-muted" style="white-space: nowrap;"
+                                        data-current-page="{{ .mempool.currentPage }}">
+                                        Page <span data-target="mempool.currentPage"
+                                            data-current-page="{{ .mempool.currentPage }}">{{ .mempool.currentPage }}</span>
+                                        of
+                                        <span data-target="mempool.totalPageCount">{{ .mempool.totalPages }}</span>
+                                    </span>
+
+                                    <button data-target="mempool.nextPageButton" data-action="click->mempool#gotoNextPage"
+                                        data-next-page="{{ .mempool.nextPage }}"
+                                        class="btn btn-link {{ if not .mempool.nextPage }}d-none{{ end }}">
+                                        Next &gt;
+                                    </button>
+                                </div>
                             </div>
                         </div>
-
-                        <div data-target="mempool.chartOptions" class="control-div p-0 d-hide">
-                            <div class="control-label ">Mempool Charts:</div>
-
-                            <select data-target="mempool.selectedMempoolOpt"
-                                data-action="change->mempool#MempoolOptionChanged" class="form-control mr-5 "
-                                style="width: 200px;">
-                                <option value="size">Size Chart</option>
-                                <option value="total_fee">Total fees Chart</option>
-                                <option value="number_of_transactions">Number of Transactions</option>
-                            </select>
-                        </div>
-
-                        <div class="chart-control-wrapper control-div p-0 d-none"
-                            data-target="mempool.chartDataTypeSelector">
-                            <div class="chart-control mempool-control">
-                                <ul class="nav nav-pills">
-                                    <li class="nav-item">
-                                        <a data-target="mempool.chartDataType"
-                                            data-action="click->mempool#setSizeDataType" class="nav-link active"
-                                            href="javascript:void(0);" data-option="table">Size</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a data-target="mempool.chartDataType"
-                                            data-action="click->mempool#setFeesDataType" class="nav-link"
-                                            href="javascript:void(0);" data-option="table">Fees</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a data-target="mempool.chartDataType"
-                                            data-action="click->mempool#setTransactionsDataType" class="nav-link"
-                                            href="javascript:void(0);" data-option="table">Transactions</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <div data-target="mempool.numPageWrapper" class="control-div p-0 ml-auto">
-                            <div class="control-label">Page Size:</div>
-
-                            <select data-target="mempool.selectedNum" data-action="change->mempool#NumberOfRowsChanged"
-                                class="form-control" style="width: 70px;">
-                                <option value="20">20</option>
-                                <option value="30">30</option>
-                                <option value="50">50</option>
-                                <option value="100">100</option>
-                                <option value="150">150</option>
-                            </select>
-                        </div>
-                        <div class="d-flex">
-                            <div data-target="mempool.btnWrapper" class="float-md-right">
-                                <button data-target="mempool.previousPageButton"
-                                    data-action="click->mempool#gotoPreviousPage"
-                                    data-previous-page="{{ .mempool.previousPage}}"
-                                    class="btn btn-link {{ if lt .mempool.previousPage 1 }}d-none{{ end }}">
-                                    &lt; Previous
-                                </button>
-
-                                <span data-target="mempool.pageReport" class="text-muted" style="white-space: nowrap;"
-                                    data-current-page="{{ .mempool.currentPage }}">
-                                    Page <span data-target="mempool.currentPage"
-                                        data-current-page="{{ .mempool.currentPage }}">{{ .mempool.currentPage }}</span>
-                                    of
-                                    <span data-target="mempool.totalPageCount">{{ .mempool.totalPages }}</span>
-                                </span>
-
-                                <button data-target="mempool.nextPageButton" data-action="click->mempool#gotoNextPage"
-                                    data-next-page="{{ .mempool.nextPage }}"
-                                    class="btn btn-link {{ if not .mempool.nextPage }}d-none{{ end }}">
-                                    Next &gt;
-                                </button>
-                            </div>
-                        </div>
+                        
                     </div>
                 </div>
 
                 <div>
                     <div data-target="mempool.tableWrapper">
-                        <table class="table">
+                        <table class="table mx-auto">
                             <thead>
                                 <tr>
                                     <th>Date (UTC)</th>

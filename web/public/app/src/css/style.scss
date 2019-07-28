@@ -45,9 +45,14 @@ a:hover {
   padding-bottom: 0 !important;
 }
 
+.table {
+  width: auto !important;
+}
+
 .table td,
 .table th {
   padding: 0.3rem;
+  padding-right: 30px;
 }
 
 /* table */
@@ -400,7 +405,7 @@ table.collapsible .labels tr td {
 .control-div {
   padding: 0, 0, 0, 1rem !important;
   white-space: nowrap;
-  display: inline-block;
+  // display: inline-block;
   margin-right: 1rem;
 }
 
@@ -446,7 +451,6 @@ table.collapsible .labels tr td {
   background: #fff;
   width: max-content;
   border-radius: 3px;
-  display: inline-block;
 }
 
 .chart-control .nav-item {
