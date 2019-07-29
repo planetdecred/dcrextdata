@@ -23,11 +23,11 @@ export default class extends Controller {
     this.selectedFilterTarget.value = filter[0].text
     this.selectedCurrencyPairTarget.value = cpair[0].text
     this.selectedNumTarget.value = num[0].text
-    this.selectedIntervalTarget.value = interval[0].value
+    this.selectedIntervalTarget.value = interval[4].value
   }
 
   initialize () {
-    this.viewOption = 'table'
+    this.setChart()
     this.selectedFilter = this.selectedFilterTarget.value
     this.selectedCurrencyPair = this.selectedCurrencyPairTarget.value
 
@@ -55,7 +55,7 @@ export default class extends Controller {
     this.selectedFilter = this.selectedFilterTarget.value = filter[0].text
     this.selectedCurrencyPair = this.selectedCurrencyPairTarget.value = cpair[0].text
     this.selectedNum = this.selectedNumTarget.value = num[0].value
-    this.selectedInterval = this.selectedIntervalTarget.value = interval[0].value
+    this.selectedInterval = this.selectedIntervalTarget.value = interval[4].value
     this.setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
     this.selectedTicksTarget.value = 'close'
     this.nextPage = 1
@@ -76,7 +76,7 @@ export default class extends Controller {
     hide(this.numPageWrapperTarget)
     hide(this.exchangeTableWrapperTarget)
     this.setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
-    this.selectedInterval = this.selectedIntervalTarget.value = interval[1].value
+    this.selectedInterval = this.selectedIntervalTarget.value = interval[4].value
     this.selectedFilter = this.selectedFilterTarget.value = sFilter[1].text
     this.selectedTick = this.selectedTicksTarget.value = 'close'
     this.selectedCurrencyPair = this.selectedCurrencyPairTarget.value = 'BTC/DCR'
