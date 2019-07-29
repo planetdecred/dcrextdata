@@ -5,3 +5,4 @@ vendor
 .vscode
 logs
 *.log
+.idea
