@@ -1,6 +1,5 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { hide, show } from '../utils'
 import { hide, isHidden, show, setActiveOptionBtn } from '../utils'
 
 export default class extends Controller {
