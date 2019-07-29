@@ -121,7 +121,7 @@ export function getRandomColor () {
 
 export function setActiveOptionBtn (opt, optTargets) {
   optTargets.forEach(li => {
-    if (li.dataset.option === this.viewOption) {
+    if (li.dataset.option === opt) {
       li.classList.add('active')
     } else {
       li.classList.remove('active')

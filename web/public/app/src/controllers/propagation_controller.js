@@ -1,16 +1,17 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { hide, isHidden, show, setActiveOptionBtn } from '../utils'
+import { hide, show, setActiveOptionBtn } from '../utils'
 
 export default class extends Controller {
   static get targets () {
     return [
       'nextPageButton', 'previousPageButton',
-      'selectedRecordSet', 'selectedNum', 'numPageWrapper',
-      'table', 'blocksTbody', 'votesTbody',
+      'selectedRecordSetWrapper', 'selectedRecordSet', 'selectedNum', 'numPageWrapper', 'paginationButtonsWrapper',
+      'tablesWrapper', 'table', 'blocksTbody', 'votesTbody',
       'blocksTable', 'blocksTableBody', 'blocksRowTemplate', 'votesTable', 'votesTableBody', 'votesRowTemplate',
       'totalPageCount', 'currentPage',
-      'chartSelector', 'viewOption'
+      'chartSelector', 'viewOption',
+      'chartWrapper', 'chartsView', 'labels'
     ]
   }
 
@@ -33,11 +34,21 @@ export default class extends Controller {
     this.viewOption = 'table'
     setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
     hide(this.chartWrapperTarget)
+    show(this.selectedRecordSetWrapperTarget)
+    show(this.paginationButtonsWrapperTarget)
+    show(this.numPageWrapperTarget)
+    hide(this.chartWrapperTarget)
+    show(this.tablesWrapperTarget)
   }
 
   setChart () {
     this.viewOption = 'chart'
-    hide(this.btnWrapperTarget)
+    setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
+    hide(this.selectedRecordSetWrapperTarget)
+    hide(this.numPageWrapperTarget)
+    hide(this.paginationButtonsWrapperTarget)
+    hide(this.tablesWrapperTarget)
+    show(this.chartWrapperTarget)
   }
 
   selectedRecordSetChanged () {
@@ -213,5 +224,20 @@ export default class extends Controller {
     show(this.tableTarget)
     hide(this.blocksTableTarget)
     hide(this.votesTableTarget)
+  }
+
+  fetchChartDataAndPlot () {
+    const _this = this
+    axios.get('/propagationchartdata').then(function (response) {
+      let result = response.data
+
+      _this.plotGraph(result.records)
+    }).catch(function (e) {
+      console.log(e) // todo: handle error
+    })
+  }
+
+  plotGraph (dataset) {
+
   }
 }
