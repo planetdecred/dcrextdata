@@ -28,7 +28,6 @@ export default class extends Controller {
     if (this.currentPage < 1) {
       this.currentPage = 1
     }
-    this.viewOption = 'table'
 
     this.vsps = []
     this.chartSourceTargets.forEach(chartSource => {
@@ -36,6 +35,7 @@ export default class extends Controller {
         this.vsps.push(chartSource.value)
       }
     })
+    this.setChart()
   }
 
   setTable () {

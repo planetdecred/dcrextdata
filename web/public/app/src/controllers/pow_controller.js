@@ -15,7 +15,7 @@ export default class extends Controller {
   }
 
   initialize () {
-    this.viewOption = 'table'
+    this.setChart()
   }
 
   connect () {
