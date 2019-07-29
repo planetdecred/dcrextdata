@@ -1,6 +1,5 @@
 const path = require('path')
 const StyleLintPlugin = require('stylelint-webpack-plugin')
-const webpack = require('webpack')
 
 module.exports = {
   entry: {
@@ -25,7 +24,7 @@ module.exports = {
           {
             // Interprets `@import` and `url()` like `import/require()` and will resolve them
             loader: 'css-loader'
-          },
+          }
         ]
       },
       {
@@ -53,9 +52,9 @@ module.exports = {
           {
             // Loads a SASS/SCSS file and compiles it to CSS
             loader: 'sass-loader'
-          },
+          }
         ]
-      },
+      }
     ]
   },
   plugins: [
