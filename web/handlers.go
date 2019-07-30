@@ -674,7 +674,26 @@ func (s *Server) propagationChartData(res http.ResponseWriter, req *http.Request
 		s.renderErrorJSON(err.Error(), res)
 		return
 	}
-	s.renderJSON(data, res)
+	var avgTimeForHeight = map[int64]float64{}
+	var heightArr []int64
+	for _, record := range data {
+		if existingTime, found := avgTimeForHeight[record.BlockHeight]; found {
+			avgTimeForHeight[record.BlockHeight] = (record.TimeDifference + existingTime)/2
+		} else {
+			avgTimeForHeight[record.BlockHeight] = record.TimeDifference
+			heightArr = append(heightArr, record.BlockHeight)
+		}
+	}
+
+	var csv = "Height,Time Difference\n"
+	for _, height := range heightArr {
+		if height == 364880 {
+			height = 2000
+		}
+		timeDifference := fmt.Sprintf("%04.2f", avgTimeForHeight[height])
+		csv += fmt.Sprintf("%d, %s\n", height, timeDifference)
+	}
+	s.renderJSON(csv, res)
 }
 
 func (s *Server) fetchPropagationData(req *http.Request) (map[string]interface{}, error) {

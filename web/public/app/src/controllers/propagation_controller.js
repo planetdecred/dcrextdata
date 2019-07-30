@@ -1,6 +1,8 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { hide, show, setActiveOptionBtn } from '../utils'
+import { hide, show, setActiveOptionBtn, legendFormatter } from '../utils'
+
+const Dygraph = require('../../../dist/js/dygraphs.min.js')
 
 export default class extends Controller {
   static get targets () {
@@ -48,6 +50,7 @@ export default class extends Controller {
     hide(this.numPageWrapperTarget)
     hide(this.paginationButtonsWrapperTarget)
     hide(this.tablesWrapperTarget)
+    this.fetchChartDataAndPlot()
     show(this.chartWrapperTarget)
   }
 
@@ -229,15 +232,36 @@ export default class extends Controller {
   fetchChartDataAndPlot () {
     const _this = this
     axios.get('/propagationchartdata').then(function (response) {
-      let result = response.data
-
-      _this.plotGraph(result.records)
+      _this.plotGraph(response.data)
     }).catch(function (e) {
       console.log(e) // todo: handle error
     })
   }
 
-  plotGraph (dataset) {
+  plotGraph (csv) {
+    const _this = this
+    console.log(csv)
 
+    let yLabel = 'Time Difference'
+    let options = {
+      legend: 'always',
+      includeZero: true,
+      animatedZooms: true,
+      legendFormatter: legendFormatter,
+      // plotter: barChartPlotter,
+      labelsDiv: _this.labelsTarget,
+      ylabel: yLabel,
+      xlabel: 'Height',
+      // labelsUTC: true,
+      labelsKMB: true,
+      // connectSeparatedPoints: true,
+      axes: {
+        x: {
+          drawGrid: false
+        }
+      }
+    }
+
+    _this.chartsView = new Dygraph(_this.chartsViewTarget, csv, options)
   }
 }

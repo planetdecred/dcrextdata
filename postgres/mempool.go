@@ -281,16 +281,17 @@ func (pg *PgDb) VotesCount(ctx context.Context) (int64, error) {
 }
 
 func (pg *PgDb) PropagationChartData(ctx context.Context) ([]mempool.PropagationChartData, error) {
-	voteSlice, err := models.Votes(qm.Select(models.VoteColumns.VotingOn, models.VoteColumns.ReceiveTime)).All(ctx, pg.db)
+	voteSlice, err := models.Votes(qm.OrderBy(models.VoteColumns.VotingOn)).All(ctx, pg.db)
 	if err != nil {
 		return nil, err
 	}
 
 	var chartData []mempool.PropagationChartData
 	for _, vote := range voteSlice {
-		blockReceiveTimeDiff := vote.ReceiveTime.Time.Sub(vote.BlockReceiveTime.Time).Seconds()
+		// timeDiff := vote.ReceiveTime.Time.Sub(vote.BlockReceiveTime.Time).Seconds()
+		timeDiff := vote.ReceiveTime.Time.Sub(vote.TargetedBlockTime.Time).Seconds()
 		chartData = append(chartData, mempool.PropagationChartData{
-			BlockNumber: vote.VotingOn.Int64, TimeDifference: blockReceiveTimeDiff,
+			BlockHeight: vote.VotingOn.Int64, TimeDifference: timeDiff,
 		})
 	}
 
