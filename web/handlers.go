@@ -706,6 +706,7 @@ func (s *Server) propagationChartData(res http.ResponseWriter, req *http.Request
 		timeDifference := fmt.Sprintf("%04.2f", avgTimeForHeight[height])
 		csv += fmt.Sprintf("%d, %s\n", height, timeDifference)
 	}
+
 	s.renderJSON(csv, res)
 }
 
