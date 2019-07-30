@@ -20,7 +20,7 @@
                                 </select>
                             </div>
 
-                            <div data-target="propagation.numPageWrapper" class="control-div ml-5 p-0">
+                            <div data-target="propagation.numPageWrapper" class="control-div ml-2 p-0">
                                 <div class="control-label">Page Size:</div>
                                 <select data-target="propagation.selectedNum"
                                     data-action="change->propagation#numberOfRowsChanged" class="form-control"
@@ -125,7 +125,7 @@
                     </table>
 
                     {{/*blocks only*/}}
-                    <table class="table d-none" data-target="propagation.blocksTable">
+                    <table class="table d-none mx-auto" data-target="propagation.blocksTable">
                         <thead>
                         <tr style="white-space: nowrap;">
                             <th>Height</th>
@@ -150,7 +150,7 @@
                     </template>
 
                     {{/*votes only*/}}
-                    <table data-target="propagation.votesTable" class="table d-none">
+                    <table data-target="propagation.votesTable" class="table d-none mx-auto">
                         <thead>
                         <tr style="white-space: nowrap;">
                             <th>Voting On</th>
