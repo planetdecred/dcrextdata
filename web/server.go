@@ -111,7 +111,7 @@ func (s *Server) registerHandlers(r *chi.Mux) {
 	r.Get("/", s.homePage)
 	r.Get("/exchanges", s.getExchangeTicks)
 	r.Get("/filteredEx", s.getFilteredExchangeTicks)
-	r.Get("/chartExchange", s.getExchangeChartData)
+	r.Get("/chartExchange", s.getChartData)
 	r.Get("/vsp", s.getVspTicks)
 	r.Get("/vspchartdata", s.vspChartData)
 	r.Get("/filteredvspticks", s.getFilteredVspTicks)

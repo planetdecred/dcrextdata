@@ -157,7 +157,7 @@ func (s *Server) getFilteredExchangeTicks(res http.ResponseWriter, req *http.Req
 	}
 }
 
-func (s *Server) getExchangeChartData(res http.ResponseWriter, req *http.Request) {
+func (s *Server) getChartData(res http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 	selectedTick := req.FormValue("selectedTick")
 	selectedCurrencyPair := req.FormValue("selectedCurrencyPair")
@@ -684,6 +684,7 @@ func (s *Server) propagationChartData(res http.ResponseWriter, req *http.Request
 		s.renderErrorJSON(err.Error(), res)
 		return
 	}
+
 	var avgTimeForHeight = map[int64]float64{}
 	var heightArr []int64
 	for _, record := range data {
@@ -699,13 +700,10 @@ func (s *Server) propagationChartData(res http.ResponseWriter, req *http.Request
 	if requestedRecordSet == "votes" {
 		yLabel = "Time Difference (s)"
 	}
+
 	var csv = fmt.Sprintf("Height,%s\n", yLabel)
 	for _, height := range heightArr {
 		timeDifference := fmt.Sprintf("%04.2f", avgTimeForHeight[height])
-		/*if requestedRecordSet != "blocks" && math.Abs(avgTimeForHeight[height]) > 10 {
-			continue
-		}*/
-
 		csv += fmt.Sprintf("%d, %s\n", height, timeDifference)
 	}
 	s.renderJSON(csv, res)
