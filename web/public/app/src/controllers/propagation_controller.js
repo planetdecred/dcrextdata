@@ -126,21 +126,25 @@ export default class extends Controller {
     const _this = this
     this.votesTableBodyTarget.innerHTML = ''
 
-    data.forEach(item => {
-      const exRow = document.importNode(_this.votesRowTemplateTarget.content, true)
-      const fields = exRow.querySelectorAll('td')
+    if (data) {
+      data.forEach(item => {
+        const exRow = document.importNode(_this.votesRowTemplateTarget.content, true)
+        const fields = exRow.querySelectorAll('td')
 
-      fields[0].innerHTML = `<a target="_blank" href="https://explorer.dcrdata.org/block/${item.voting_on}">${item.voting_on}</a>`
-      fields[1].innerHTML = `<a target="_blank" href="https://explorer.dcrdata.org/block/${item.block_hash}">...${item.short_block_hash}</a>`
-      fields[2].innerText = item.validator_id
-      fields[3].innerText = item.validity
-      fields[4].innerText = item.receive_time
-      fields[5].innerText = item.block_time_diff
-      fields[6].innerText = item.block_receive_time_diff
-      fields[7].innerHTML = `<a target="_blank" href="https://explorer.dcrdata.org/tx/${item.hash}">${item.hash}</a>`
+        fields[0].innerHTML = `<a target="_blank" href="https://explorer.dcrdata.org/block/${item.voting_on}">${item.voting_on}</a>`
+        fields[1].innerHTML = `<a target="_blank" href="https://explorer.dcrdata.org/block/${item.block_hash}">...${item.short_block_hash}</a>`
+        fields[2].innerText = item.validator_id
+        fields[3].innerText = item.validity
+        fields[4].innerText = item.receive_time
+        fields[5].innerText = item.block_time_diff
+        fields[6].innerText = item.block_receive_time_diff
+        fields[7].innerHTML = `<a target="_blank" href="https://explorer.dcrdata.org/tx/${item.hash}">${item.hash}</a>`
 
-      _this.votesTableBodyTarget.appendChild(exRow)
-    })
+        _this.votesTableBodyTarget.appendChild(exRow)
+      })
+    } else {
+      this.votesTableBodyTarget.innerHTML = 'No votes to show'
+    }
 
     hide(this.tableTarget)
     hide(this.blocksTableTarget)
