@@ -109,6 +109,10 @@ func (pc *Collector) CollectAsync(ctx context.Context) {
 					break
 				}
 			}
+			completeCollectionCycle := pc.store.LastPowEntryTime("")
+			collectionCycleDate := time.Unix(completeCollectionCycle, 0)
+			timeInterval := time.Since(collectionCycleDate)
+			log.Info("The next collection cycle begins in", timeInterval)
 
 			log.Info("Starting a new PoW collection cycle")
 			pc.Collect(ctx)
