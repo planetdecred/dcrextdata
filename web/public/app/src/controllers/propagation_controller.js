@@ -30,6 +30,7 @@ export default class extends Controller {
       this.currentPage = 1
     }
     this.selectedRecordSet = 'both'
+    this.viewOption = 'table'
   }
 
   setTable () {
@@ -247,7 +248,6 @@ export default class extends Controller {
 
   plotGraph (csv) {
     const _this = this
-    console.log(csv)
 
     let yLabel = this.selectedRecordSet === 'votes' ? 'Time Difference (s)' : 'Delay (s)'
     let options = {
@@ -258,7 +258,6 @@ export default class extends Controller {
       labelsDiv: _this.labelsTarget,
       ylabel: yLabel,
       xlabel: 'Height',
-      labelsKMB: true,
       drawPoints: true,
       strokeWidth: 0.0
     }
