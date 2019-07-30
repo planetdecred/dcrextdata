@@ -8,7 +8,7 @@ export default class extends Controller {
   static get targets () {
     return [
       'nextPageButton', 'previousPageButton',
-      'selectedRecordSetWrapper', 'selectedRecordSet', 'selectedNum', 'numPageWrapper', 'paginationButtonsWrapper',
+      'bothRecordSetOption', 'selectedRecordSet', 'selectedNum', 'numPageWrapper', 'paginationButtonsWrapper',
       'tablesWrapper', 'table', 'blocksTbody', 'votesTbody',
       'blocksTable', 'blocksTableBody', 'blocksRowTemplate', 'votesTable', 'votesTableBody', 'votesRowTemplate',
       'totalPageCount', 'currentPage',
@@ -36,7 +36,7 @@ export default class extends Controller {
     this.viewOption = 'table'
     setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
     hide(this.chartWrapperTarget)
-    show(this.selectedRecordSetWrapperTarget)
+    show(this.bothRecordSetOptionTarget)
     show(this.paginationButtonsWrapperTarget)
     show(this.numPageWrapperTarget)
     hide(this.chartWrapperTarget)
@@ -46,10 +46,13 @@ export default class extends Controller {
   setChart () {
     this.viewOption = 'chart'
     setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
-    hide(this.selectedRecordSetWrapperTarget)
+    hide(this.bothRecordSetOptionTarget)
     hide(this.numPageWrapperTarget)
     hide(this.paginationButtonsWrapperTarget)
     hide(this.tablesWrapperTarget)
+    if (this.selectedRecordSet === 'both') {
+      this.selectedRecordSetTarget.value = this.selectedRecordSet = 'blocks'
+    }
     this.fetchChartDataAndPlot()
     show(this.chartWrapperTarget)
   }
@@ -57,7 +60,11 @@ export default class extends Controller {
   selectedRecordSetChanged () {
     this.currentPage = 1
     this.selectedRecordSet = this.selectedRecordSetTarget.value
-    this.fetchData(1)
+    if (this.viewOption === 'table') {
+      this.fetchData(1)
+    } else {
+      this.fetchChartDataAndPlot()
+    }
   }
 
   gotoPreviousPage () {
@@ -231,7 +238,7 @@ export default class extends Controller {
 
   fetchChartDataAndPlot () {
     const _this = this
-    axios.get('/propagationchartdata').then(function (response) {
+    axios.get('/propagationchartdata?recordset=' + this.selectedRecordSet).then(function (response) {
       _this.plotGraph(response.data)
     }).catch(function (e) {
       console.log(e) // todo: handle error
@@ -242,7 +249,7 @@ export default class extends Controller {
     const _this = this
     console.log(csv)
 
-    let yLabel = 'Time Difference'
+    let yLabel = this.selectedRecordSet === 'votes' ? 'Time Difference (s)' : 'Delay (s)'
     let options = {
       legend: 'always',
       includeZero: true,
