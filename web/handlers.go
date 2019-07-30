@@ -688,9 +688,13 @@ func (s *Server) propagationChartData(res http.ResponseWriter, req *http.Request
 	var csv = "Height,Time Difference\n"
 	for _, height := range heightArr {
 		if height == 364880 {
-			height = 2000
+			continue
 		}
 		timeDifference := fmt.Sprintf("%04.2f", avgTimeForHeight[height])
+		if math.Abs(avgTimeForHeight[height]) > 10 {
+			continue
+		}
+
 		csv += fmt.Sprintf("%d, %s\n", height, timeDifference)
 	}
 	s.renderJSON(csv, res)

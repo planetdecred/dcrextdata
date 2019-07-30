@@ -289,9 +289,9 @@ func (pg *PgDb) PropagationChartData(ctx context.Context) ([]mempool.Propagation
 	var chartData []mempool.PropagationChartData
 	for _, vote := range voteSlice {
 		// timeDiff := vote.ReceiveTime.Time.Sub(vote.BlockReceiveTime.Time).Seconds()
-		timeDiff := vote.ReceiveTime.Time.Sub(vote.TargetedBlockTime.Time).Seconds()
+		blockReceiveTimeDiff := vote.ReceiveTime.Time.Sub(vote.BlockReceiveTime.Time).Seconds()
 		chartData = append(chartData, mempool.PropagationChartData{
-			BlockHeight: vote.VotingOn.Int64, TimeDifference: timeDiff,
+			BlockHeight: vote.VotingOn.Int64, TimeDifference: blockReceiveTimeDiff,
 		})
 	}
 

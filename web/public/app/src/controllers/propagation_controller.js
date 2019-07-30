@@ -248,18 +248,12 @@ export default class extends Controller {
       includeZero: true,
       animatedZooms: true,
       legendFormatter: legendFormatter,
-      // plotter: barChartPlotter,
       labelsDiv: _this.labelsTarget,
       ylabel: yLabel,
       xlabel: 'Height',
-      // labelsUTC: true,
       labelsKMB: true,
-      // connectSeparatedPoints: true,
-      axes: {
-        x: {
-          drawGrid: false
-        }
-      }
+      drawPoints: true,
+      strokeWidth: 0.0
     }
 
     _this.chartsView = new Dygraph(_this.chartsViewTarget, csv, options)
