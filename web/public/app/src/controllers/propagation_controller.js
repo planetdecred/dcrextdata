@@ -25,12 +25,12 @@ export default class extends Controller {
   }
 
   initialize () {
+    this.setChart()
     this.currentPage = parseInt(this.currentPageTarget.getAttribute('data-current-page'))
     if (this.currentPage < 1) {
       this.currentPage = 1
     }
     this.selectedRecordSet = 'both'
-    this.setChart()
   }
 
   setTable () {

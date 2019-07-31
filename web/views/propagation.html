@@ -88,7 +88,7 @@
                     </div>
                 </div>
 
-                <div data-target="propagation.tablesWrapper d-hide">
+                <div class="d-none" data-target="propagation.tablesWrapper">
                     {{/*combine view*/}}
                     <table class="table collapsible mx-auto" data-target="propagation.table">
                         {{range $index, $block := .propagation.records}}
@@ -134,7 +134,7 @@
                             </tbody>
                             <tbody>
                                 <tr>
-                                    <td colspan="7" height="50" style="border: none !important;"></td>
+                                    <td colspan="7" height="30" style="border: none !important;"></td>
                                 </tr>
                             </tbody>
                         {{end}}
