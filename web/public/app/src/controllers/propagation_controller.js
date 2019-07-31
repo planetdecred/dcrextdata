@@ -258,6 +258,7 @@ export default class extends Controller {
       labelsDiv: _this.labelsTarget,
       ylabel: yLabel,
       xlabel: 'Height',
+      labelsKMB: true,
       drawPoints: true,
       strokeWidth: 0.0
     }
