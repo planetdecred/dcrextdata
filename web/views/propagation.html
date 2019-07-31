@@ -19,18 +19,18 @@
                                                     class="nav-link active"
                                                     href="javascript:void(0);"
                                                     data-target="propagation.viewOption"
-                                                    data-action="click->propagation#setTable"
-                                                    data-option="table"
-                                            >Table</a>
+                                                    data-action="click->propagation#setChart"
+                                                    data-option="chart"
+                                            >Chart</a>
                                         </li>
                                         <li class="nav-item">
                                             <a
                                                     class="nav-link"
                                                     href="javascript:void(0);"
                                                     data-target="propagation.viewOption"
-                                                    data-action="click->propagation#setChart"
-                                                    data-option="chart"
-                                            >Chart</a>
+                                                    data-action="click->propagation#setTable"
+                                                    data-option="table"
+                                            >Table</a>
                                         </li>
                                     </ul>
                                 </div>
@@ -88,49 +88,54 @@
                     </div>
                 </div>
 
-                <div data-target="propagation.tablesWrapper">
+                <div data-target="propagation.tablesWrapper d-hide">
                     {{/*combine view*/}}
                     <table class="table collapsible mx-auto" data-target="propagation.table">
                         {{range $index, $block := .propagation.records}}
                             <tbody data-target="propagation.blocksTbody" data-block-hash="{{$block.BlockHash}}">
-                            <tr>
-                                <td colspan="100">
-                                    <span class="d-inline-block"><b>Height</b>: {{$block.BlockHeight}}</span> &#8195;
-                                    <span class="d-inline-block"><b>Timestamp</b>: {{$block.BlockInternalTime}}</span>
-                                    &#8195;
-                                    <span class="d-inline-block"><b>Received</b>: {{$block.BlockReceiveTime}}</span>
-                                    &#8195;
-                                    <span class="d-inline-block"><b>Hash</b>: <a target="_blank"
-                                            href="https://explorer.dcrdata.org/block/{{$block.BlockHeight}}">{{$block.BlockHash}}</a></span>
-                                </td>
-                            </tr>
+                                <tr>
+                                    <td colspan="100">
+                                        <span class="d-inline-block"><b>Height</b>: {{$block.BlockHeight}}</span> &#8195;
+                                        <span class="d-inline-block"><b>Timestamp</b>: {{$block.BlockInternalTime}}</span>
+                                        &#8195;
+                                        <span class="d-inline-block"><b>Received</b>: {{$block.BlockReceiveTime}}</span>
+                                        &#8195;
+                                        <span class="d-inline-block"><b>Hash</b>: <a target="_blank"
+                                                href="https://explorer.dcrdata.org/block/{{$block.BlockHeight}}">{{$block.BlockHash}}</a></span>
+                                    </td>
+                                </tr>
                             </tbody>
                             <tbody data-target="propagation.votesTbody" data-block-hash="{{$block.BlockHash}}">
-                            <tr style="white-space: nowrap;">
-                                <td style="width: 120px;">Voting On</td>
-                                <td style="width: 120px;">Block Hash</td>
-                                <td style="width: 120px;">Validator ID</td>
-                                <td style="width: 120px;">Validity</td>
-                                <td style="width: 120px;">Block Receive</td>
-                                <td style="width: 120px;">Block Receive Time Diff</td>
-                                <td style="width: 120px;">Hash</td>
-                            </tr>
-                            {{range $index, $vote := $block.Votes}}
-                                <tr>
-                                    <td><a target="_blank"
-                                           href="https://explorer.dcrdata.org/block/{{$vote.VotingOn}}">{{$vote.VotingOn}}</a>
-                                    </td>
-                                    <td><a target="_blank"
-                                           href="https://explorer.dcrdata.org/block/{{$vote.BlockHash}}">...{{$vote.ShortBlockHash}}</a>
-                                    </td>
-                                    <td>{{$vote.ValidatorId}}</td>
-                                    <td>{{$vote.Validity}}</td>
-                                    <td>{{$vote.ReceiveTime}}</td>
-                                    <td>{{$vote.BlockReceiveTimeDiff}}s</td>
-                                    <td><a target="_blank"
-                                           href="https://explorer.dcrdata.org/tx/{{$vote.Hash}}">{{$vote.Hash}}</a></td>
+                                <tr style="white-space: nowrap;">
+                                    <td style="width: 120px;">Voting On</td>
+                                    <td style="width: 120px;">Block Hash</td>
+                                    <td style="width: 120px;">Validator ID</td>
+                                    <td style="width: 120px;">Validity</td>
+                                    <td style="width: 120px;">Block Receive</td>
+                                    <td style="width: 120px;">Block Receive Time Diff</td>
+                                    <td style="width: 120px;">Hash</td>
                                 </tr>
-                            {{end}}
+                                {{range $index, $vote := $block.Votes}}
+                                    <tr>
+                                        <td><a target="_blank"
+                                            href="https://explorer.dcrdata.org/block/{{$vote.VotingOn}}">{{$vote.VotingOn}}</a>
+                                        </td>
+                                        <td><a target="_blank"
+                                            href="https://explorer.dcrdata.org/block/{{$vote.BlockHash}}">...{{$vote.ShortBlockHash}}</a>
+                                        </td>
+                                        <td>{{$vote.ValidatorId}}</td>
+                                        <td>{{$vote.Validity}}</td>
+                                        <td>{{$vote.ReceiveTime}}</td>
+                                        <td>{{$vote.BlockReceiveTimeDiff}}s</td>
+                                        <td><a target="_blank"
+                                            href="https://explorer.dcrdata.org/tx/{{$vote.Hash}}">{{$vote.Hash}}</a></td>
+                                    </tr>
+                                {{end}}
+                            </tbody>
+                            <tbody>
+                                <tr>
+                                    <td colspan="7" height="50" style="border: none !important;"></td>
+                                </tr>
                             </tbody>
                         {{end}}
                     </table>
@@ -192,7 +197,7 @@
                     </template>
                 </div>
 
-                <div data-target="propagation.chartWrapper" class="chart-wrapper pl-2 pr-2 mb-5 d-hide" style="width:100%;">
+                <div data-target="propagation.chartWrapper" class="chart-wrapper pl-2 pr-2 mb-5" style="width:100%;">
                     <div id="chart" data-target="propagation.chartsView" style="width:100%; height:73vh; margin:0 auto;"></div>
                     <div class="d-flex justify-content-center legend-wrapper">
                         <div class="legend d-flex" data-target="propagation.labels"></div>
