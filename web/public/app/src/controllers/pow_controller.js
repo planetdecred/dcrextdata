@@ -128,8 +128,9 @@ export default class extends Controller {
     var data = []
     var dataSet = []
     pows.forEach(pow => {
-      data.push(new Date(pow.Time))
-      data.push(pow.pool_hashrate_th)
+      pow.time = this.formatPowDateTime(pow.time)
+      data.push(new Date(pow.time))
+      data.push(Number(pow.pool_hashrate_th))
 
       dataSet.push(data)
       data = []
@@ -159,5 +160,11 @@ export default class extends Controller {
         li.classList.remove('active')
       }
     })
+  }
+
+  formatPowDateTime (dateTime) {
+    // dateTime is coming in format yy-mm-dd hh:mm
+    // Date method expects format yy-mm-ddThh:mm:ss
+    return (dateTime + ':00').split(' ').join('T')
   }
 }
