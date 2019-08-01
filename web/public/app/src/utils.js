@@ -16,6 +16,10 @@ export const isHidden = (el) => {
   return el.classList.contains('d-none')
 }
 
+export const isLoading = (el) => {
+  return el.classList.add('loading')
+}
+
 export function legendFormatter (data) {
   let html = ''
   if (data.x == null) {

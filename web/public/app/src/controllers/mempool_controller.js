@@ -9,15 +9,10 @@ export default class extends Controller {
     return [
       'nextPageButton', 'previousPageButton', 'tableBody', 'rowTemplate',
       'totalPageCount', 'currentPage', 'btnWrapper', 'tableWrapper', 'chartsView',
-      'chartWrapper', 'viewOption', 'labels',
+      'chartWrapper', 'viewOption', 'labels', 'viewOptionControl',
       'chartDataTypeSelector', 'chartDataType', 'chartOptions', 'labels', 'selectedMempoolOpt',
-      'selectedNum', 'numPageWrapper'
+      'selectedNumberOfRows', 'numPageWrapper'
     ]
-  }
-
-  connect () {
-    var num = this.selectedNumTarget.options
-    this.selectedNumTarget.value = num[0].text
   }
 
   initialize () {
@@ -26,39 +21,44 @@ export default class extends Controller {
       this.currentPage = 1
     }
     this.dataType = 'size'
-    this.setChart()
+
+    this.selectedViewOption = this.viewOptionControlTarget.getAttribute('data-initial-value')
+    if (this.selectedViewOption === 'chart') {
+      this.setChart()
+    } else {
+      this.setTable()
+    }
   }
 
   setTable () {
-    this.viewOption = 'table'
-    setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
+    this.selectedViewOption = 'table'
+    setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
     hide(this.chartWrapperTarget)
     hide(this.chartDataTypeSelectorTarget)
     show(this.tableWrapperTarget)
     show(this.numPageWrapperTarget)
     show(this.btnWrapperTarget)
-    this.currentPage = this.currentPage
-    this.fetchData(this.viewOption)
+    this.nextPage = this.currentPage
+    this.fetchData(this.selectedViewOption)
   }
 
   setChart () {
-    this.viewOption = 'chart'
+    this.selectedViewOption = 'chart'
     hide(this.btnWrapperTarget)
     hide(this.tableWrapperTarget)
-    var y = this.selectedMempoolOptTarget.options
-    this.chartFilter = this.selectedMempoolOptTarget.value = y[0].value
-    setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
+    this.chartFilter = this.selectedMempoolOptTarget.value = this.selectedMempoolOptTarget.options[0].value
+    setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
     show(this.chartDataTypeSelectorTarget)
     hide(this.numPageWrapperTarget)
     show(this.chartWrapperTarget)
-    this.nextPage = 1
-    this.fetchData(this.viewOption)
+    this.fetchData(this.selectedViewOption)
   }
 
   MempoolOptionChanged () {
     this.chartFilter = this.selectedMempoolOptTarget.value
-    this.fetchData(this.viewOption)
+    this.fetchData(this.selectedViewOption)
   }
+
   setSizeDataType (event) {
     this.dataType = 'size'
     this.chartDataTypeTargets.forEach(el => {
@@ -86,28 +86,29 @@ export default class extends Controller {
     this.fetchData('chart')
   }
 
-  gotoPreviousPage () {
-    this.currentPage = this.currentPage - 1
-    this.fetchData(this.viewOption)
+  numberOfRowsChanged () {
+    this.selectedNumberOfRowsberOfRows = this.selectedNumberOfRowsTarget.value
+    this.fetchData(this.selectedViewOption)
   }
 
-  gotoNextPage () {
-    this.currentPage = this.currentPage + 1
-    this.fetchData(this.viewOption)
+  loadPreviousPage () {
+    this.nextPage = this.currentPage - 1
+    this.fetchData(this.selectedViewOption)
   }
 
-  NumberOfRowsChanged () {
-    this.selectedNum = this.selectedNumTarget.value
-    this.fetchData(this.viewOption)
+  loadNextPage () {
+    this.nextPage = this.currentPage + 1
+    this.fetchData(this.selectedViewOption)
   }
 
   fetchData (display) {
     var url
     if (display === 'table') {
-      var numberOfRows = this.selectedNumTarget.value
-      url = `/getmempool?page=${this.currentPage}&recordsPerPage=${numberOfRows}`
+      var numberOfRows = this.selectedNumberOfRowsTarget.value
+      url = `/getmempool?page=${this.nextPage}&recordsPerPage=${numberOfRows}&viewOption=${this.selectedViewOption}`
     } else {
-      url = `/getmempoolCharts?chartFilter=${this.dataType}`
+      url = `/mempoolcharts?chartFilter=${this.dataType}&viewOption=${this.selectedViewOption}`
+      window.history.pushState(window.history.state, this.addr, url + `&refresh=${1}`)
     }
 
     const _this = this
@@ -116,6 +117,7 @@ export default class extends Controller {
       if (display === 'table') {
         _this.totalPageCountTarget.textContent = result.totalPages
         _this.currentPageTarget.textContent = result.currentPage
+        window.history.pushState(window.history.state, _this.addr, `/mempool?page=${result.currentPage}&recordsPerPage=${result.selectedNumberOfRows}&viewOption=${_this.selectedViewOption}`)
 
         _this.currentPage = result.currentPage
         if (_this.currentPage <= 1) {
@@ -205,10 +207,8 @@ export default class extends Controller {
       csv,
       {
         legend: 'always',
-        // title: title,
         includeZero: true,
         dateWindow: [minDate, maxDate],
-        animatedZooms: true,
         legendFormatter: legendFormatter,
         plotter: barChartPlotter,
         labelsDiv: _this.labelsTarget,
@@ -217,6 +217,7 @@ export default class extends Controller {
         labelsUTC: true,
         labelsKMB: true,
         maxNumberWidth: 10,
+        showRangeSelector: true,
         axes: {
           x: {
             drawGrid: false

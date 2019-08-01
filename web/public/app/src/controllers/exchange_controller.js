@@ -7,11 +7,11 @@ const Dygraph = require('../../../dist/js/dygraphs.min.js')
 export default class extends Controller {
   static get targets () {
     return [
-      'selectedFilter', 'exchangeTable', 'selectedCurrencyPair', 'numPageWrapper', 'intervalWapper',
+      'selectedFilter', 'exchangeTable', 'selectedCurrencyPair', 'numPageWrapper', 'intervalsWapper',
       'previousPageButton', 'totalPageCount', 'nextPageButton', 'selectedTicks', 'selectedInterval',
-      'exRowTemplate', 'currentPage', 'selectedNum', 'exchangeTableWrapper', 'tickWapper',
-      'chartWrapper', 'labels', 'chartsView', 'viewOption', 'hideOption', 'sourceWrapper',
-      'pageSizeWrapper', 'chartSource', 'currencyPairHideOption', 'messageView', 'hideIntervalOption'
+      'exRowTemplate', 'currentPage', 'selectedNum', 'exchangeTableWrapper', 'tickWapper', 'viewOptionControl',
+      'chartWrapper', 'labels', 'chartsView', 'selectedViewOption', 'hideOption', 'sourceWrapper', 'chartSelector',
+      'pageSizeWrapper', 'chartSource', 'currencyPairHideOption', 'messageView', 'hideIntervalOption', 'viewOption'
     ]
   }
 
@@ -30,21 +30,30 @@ export default class extends Controller {
     this.setChart()
     this.selectedFilter = this.selectedFilterTarget.value
     this.selectedCurrencyPair = this.selectedCurrencyPairTarget.value
+    this.numberOfRows = this.selectedNumTarget.value
+    this.selectedInterval = this.selectedIntervalTarget.value
 
     this.currentPage = parseInt(this.currentPageTarget.getAttribute('data-current-page'))
     if (this.currentPage < 1) {
       this.currentPage = 1
     }
+
+    this.selectedViewOption = this.viewOptionControlTarget.getAttribute('data-initial-value')
+    if (this.selectedViewOption === 'chart') {
+      this.setChart()
+    } else {
+      this.setTable()
+    }
   }
 
   setTable () {
-    this.viewOption = 'table'
+    this.selectedViewOption = 'table'
     hide(this.messageViewTarget)
     hide(this.tickWapperTarget)
     show(this.hideOptionTarget)
     show(this.pageSizeWrapperTarget)
     hide(this.chartWrapperTarget)
-    show(this.hideIntervalOptionTarget)
+    show(this.selectedIntervalTarget.options[0])
     show(this.currencyPairHideOptionTarget)
     show(this.exchangeTableWrapperTarget)
     show(this.numPageWrapperTarget)
@@ -63,76 +72,79 @@ export default class extends Controller {
   }
 
   setChart () {
-    this.viewOption = 'chart'
+    this.selectedViewOption = 'chart'
     hide(this.messageViewTarget)
-    hide(this.hideIntervalOptionTarget)
-    var interval = this.selectedIntervalTarget.options
-    var sFilter = this.selectedFilterTarget.options
+    var intervals = this.selectedIntervalTarget.options
+    var filters = this.selectedFilterTarget.options
     show(this.chartWrapperTarget)
     hide(this.pageSizeWrapperTarget)
     show(this.tickWapperTarget)
     hide(this.hideOptionTarget)
+    hide(intervals[0])
     hide(this.currencyPairHideOptionTarget)
     hide(this.numPageWrapperTarget)
     hide(this.exchangeTableWrapperTarget)
     this.setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
-    this.selectedInterval = this.selectedIntervalTarget.value = interval[4].value
-    this.selectedFilter = this.selectedFilterTarget.value = sFilter[1].text
+    this.selectedInterval = this.selectedIntervalTarget.value = intervals[4].value
+    this.selectedFilter = this.selectedFilterTarget.value = filters[1].text
     this.selectedTick = this.selectedTicksTarget.value = 'close'
     this.selectedCurrencyPair = this.selectedCurrencyPairTarget.value = 'BTC/DCR'
-    this.fetchExchange(this.viewOption)
+    this.fetchExchange(this.selectedViewOption)
   }
 
   selectedIntervalChanged () {
+    this.nextPage = 1
     this.selectedInterval = this.selectedIntervalTarget.value
-    this.fetchExchange(this.viewOption)
+    this.fetchExchange(this.selectedViewOption)
   }
 
   selectedTicksChanged () {
     this.selectedTick = this.selectedTicksTarget.value
-    this.fetchExchange(this.viewOption)
-  }
-
-  loadPreviousPage () {
-    this.nextPage = this.previousPageButtonTarget.getAttribute('data-previous-page')
-    this.fetchExchange(this.viewOption)
-  }
-
-  loadNextPage () {
-    this.nextPage = this.nextPageButtonTarget.getAttribute('data-next-page')
-    this.fetchExchange(this.viewOption)
+    this.fetchExchange(this.selectedViewOption)
   }
 
   selectedFilterChanged () {
     this.nextPage = 1
-    this.selectedFilter = this.selectedFilterTarget.value
-    this.fetchExchange(this.viewOption)
+    this.selectedExchange = this.selectedFilterTarget.value
+    this.fetchExchange(this.selectedViewOption)
+  }
+
+  loadPreviousPage () {
+    this.nextPage = this.currentPage - 1
+    this.fetchExchange(this.selectedViewOption)
+  }
+
+  loadNextPage () {
+    this.nextPage = this.currentPage + 1
+    this.fetchExchange(this.selectedViewOption)
   }
 
   selectedCurrencyPairChanged () {
     this.nextPage = 1
     this.selectedCurrencyPair = this.selectedCurrencyPairTarget.value
-    this.fetchExchange(this.viewOption)
+    this.fetchExchange(this.selectedViewOption)
   }
 
   NumberOfRowsChanged () {
     this.nextPage = 1
     this.numberOfRows = this.selectedNumTarget.value
-    this.fetchExchange(this.viewOption)
+    this.fetchExchange(this.selectedViewOption)
   }
 
   fetchExchange (display) {
     const _this = this
     var url
     if (display === 'table') {
-      url = `/filteredEx?page=${this.nextPage}&filter=${this.selectedFilter}&recordsPerPage=${this.numberOfRows}&selectedCurrencyPair=${this.selectedCurrencyPair}&selectedInterval=${this.selectedInterval}`
+      url = `/exchange?page=${_this.nextPage}&selectedExchange=${_this.selectedExchange}&recordsPerPage=${_this.numberOfRows}&selectedCurrencyPair=${_this.selectedCurrencyPair}&selectedInterval=${_this.selectedInterval}&viewOption=${_this.selectedViewOption}`
     } else {
-      url = `/chartExchange?selectedTick=${this.selectedTick}&selectedCurrencyPair=${this.selectedCurrencyPair}&selectedInterval=${this.selectedInterval}&sources=${this.selectedFilter}`
+      url = `/exchangechart?selectedTick=${_this.selectedTick}&selectedCurrencyPair=${_this.selectedCurrencyPair}&selectedInterval=${_this.selectedInterval}&selectedExchange=${_this.selectedExchange}&viewOption=${_this.selectedViewOption}`
+      window.history.pushState(window.history.state, this.addr, url + `&refresh=${1}`)
     }
 
     axios.get(url)
       .then(function (response) {
         let result = response.data
+        console.log(result)
         if (display === 'table') {
           if (result.message) {
             let messageHTML = ''
@@ -143,7 +155,11 @@ export default class extends Controller {
             _this.messageViewTarget.innerHTML = messageHTML
             show(_this.messageViewTarget)
             hide(_this.exchangeTableWrapperTarget)
+            hide(_this.pageSizeWrapperTarget)
+            _this.totalPageCountTarget.textContent = 0
+            _this.currentPageTarget.textContent = 0
           } else {
+            window.history.pushState(window.history.state, _this.addr, `/exchanges?page=${result.currentPage}&selectedExchange=${_this.selectedExchange}&recordsPerPage=${result.selectedNum}&selectedCurrencyPair=${result.selectedCurrencyPair}&selectedInterval=${result.selectedInterval}&viewOption=${result.selectedViewOption}`)
             hide(_this.messageViewTarget)
             show(_this.exchangeTableWrapperTarget)
             _this.currentPage = result.currentPage
@@ -159,11 +175,12 @@ export default class extends Controller {
               show(_this.nextPageButtonTarget)
             }
 
+            _this.selectedIntervalTarget.value = result.selectedInterval
+            _this.selectedFilterTarget.value = _this.selectedExchange
+            _this.selectedNumTarget.value = result.selectedNum
+            _this.selectedCurrencyPairTarget.value = result.selectedCurrencyPair
             _this.totalPageCountTarget.textContent = result.totalPages
             _this.currentPageTarget.textContent = result.currentPage
-            _this.previousPageButtonTarget.setAttribute('data-previous-page', `${result.previousPage}`)
-            _this.nextPageButtonTarget.setAttribute('data-next-page', `${result.nextPage}`)
-
             _this.displayExchange(result.exData)
           }
         } else {
@@ -240,15 +257,5 @@ export default class extends Controller {
       show(this.messageViewTarget)
       hide(this.chartsViewTarget)
     }
-  }
-
-  setActiveOptionBtn (opt, optTargets) {
-    optTargets.forEach(li => {
-      if (li.dataset.option === this.viewOption) {
-        li.classList.add('active')
-      } else {
-        li.classList.remove('active')
-      }
-    })
   }
 }

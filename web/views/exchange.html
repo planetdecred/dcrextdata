@@ -39,73 +39,59 @@
                             </div>
                             <div data-target=exchange.sourceWrapper class="control-div p-0">
                                 <div class="control-label">Exchanges:</div>
-                                <select 
-                                    data-target="exchange.selectedFilter"
-                                    data-action="change->exchange#selectedFilterChanged" class="form-control"
-                                    style="width: 100px;"
-                                >
-                                    <option data-target="exchange.hideOption" value="All" selected>All</option>
+                                <select data-target="exchange.selectedFilter" data-action="change->exchange#selectedFilterChanged"
+                                    class="form-control" style="width: 100px;">
+                                    {{$selectedExchange := .selectedExchange}}
+                                    <option data-target="exchange.hideOption" class="{{ if .chartView }}d-none{{ end }}" value="All">All</option>
                                     {{ range $index, $filter := .allExData}}
-                                        <option value="{{$filter.Name}}">{{$filter.Name}}</option>
+                                    <option value="{{$filter.Name}}"  {{ if eq $filter.Name $selectedExchange}} selected {{ end }}>{{$filter.Name}}</option>
                                     {{ end }}
                                 </select>
                             </div>
                             <div data-target="exchange.intervalWapper" class="control-div p-0">
                                 <div class="control-label">Interval:</div>
-                                <select data-target="exchange.selectedInterval"
-                                    data-action="change->exchange#selectedIntervalChanged" class="form-control"
-                                    style="width: 60px;">
-                                    <option data-target="exchange.hideIntervalOption" value="-1">All</option>
-                                    <option value="5">5m</option>
-                                    <option value="60">1h</option>
-                                    <option value="120">2h</option>
-                                    <option value="1440">1d</option>
+                                <select data-target="exchange.selectedInterval" data-action="change->exchange#selectedIntervalChanged"
+                                    class="form-control" style="width: 60px;">
+                                    {{$selectedInterval := .selectedInterval}}
+                                    {{ range $index, $filter := .intervals}}
+                                    <option value="{{$index}}" {{ if eq $index $selectedInterval}} selected {{ end }}>{{$filter}}</option>
+                                    {{ end }}
                                 </select>
                             </div>
 
                             <div data-target="exchange.tickWapper" class="control-div  p-0 d-hide">
                                 <div class="control-label">Data Ticks:</div>
                                 <select data-target="exchange.selectedTicks"
-                                    data-action="change->exchange#selectedTicksChanged" class="form-control"
-                                    style="width: 90px;">
-                                    <option value="close">Close</option>
-                                    <option value="high">High</option>
-                                    <option value="open">Open</option>
-                                    <option value="low">Low</option>
-                                </select>
-                            </div>
+                                data-action="change->exchange#selectedTicksChanged" class="form-control"
+                                style="width: 90px;">
+                                <option value="close">Close</option>
+                                <option value="high">High</option>
+                                <option value="open">Open</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
 
-                            <div data-target="exchange.numPageWrapper" class="control-div p-0 ml-2">
-                                <div class="control-label">Page Size:</div>
-                                <select data-target="exchange.selectedNum"
-                                    data-action="change->exchange#NumberOfRowsChanged" class="form-control"
-                                    style="width: 70px;">
-                                    <option value="20">20</option>
-                                    <option value="30">30</option>
-                                    <option value="50">50</option>
-                                    <option value="100">100</option>
-                                    <option value="150">150</option>
-                                </select>
-                            </div>
-                            <div data-target="exchange.pageSizeWrapper" class="control-div pt-1">
-                                <a href="javascript:void(0)" data-target="exchange.previousPageButton"
-                                    data-action="click->exchange#loadPreviousPage" data-previous-page="{{ .previousPage }}"
-                                    data-current-page="{{ .totalPages }}"
-                                    class="mr-2 {{ if lt .previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
+                        <div data-target="exchange.numPageWrapper" class="control-div p-0 ml-2 {{ if .chartView }}d-none{{ end }}">
+                            <div class="control-label">Page Size:</div>
+                            <select data-target="exchange.selectedNum" data-action="change->exchange#NumberOfRowsChanged" class="form-control" style="width: 70px;">
+                                {{$selectedNum := .selectedNum}}
+                                {{ range $index, $filter := .pageSizeSelector}}
+                                <option value="{{$index}}" {{ if eq $index $selectedNum}} selected {{ end }}>{{$filter}}</option>
+                                {{ end }}
+                            </select>
+                        </div>
 
-                                <p class="text-muted d-inline" style="white-space: nowrap;"> Page <span
-                                        data-target="exchange.currentPage" class="text-muted"> {{ .currentPage }}</span> of
-                                    <span data-target="exchange.totalPageCount" class="text-muted">{{ .totalPages }}</span>
-                                </p>
-                                <a href="javascript:void(0)" data-target="exchange.nextPageButton"
-                                    data-action="click->exchange#loadNextPage" data-total-page="{{ .totalPages }}"
-                                    data-current-page="{{ .totalPages }}" data-next-page="{{ .nextPage }}"
-                                    class="ml-2 {{ if not .nextPage }}d-none{{ end }}"> Next&gt;</a>
-                            </div>
+                        <div data-target="exchange.pageSizeWrapper" class="d-flex {{ if .chartView }}d-none{{ end }}">
+                            <a href="javascript:void(0)" data-target="exchange.previousPageButton" data-action="click->exchange#loadPreviousPage" class="mr-2 {{ if lt .previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
+
+                            <p class="text-muted" style="white-space: nowrap;"> Page <span data-target="exchange.currentPage" class="text-muted" data-current-page="{{ .currentPage }}"> {{ .currentPage }}</span> of <span data-target="exchange.totalPageCount" class="text-muted">{{ .totalPages }}</span>
+                            </p>
+
+                            <a href="javascript:void(0)"  data-target="exchange.nextPageButton"  data-action="click->exchange#loadNextPage" class="ml-2 {{ if not .nextPage }}d-none{{ end }}"> Next&gt;</a>
                         </div>
                     </div>
                 </div>
-                <div class="d-none" data-target="exchange.exchangeTableWrapper">
+                <div class="{{ if .chartView }}d-none{{ end }}" data-target="exchange.exchangeTableWrapper">
                     <table class="table mx-auto">
                         <thead>
                             <tr style="white-space: nowrap;">
@@ -138,7 +124,7 @@
                     </table>
 
                     <template data-target="exchange.exRowTemplate">
-                        <tr>
+                        <tr style="white-space: nowrap;">
                             <td></td>
                             <td></td>
                             <td></td>

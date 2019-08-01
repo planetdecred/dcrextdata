@@ -1,5 +1,7 @@
 package pow
 
+import "time"
+
 type PowDataSource struct {
 	Source string
 }
@@ -20,6 +22,11 @@ type PowDataDto struct {
 	CoinPrice      float64 `json:"coin_price"`
 	BtcPrice       float64 `json:"btc_price"`
 	Source         string  `json:"source"`
+}
+
+type PowChartData struct {
+	Date   time.Time `json:"date"`
+	Record string    `json:"record"`
 }
 
 type luxorPowData struct {

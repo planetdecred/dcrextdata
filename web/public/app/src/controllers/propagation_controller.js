@@ -9,19 +9,10 @@ export default class extends Controller {
     return [
       'nextPageButton', 'previousPageButton',
       'bothRecordSetOption', 'selectedRecordSet', 'selectedNum', 'numPageWrapper', 'paginationButtonsWrapper',
-      'tablesWrapper', 'table', 'blocksTbody', 'votesTbody',
+      'tablesWrapper', 'table', 'blocksTbody', 'votesTbody', 'chartWrapper', 'chartsView', 'labels',
       'blocksTable', 'blocksTableBody', 'blocksRowTemplate', 'votesTable', 'votesTableBody', 'votesRowTemplate',
-      'totalPageCount', 'currentPage',
-      'chartSelector', 'viewOption',
-      'chartWrapper', 'chartsView', 'labels'
+      'totalPageCount', 'currentPage', 'viewOptionControl', 'chartSelector', 'viewOption'
     ]
-  }
-
-  connect () {
-    var filter = this.selectedRecordSetTarget.options
-    var num = this.selectedNumTarget.options
-    this.selectedRecordSetTarget.value = filter[0].value
-    this.selectedNumTarget.value = num[0].text
   }
 
   initialize () {
@@ -31,52 +22,64 @@ export default class extends Controller {
       this.currentPage = 1
     }
     this.selectedRecordSet = 'both'
+
+    this.selectedViewOption = this.viewOptionControlTarget.getAttribute('data-initial-value')
+    if (this.selectedViewOption === 'chart') {
+      this.setChart()
+    } else {
+      this.setTable()
+    }
   }
 
   setTable () {
-    this.viewOption = 'table'
-    setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
+    this.selectedViewOption = 'table'
+    this.selectedRecordSet = this.selectedRecordSetTarget.value = this.selectedRecordSetTarget.options[0].value
+    setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
+    show(this.selectedRecordSetTarget.options[0])
+    this.selectedRecordSet = this.selectedRecordSetTarget.value
     hide(this.chartWrapperTarget)
     show(this.bothRecordSetOptionTarget)
     show(this.paginationButtonsWrapperTarget)
     show(this.numPageWrapperTarget)
     hide(this.chartWrapperTarget)
     show(this.tablesWrapperTarget)
+    this.fetchData(this.currentPage)
   }
 
   setChart () {
-    this.viewOption = 'chart'
-    setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
-    hide(this.bothRecordSetOptionTarget)
+    this.selectedViewOption = 'chart'
+    setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
+    hide(this.selectedRecordSetTarget.options[0])
     hide(this.numPageWrapperTarget)
     hide(this.paginationButtonsWrapperTarget)
     hide(this.tablesWrapperTarget)
-    if (this.selectedRecordSet === 'both') {
-      this.selectedRecordSetTarget.value = this.selectedRecordSet = 'blocks'
-    }
-    this.fetchChartDataAndPlot()
     show(this.chartWrapperTarget)
+    this.selectedRecordSet = this.selectedRecordSetTarget.value = this.selectedRecordSetTarget.options[1].value
+
+    this.fetchChartDataAndPlot()
   }
 
   selectedRecordSetChanged () {
     this.currentPage = 1
+    this.selectedNumTarget.value = this.selectedNumTarget.options[0].text
     this.selectedRecordSet = this.selectedRecordSetTarget.value
-    if (this.viewOption === 'table') {
+    if (this.selectedViewOption === 'table') {
       this.fetchData(1)
     } else {
       this.fetchChartDataAndPlot()
     }
   }
 
-  gotoPreviousPage () {
+  loadPreviousPage () {
     this.fetchData(this.currentPage - 1)
   }
 
-  gotoNextPage () {
+  loadNextPage () {
     this.fetchData(this.currentPage + 1)
   }
 
   numberOfRowsChanged () {
+    this.selectedRecordSet = this.selectedRecordSetTarget.value
     this.selectedNum = this.selectedNumTarget.value
     this.fetchData(1)
   }
@@ -85,22 +88,24 @@ export default class extends Controller {
     const _this = this
 
     var numberOfRows = this.selectedNumTarget.value
-    let uri = '/getpropagationdata'
+    let url = '/getpropagationdata'
     switch (this.selectedRecordSet) {
       case 'blocks':
-        uri = 'getblocks'
+        url = 'getblocks'
         break
       case 'votes':
-        uri = 'getvotes'
+        url = 'getvotes'
         break
       default:
-        uri = 'getpropagationdata'
+        url = 'getpropagationdata'
         break
     }
-    axios.get(`/${uri}?page=${page}&recordsPerPage=${numberOfRows}`).then(function (response) {
+    axios.get(`/${url}?page=${page}&recordsPerPage=${numberOfRows}&viewOption=${_this.selectedViewOption}`).then(function (response) {
       let result = response.data
+      console.log(result)
       _this.totalPageCountTarget.textContent = result.totalPages
       _this.currentPageTarget.textContent = result.currentPage
+      window.history.pushState(window.history.state, _this.addr, `${result.url}?page=${result.currentPage}&recordsPerPage=${result.selectedNum}&viewOption=${_this.selectedViewOption}`)
 
       _this.currentPage = result.currentPage
       if (_this.currentPage <= 1) {
@@ -115,22 +120,22 @@ export default class extends Controller {
         show(_this.nextPageButtonTarget)
       }
 
-      _this.displayData(result.records)
+      _this.displayData(result)
     }).catch(function (e) {
-      console.log(e) // todo: handle error
+      // console.log(e) // todo: handle error
     })
   }
 
   displayData (data) {
     switch (this.selectedRecordSet) {
       case 'blocks':
-        this.displayBlocks(data)
+        this.displayBlocks(data.records)
         break
       case 'votes':
-        this.displayVotes(data)
+        this.displayVotes(data.voteRecords)
         break
       default:
-        this.displayPropagationData(data)
+        this.displayPropagationData(data.records)
         break
     }
   }
@@ -243,7 +248,10 @@ export default class extends Controller {
 
   fetchChartDataAndPlot () {
     const _this = this
-    axios.get('/propagationchartdata?recordset=' + this.selectedRecordSet).then(function (response) {
+    const url = '/propagationchartdata?recordset=' + this.selectedRecordSet + `&viewOption=${_this.selectedViewOption}`
+    window.history.pushState(window.history.state, _this.addr, url + `&refresh=${1}`)
+
+    axios.get(url).then(function (response) {
       _this.plotGraph(response.data)
     }).catch(function (e) {
       console.log(e) // todo: handle error
@@ -257,14 +265,14 @@ export default class extends Controller {
     let options = {
       legend: 'always',
       includeZero: true,
-      animatedZooms: true,
       legendFormatter: legendFormatter,
       labelsDiv: _this.labelsTarget,
       ylabel: yLabel,
       xlabel: 'Height',
       labelsKMB: true,
       drawPoints: true,
-      strokeWidth: 0.0
+      strokeWidth: 0.0,
+      showRangeSelector: true
     }
 
     _this.chartsView = new Dygraph(_this.chartsViewTarget, csv, options)

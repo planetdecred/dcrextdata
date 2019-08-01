@@ -1,6 +1,6 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { hide, show, legendFormatter } from '../utils'
+import { hide, show, legendFormatter, setActiveOptionBtn } from '../utils'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
 
@@ -10,17 +10,10 @@ export default class extends Controller {
       'selectedFilter', 'vspTicksTable', 'numPageWrapper',
       'previousPageButton', 'totalPageCount', 'nextPageButton',
       'vspRowTemplate', 'currentPage', 'selectedNum', 'vspTableWrapper',
-      'graphTypeWrapper', 'graphType', 'pageSizeWrapper',
+      'graphTypeWrapper', 'graphType', 'pageSizeWrapper', 'viewOptionControl',
       'vspSelectorWrapper', 'chartSourceWrapper', 'chartSource',
       'chartWrapper', 'labels', 'chartsView', 'viewOption'
     ]
-  }
-
-  connect () {
-    var filter = this.selectedFilterTarget.options
-    var num = this.selectedNumTarget.options
-    this.selectedFilterTarget.value = filter[0].text
-    this.selectedNumTarget.value = num[0].text
   }
 
   initialize () {
@@ -35,12 +28,18 @@ export default class extends Controller {
         this.vsps.push(chartSource.value)
       }
     })
-    this.setChart()
+
+    this.selectedViewOption = this.viewOptionControlTarget.getAttribute('data-initial-value')
+    if (this.selectedViewOption === 'chart') {
+      this.setChart()
+    } else {
+      this.setTable()
+    }
   }
 
   setTable () {
-    this.viewOption = 'table'
-    this.setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
+    this.selectedViewOption = 'table'
+    setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
     hide(this.chartWrapperTarget)
     hide(this.graphTypeWrapperTarget)
     hide(this.chartSourceWrapperTarget)
@@ -49,12 +48,12 @@ export default class extends Controller {
     show(this.pageSizeWrapperTarget)
     show(this.vspSelectorWrapperTarget)
     this.vspTicksTableTarget.innerHTML = ''
-    this.nextPage = 1
+    this.nextPage = this.currentPage
     this.fetchExchange('table')
   }
 
   setChart () {
-    this.viewOption = 'chart'
+    this.selectedViewOption = 'chart'
     hide(this.numPageWrapperTarget)
     hide(this.vspTableWrapperTarget)
     hide(this.vspSelectorWrapperTarget)
@@ -62,29 +61,14 @@ export default class extends Controller {
     show(this.chartWrapperTarget)
     show(this.chartSourceWrapperTarget)
     hide(this.pageSizeWrapperTarget)
-    this.setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
-    this.nextPage = 1
-    if (this.selectedFilterTarget.selectedIndex === 0) {
-      this.selectedFilterTarget.selectedIndex = 1
-    }
+    setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
     this.fetchExchange('chart')
   }
 
-  loadPreviousPage () {
-    this.nextPage = this.previousPageButtonTarget.getAttribute('data-next-page')
-    this.fetchExchange(this.viewOption)
-  }
-
-  loadNextPage () {
-    this.nextPage = this.nextPageButtonTarget.getAttribute('data-next-page')
-    this.totalPages = (this.nextPageButtonTarget.getAttribute('data-total-page'))
-    this.fetchExchange(this.viewOption)
-  }
-
   selectedFilterChanged () {
-    if (this.viewOption === 'table') {
+    if (this.selectedViewOption === 'table') {
       this.nextPage = 1
-      this.fetchExchange(this.viewOption)
+      this.fetchExchange(this.selectedViewOption)
     } else {
       if (this.selectedFilterTarget.selectedIndex === 0) {
         this.selectedFilterTarget.selectedIndex = 1
@@ -93,9 +77,19 @@ export default class extends Controller {
     }
   }
 
+  loadPreviousPage () {
+    this.nextPage = this.currentPage - 1
+    this.fetchExchange(this.selectedViewOption)
+  }
+
+  loadNextPage () {
+    this.nextPage = this.currentPage + 1
+    this.fetchExchange(this.selectedViewOption)
+  }
+
   numberOfRowsChanged () {
     this.nextPage = 1
-    this.fetchExchange(this.viewOption)
+    this.fetchExchange(this.selectedViewOption)
   }
 
   fetchExchange (display) {
@@ -109,11 +103,12 @@ export default class extends Controller {
     }
 
     const _this = this
-    axios.get(`/filteredvspticks?page=${this.nextPage}&filter=${selectedFilter}&recordsPerPage=${numberOfRows}`)
+    axios.get(`/vsps?page=${this.nextPage}&filter=${selectedFilter}&recordsPerPage=${numberOfRows}&viewOption=${_this.selectedViewOption}`)
       .then(function (response) {
         let result = response.data
 
         if (display === 'table') {
+          window.history.pushState(window.history.state, _this.addr, `/vsp?page=${result.currentPage}&filter=${selectedFilter}&recordsPerPage=${result.selectedNum}&viewOption=${_this.selectedViewOption}`)
           _this.currentPage = result.currentPage
           if (_this.currentPage <= 1) {
             hide(_this.previousPageButtonTarget)
@@ -128,8 +123,6 @@ export default class extends Controller {
           }
           _this.totalPageCountTarget.textContent = result.totalPages
           _this.currentPageTarget.textContent = result.currentPage
-          _this.previousPageButtonTarget.setAttribute('data-next-page', `${result.previousPage}`)
-          _this.nextPageButtonTarget.setAttribute('data-next-page', `${result.nextPage}`)
 
           _this.displayVSPs(result.vspData)
         } else {
@@ -188,7 +181,8 @@ export default class extends Controller {
       return
     }
     let _this = this
-    let url = `/vspchartdata?selectedAttribute=${this.graphTypeTarget.value}&vsps=${this.vsps.join('|')}`
+    let url = `/vspchartdata?selectedAttribute=${this.graphTypeTarget.value}&vsps=${this.vsps.join('|')}&viewOption=${_this.selectedViewOption}`
+    window.history.pushState(window.history.state, _this.addr, url + `&refresh=${1}`)
     axios.get(url).then(function (response) {
       _this.plotGraph(response.data)
     })
@@ -205,16 +199,14 @@ export default class extends Controller {
     let options = {
       legend: 'always',
       includeZero: true,
-      // dateWindow: [dataSet.min_date, dataSet.max_date],
-      animatedZooms: true,
       legendFormatter: legendFormatter,
-      // plotter: barChartPlotter,
       labelsDiv: _this.labelsTarget,
       ylabel: yLabel,
       xlabel: 'Date',
       labelsUTC: true,
       labelsKMB: true,
       connectSeparatedPoints: true,
+      showRangeSelector: true,
       axes: {
         x: {
           drawGrid: false
@@ -231,15 +223,5 @@ export default class extends Controller {
       dataSet.csv,
       options
     )
-  }
-
-  setActiveOptionBtn (opt, optTargets) {
-    optTargets.forEach(li => {
-      if (li.dataset.option === this.viewOption) {
-        li.classList.add('active')
-      } else {
-        li.classList.remove('active')
-      }
-    })
   }
 }

@@ -60,41 +60,21 @@
                                 </div>
                             </div>
 
-                            <div data-target="mempool.numPageWrapper" class="control-div p-0">
+                            <div data-target="mempool.numPageWrapper" class="control-div p-0 {{ if .mempool.chartView }}d-none{{ end }}">
                                 <div class="control-label">Page Size:</div>
-
-                                <select data-target="mempool.selectedNum" data-action="change->mempool#NumberOfRowsChanged"
-                                    class="form-control" style="width: 70px;">
-                                    <option value="20">20</option>
-                                    <option value="30">30</option>
-                                    <option value="50">50</option>
-                                    <option value="100">100</option>
-                                    <option value="150">150</option>
+                                <select data-target="mempool.selectedNumberOfRows" data-action="change->mempool#numberOfRowsChanged" class="form-control" style="width: 70px;">
+                                    {{$selectedNumberOfRows := .mempool.selectedNumberOfRows}}
+                                    {{ range $index, $filter := .mempool.pageSizeSelector}}
+                                    <option value="{{$index}}" {{ if eq $index $selectedNumberOfRows}} selected {{ end }}>{{$filter}}</option>
+                                    {{ end }}
                                 </select>
                             </div>
-                            <div class="d-flex">
-                                <div data-target="mempool.btnWrapper" class=" control-div float-md-right">
-                                    <button data-target="mempool.previousPageButton"
-                                        data-action="click->mempool#gotoPreviousPage"
-                                        data-previous-page="{{ .mempool.previousPage}}"
-                                        class="btn btn-link {{ if lt .mempool.previousPage 1 }}d-none{{ end }}">
-                                        &lt; Previous
-                                    </button>
+                            <div data-target="mempool.btnWrapper" class="d-flex {{ if .mempool.chartView }}d-none{{ end }}">
+                                <a href="javascript:void(0)" data-target="mempool.previousPageButton" data-action="click->mempool#loadPreviousPage" class="mr-2 {{ if lt .mempool.previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
 
-                                    <span data-target="mempool.pageReport" class="text-muted" style="white-space: nowrap;"
-                                        data-current-page="{{ .mempool.currentPage }}">
-                                        Page <span data-target="mempool.currentPage"
-                                            data-current-page="{{ .mempool.currentPage }}">{{ .mempool.currentPage }}</span>
-                                        of
-                                        <span data-target="mempool.totalPageCount">{{ .mempool.totalPages }}</span>
-                                    </span>
-
-                                    <button data-target="mempool.nextPageButton" data-action="click->mempool#gotoNextPage"
-                                        data-next-page="{{ .mempool.nextPage }}"
-                                        class="btn btn-link {{ if not .mempool.nextPage }}d-none{{ end }}">
-                                        Next &gt;
-                                    </button>
-                                </div>
+                                <p class="text-muted" style="white-space: nowrap;"> Page <span data-target="mempool.currentPage" class="text-muted" data-current-page="{{ .mempool.currentPage }}"> {{ .mempool.currentPage }}</span> of <span data-target="mempool.totalPageCount" class="text-muted">{{ .mempool.totalPages }}</span>
+                                </p>    
+                                <a href="javascript:void(0)" data-target="mempool.nextPageButton" data-action="click->mempool#loadNextPage" class="ml-2 {{ if not .mempool.nextPage }}d-none{{ end }}"> Next&gt;</a>
                             </div>
                         </div>
                         

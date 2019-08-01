@@ -143,33 +143,39 @@ func (pg *PgDb) FetchVSPs(ctx context.Context) ([]vsp.VSPDto, error) {
 }
 
 // VSPTicks
-func (pg *PgDb) FiltredVSPTicks(ctx context.Context, vspName string, offset int, limit int) ([]vsp.VSPTickDto, error) {
+func (pg *PgDb) FiltredVSPTicks(ctx context.Context, vspName string, offset, limit int) ([]vsp.VSPTickDto, int64, error) {
 	vspInfo, err := models.VSPS(models.VSPWhere.Name.EQ(null.StringFrom(vspName))).One(ctx, pg.db)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	vspIdQuery := models.VSPTickWhere.VSPID.EQ(vspInfo.ID)
-	vspTickSlice, err := models.VSPTicks(qm.Load("VSP"), vspIdQuery, qm.Limit(limit), qm.Offset(offset), qm.OrderBy(fmt.Sprintf("%s DESC", models.VSPTickColumns.Time))).All(ctx, pg.db)
-
+	vspTickSlice, err := models.VSPTicks(qm.Load(models.VSPTickRels.VSP), vspIdQuery, qm.Limit(limit), qm.Offset(offset), qm.OrderBy(fmt.Sprintf("%s DESC", models.VSPTickColumns.Time))).All(ctx, pg.db)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
+
+	vspTickCount, err := models.VSPTicks(qm.Load(models.VSPTickRels.VSP), vspIdQuery).Count(ctx, pg.db)
 
 	vspTicks := []vsp.VSPTickDto{}
 	for _, tick := range vspTickSlice {
 		vspTicks = append(vspTicks, pg.vspTickModelToDto(tick))
 	}
 
-	return vspTicks, nil
+	return vspTicks, vspTickCount, nil
 }
 
 // VSPTicks
 // todo impliment sorting for VSP ticks as it is currently been sorted by time
-func (pg *PgDb) AllVSPTicks(ctx context.Context, offset int, limit int) ([]vsp.VSPTickDto, error) {
-	vspTickSlice, err := models.VSPTicks(qm.Load("VSP"), qm.Limit(limit), qm.Offset(offset), qm.OrderBy(fmt.Sprintf("%s DESC", models.VSPTickColumns.Time))).All(ctx, pg.db)
+func (pg *PgDb) AllVSPTicks(ctx context.Context, offset, limit int) ([]vsp.VSPTickDto, int64, error) {
+	vspTickSlice, err := models.VSPTicks(qm.Load(models.VSPTickRels.VSP), qm.Limit(limit), qm.Offset(offset), qm.OrderBy(fmt.Sprintf("%s DESC", models.VSPTickColumns.Time))).All(ctx, pg.db)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+
+	vspTickCount, err := models.VSPTicks().Count(ctx, pg.db)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	vspTicks := []vsp.VSPTickDto{}
@@ -177,7 +183,7 @@ func (pg *PgDb) AllVSPTicks(ctx context.Context, offset int, limit int) ([]vsp.V
 		vspTicks = append(vspTicks, pg.vspTickModelToDto(tick))
 	}
 
-	return vspTicks, nil
+	return vspTicks, vspTickCount, nil
 }
 
 func (pg *PgDb) vspTickModelToDto(tick *models.VSPTick) vsp.VSPTickDto {
@@ -197,28 +203,13 @@ func (pg *PgDb) vspTickModelToDto(tick *models.VSPTick) vsp.VSPTickDto {
 	}
 }
 
-func (pg *PgDb) AllVSPTickCount(ctx context.Context) (int64, error) {
-	return models.VSPTicks().Count(ctx, pg.db)
-}
-
-// VSPTicks count by vsp names
-func (pg *PgDb) FiltredVSPTicksCount(ctx context.Context, vspName string) (int64, error) {
-	vspInfo, err := models.VSPS(models.VSPWhere.Name.EQ(null.StringFrom(vspName))).One(ctx, pg.db)
-	if err != nil {
-		return 0, err
-	}
-
-	vspIdQuery := models.VSPTickWhere.VSPID.EQ(vspInfo.ID)
-	return models.VSPTicks(qm.Load("VSP"), vspIdQuery).Count(ctx, pg.db)
-}
-
 func (pg *PgDb) LastVspTickEntryTime() (time time.Time) {
 	rows := pg.db.QueryRow(lastVspTickEntryTime)
 	_ = rows.Scan(&time)
 	return
 }
 
-func (pg *PgDb) FetchChartData(ctx context.Context, attribute string, vspName string) (records []vsp.ChartData, err error) {
+func (pg *PgDb) FetchChartData(ctx context.Context, attribute, vspName string) (records []vsp.ChartData, err error) {
 	attribute = strings.ToLower(attribute)
 	vspInfo, err := models.VSPS(models.VSPWhere.Name.EQ(null.StringFrom(vspName))).One(ctx, pg.db)
 	if err != nil {
