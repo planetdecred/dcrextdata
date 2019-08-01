@@ -221,6 +221,7 @@ func (c *Collector) StartMonitoring(ctx context.Context) {
 		mempoolDto.Revocations = len(revocations)
 
 		err = c.dataStore.StoreMempool(ctx, mempoolDto)
+		log.Info("Creating Mempool table")
 		if err != nil {
 			log.Error(err)
 		}

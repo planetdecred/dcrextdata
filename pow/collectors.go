@@ -140,6 +140,7 @@ func (pc *Collector) Collect(ctx context.Context) {
 				log.Error(err)
 			}
 			err = pc.store.AddPowData(ctx, data)
+			log.Info("Creating poW table")
 			if err != nil {
 				log.Error(err)
 			}
