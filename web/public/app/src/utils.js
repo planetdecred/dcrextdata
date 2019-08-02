@@ -3,11 +3,13 @@ import dompurify from 'dompurify'
 const Dygraph = require('../../dist/js/dygraphs.min.js')
 
 export const hide = (el) => {
+  if (!el) return
   el.classList.add('d-none')
   el.classList.add('d-hide')
 }
 
 export const show = (el) => {
+  if (!el) return
   el.classList.remove('d-none')
   el.classList.remove('d-hide')
 }

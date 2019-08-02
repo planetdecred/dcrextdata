@@ -144,11 +144,15 @@ export default class extends Controller {
     axios.get(url)
       .then(function (response) {
         let result = response.data
-        console.log(result)
+        if (result.error) {
+          throw (new Error(result.error))
+        }
         if (display === 'table') {
           if (result.message) {
             _this.totalPageCountTarget.textContent = 0
             _this.currentPageTarget.textContent = 0
+
+            throw new Error(result.message)
           } else {
             window.history.pushState(window.history.state, _this.addr, `/exchanges?page=${result.currentPage}&selectedExchange=${_this.selectedExchange}&recordsPerPage=${result.selectedNum}&selectedCurrencyPair=${result.selectedCurrencyPair}&selectedInterval=${result.selectedInterval}&viewOption=${result.selectedViewOption}`)
             hide(_this.messageViewTarget)
@@ -182,8 +186,16 @@ export default class extends Controller {
         _this.hideLoading()
       })
       .catch(function (e) {
-      }).catch(function (e) {
-        console.log(e)
+        let messageHTML = ''
+        messageHTML += `<div class="alert alert-primary">
+                            <strong>${e}</strong>
+                        </div>`
+
+        _this.messageViewTarget.innerHTML = messageHTML
+        show(_this.messageViewTarget)
+        hide(_this.exchangeTableWrapperTarget)
+        hide(_this.pageSizeWrapperTarget)
+        hide(_this.chartWrapperTarget)
         _this.hideLoading()
       })
   }
@@ -213,7 +225,9 @@ export default class extends Controller {
 
   // exchange chart
   plotGraph (exs) {
-    if (exs.chartData) {
+    if (!exs.chartData) {
+      throw (new Error(exs.message))
+    }
 
     hide(this.messageViewTarget)
 
