@@ -1,6 +1,6 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { hide, show, legendFormatter, setActiveOptionBtn, options } from '../utils'
+import { hide, show, legendFormatter, setActiveOptionBtn, options, showLoading, hideLoading } from '../utils'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
 
@@ -8,7 +8,7 @@ export default class extends Controller {
   static get targets () {
     return [
       'selectedFilter', 'exchangeTable', 'selectedCurrencyPair', 'numPageWrapper', 'intervalsWapper',
-      'previousPageButton', 'totalPageCount', 'nextPageButton', 'selectedTicks', 'selectedInterval',
+      'previousPageButton', 'totalPageCount', 'nextPageButton', 'selectedTicks', 'selectedInterval', 'loadingData',
       'exRowTemplate', 'currentPage', 'selectedNum', 'exchangeTableWrapper', 'tickWapper', 'viewOptionControl',
       'chartWrapper', 'labels', 'chartsView', 'selectedViewOption', 'hideOption', 'sourceWrapper', 'chartSelector',
       'pageSizeWrapper', 'chartSource', 'currencyPairHideOption', 'messageView', 'hideIntervalOption', 'viewOption'
@@ -116,6 +116,10 @@ export default class extends Controller {
 
   fetchExchange (display) {
     const _this = this
+
+    let elementsToToggle = [this.exchangeTableWrapperTarget, this.chartWrapperTarget]
+    showLoading(this.loadingDataTarget, elementsToToggle)
+
     var url
     if (display === 'table') {
       url = `/exchange?page=${_this.nextPage}&selectedExchange=${_this.selectedExchange}&recordsPerPage=${_this.numberOfRows}&selectedCurrencyPair=${_this.selectedCurrencyPair}&selectedInterval=${_this.selectedInterval}&viewOption=${_this.selectedViewOption}`
@@ -129,6 +133,7 @@ export default class extends Controller {
         let result = response.data
         console.log(result)
         if (display === 'table') {
+          hideLoading(_this.loadingDataTarget, [_this.exchangeTableWrapperTarget])
           if (result.message) {
             let messageHTML = ''
             messageHTML += `<div class="alert alert-primary">
@@ -167,9 +172,11 @@ export default class extends Controller {
             _this.displayExchange(result.exData)
           }
         } else {
+          hideLoading(_this.loadingDataTarget, [_this.chartWrapperTarget])
           _this.plotGraph(result)
         }
       }).catch(function (e) {
+        hideLoading(_this.loadingDataTarget, elementsToToggle)
         console.log(e)
       })
   }
