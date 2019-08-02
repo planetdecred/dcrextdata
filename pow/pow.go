@@ -6,7 +6,6 @@ package pow
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -23,9 +22,6 @@ const (
 
 	Coinmine    = "coinmine"
 	CoinmineUrl = "https://www2.coinmine.pl/dcr/index.php?page=api&action=public"
-
-	Btc    = "btc"
-	BtcUrl = "https://pool.api.btc.com/v1/pool/status"
 
 	Uupool    = "uupool"
 	UupoolUrl = "http://uupool.cn/api/getPoolInfo.php?coin=dcr"
@@ -44,7 +40,6 @@ var (
 		Luxor:    NewLuxor,
 		F2pool:   NewF2pool,
 		Coinmine: NewCoinmine,
-		Btc:      NewBtc,
 		Uupool:   NewUupool,
 	}
 
@@ -239,78 +234,6 @@ func (CoinminePow) fetch(res *coinmineAPIResponse, start int64) []PowData {
 
 func (*CoinminePow) Name() string { return Coinmine }
 
-type BtcPow struct {
-	CommonInfo
-}
-
-func NewBtc(client *http.Client, lastUpdate int64) (Pow, error) {
-	if client == nil {
-		return nil, nilClientError
-	}
-	return &BtcPow{
-		CommonInfo: CommonInfo{
-			client:     client,
-			lastUpdate: lastUpdate,
-			baseUrl:    BtcUrl,
-		},
-	}, nil
-}
-
-func (in *BtcPow) Collect(ctx context.Context) ([]PowData, error) {
-	res := new(btcAPIResponse)
-	err := helpers.GetResponse(ctx, in.client, in.baseUrl, res)
-
-	if err != nil {
-		return nil, err
-	}
-
-	result := in.fetch(res, in.lastUpdate)
-	if len(result) > 0 {
-		in.lastUpdate = result[len(result)-1].Time
-	}
-
-	return result, nil
-}
-
-func (BtcPow) fetch(res *btcAPIResponse, start int64) []PowData {
-	data := make([]PowData, 0, 1)
-	t := helpers.NowUtc().Unix()
-
-	p, err := strconv.ParseFloat(res.BtcData.PoolHashrate, 64)
-	if err != nil {
-		return nil
-	}
-
-	poolHashrate, err := convertHashRate(p, res.BtcData.PoolHashrateUnit)
-	if err != nil {
-		log.Error("Unable to convert the pool hashrage return from api: %s", err.Error())
-		return nil
-	}
-
-	data = append(data, PowData{
-		Time:         t,
-		PoolHashrate: float64(poolHashrate),
-		Workers:      0,
-		CoinPrice:    0,
-		BtcPrice:     res.BtcData.Rates.CoinPrice,
-		Source:       "btc",
-	})
-
-	return data
-}
-
-func convertHashRate(hashrate float64, unit string) (float64, error) {
-	conversionRate, found := hashConversionRates[unit]
-	if !found {
-		return 0, fmt.Errorf("unknown hashrate unit: %s", unit)
-	}
-	result := float64(conversionRate) * hashrate
-
-	return result, nil
-}
-
-func (*BtcPow) Name() string { return Btc }
-
 type UupoolPow struct {
 	CommonInfo
 }
@@ -360,4 +283,4 @@ func (UupoolPow) fetch(res *uupoolAPIResponse, start int64) []PowData {
 	return data
 }
 
-func (*UupoolPow) Name() string { return Btc }
+func (*UupoolPow) Name() string { return Uupool }

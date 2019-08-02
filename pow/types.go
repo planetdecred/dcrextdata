@@ -52,21 +52,6 @@ type coinmineAPIResponse struct {
 	Workers      int64   `json:"workers"`
 }
 
-type btcData struct {
-	NetworkHashrateUnit string              `json:"network_hashrate_unit"`
-	PoolHashrate        string              `json:"pool_hashrate"`
-	PoolHashrateUnit    string              `json:"pool_hashrate_unit"`
-	Rates               btcExchangeRateData `json:"exchange_rate"`
-}
-
-type btcExchangeRateData struct {
-	CoinPrice float64 `json:"DCR2USD"`
-}
-
-type btcAPIResponse struct {
-	BtcData btcData `json:"data"`
-}
-
 type uupoolData struct {
 	PoolHashrate  float64 `json:"hr1"`
 	OnlineWorkers int64   `json:"onlineWorkers"`
