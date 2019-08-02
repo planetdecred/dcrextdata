@@ -53,11 +53,13 @@
                             </div>
 
                            <div class="control-div pt-2" data-target="pow.chartSourceWrapper">
+                               {{ $selectedPools := .pow.selectedPools }}
                                 {{ range $index, $filter := .pow.powSource}}
                                 <div class="form-check form-check-inline" data-target="pow.poolDiv">
                                     <input data-target="pow.pool" data-action="click->pow#poolCheckChanged"
                                            class="form-check-input" type="checkbox" id="inlineCheckbox-{{$filter.Source}}"
-                                           value="{{$filter.Source}}" {{ if eq $index 0 }} checked {{ end }}>
+                                           value="{{$filter.Source}}" {{ if strListContains $selectedPools $filter.Source }} checked {{ end }}>
+
                                     <label class="form-check-label" for="inlineCheckbox-{{$filter.Source}}">{{$filter.Source}}</label>
                                 </div>
                                 {{ end}}
