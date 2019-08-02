@@ -47,5 +47,13 @@ func templateFuncMap() template.FuncMap {
 		"timestamp": func() int64 {
 			return time.Now().Unix()
 		},
+		"strListContains": func(stringList []string, niddle string) bool {
+			for _, value := range stringList {
+				if value == niddle {
+					return true
+				}
+			}
+			return false
+		},
 	}
 }

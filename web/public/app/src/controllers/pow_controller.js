@@ -23,6 +23,17 @@ export default class extends Controller {
     this.dataType = this.dataTypeTarget.getAttribute('data-initial-value')
     setActiveOptionBtn(this.dataType, this.dataTypeTargets)
 
+    // if no pool is selected, select the first on
+    let noPoolSelected = true
+    this.poolTargets.forEach(el => {
+      if (el.checked) {
+        noPoolSelected = false
+      }
+    })
+    if (noPoolSelected) {
+      this.poolTarget.checked = true
+    }
+
     this.selectedViewOption = this.viewOptionControlTarget.getAttribute('data-initial-value')
     if (this.selectedViewOption === 'chart') {
       this.setChart()
