@@ -34,10 +34,18 @@
                                     </ul>
                                 </div>
                             </div>
-
-                                </ul>
+                            <div class="chart-control control-div p-0">
+                                {{$selectedRecordSet := .propagation.selectedRecordSet}}
+                                <select data-target="propagation.selectedRecordSet" data-action="change->propagation#selectedRecordSetChanged"
+                                        data-initial-value="{{ $selectedRecordSet }}"
+                                    class="form-control " style="width: 150px;">
+                                    <option data-target="propagation.bothRecordSetOption" value="both">Both</option>
+                                    {{ range $index, $recordSet := .propagation.propagationRecordSet}}
+                                    <option value="{{$index}}" {{ if eq $index $selectedRecordSet}} selected {{ end }}>{{$recordSet}}</option>
+                                    {{ end }}
+                                </select>
                             </div>
-                        </div>
+
                         <div class="d-flex chart-control-wrapper mr-3 p-0"
                         data-target="propagation.recordSetSelector">
                         <div class="chart-control propagation-control mx-auto">
