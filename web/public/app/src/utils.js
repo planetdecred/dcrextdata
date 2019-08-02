@@ -12,6 +12,22 @@ export const show = (el) => {
   el.classList.remove('d-hide')
 }
 
+export const showLoading = (loadingTarget, elementsToHide) => {
+  show(loadingTarget)
+  if (!elementsToHide || !elementsToHide.length) return
+  elementsToHide.forEach(element => {
+    hide(element)
+  })
+}
+
+export const hideLoading = (loadingTarget, elementsToShow) => {
+  hide(loadingTarget)
+  if (!elementsToShow || !elementsToShow.length) return
+  elementsToShow.forEach(element => {
+    show(element)
+  })
+}
+
 export const isHidden = (el) => {
   return el.classList.contains('d-none')
 }
