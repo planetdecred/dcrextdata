@@ -180,10 +180,6 @@ export default class extends Controller {
       }
     })
 
-    if (this.vsps.length === 0) {
-      return
-    }
-
     let elementsToToggle = [this.chartWrapperTarget]
     showLoading(this.loadingDataTarget, elementsToToggle)
 
@@ -198,9 +194,10 @@ export default class extends Controller {
       }
 
       hideLoading(_this.loadingDataTarget, elementsToToggle)
-      _this.plotGraph(response.data)
+      _this.plotGraph(result)
     }).catch(function (e) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
+      _this.drawInitialGraph()
     })
   }
 
