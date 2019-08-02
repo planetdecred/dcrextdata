@@ -20,8 +20,7 @@ export default class extends Controller {
     if (this.currentPage < 1) {
       this.currentPage = 1
     }
-    this.dataType = this.dataTypeTarget.getAttribute('data-initial-value')
-    setActiveOptionBtn(this.dataType, this.dataTypeTargets)
+    this.setDataType(this.dataTypeTarget.getAttribute('data-initial-value'))
 
     // if no pool is selected, select the first on
     let noPoolSelected = true
@@ -148,13 +147,17 @@ export default class extends Controller {
     })
   }
 
-  setDataType (event) {
-    this.dataType = event.currentTarget.getAttribute('data-option')
+  dataTypeChanged (event) {
+    this.setDataType(event.currentTarget.getAttribute('data-option'))
+  }
+
+  setDataType (dataType) {
+    this.dataType = dataType
     setActiveOptionBtn(this.dataType, this.dataTypeTargets)
 
+    this.btcIndex = this.poolTargets.findIndex(el => el.value === 'btc')
+    this.f2poolIndex = this.poolTargets.findIndex(el => el.value === 'f2pool')
     if (this.dataType === 'workers') {
-      this.btcIndex = this.poolTargets.findIndex(el => el.value === 'btc')
-      this.f2poolIndex = this.poolTargets.findIndex(el => el.value === 'f2pool')
       hide(this.poolDivTargets[this.btcIndex])
       hide(this.poolDivTargets[this.f2poolIndex])
     } else {
