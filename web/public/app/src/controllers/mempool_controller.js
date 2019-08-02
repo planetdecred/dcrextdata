@@ -1,6 +1,6 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { legendFormatter, barChartPlotter, hide, show, setActiveOptionBtn } from '../utils'
+import { legendFormatter, barChartPlotter, hide, show, setActiveOptionBtn, showLoading, hideLoading } from '../utils'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
 
@@ -11,7 +11,7 @@ export default class extends Controller {
       'totalPageCount', 'currentPage', 'btnWrapper', 'tableWrapper', 'chartsView',
       'chartWrapper', 'viewOption', 'labels', 'viewOptionControl',
       'chartDataTypeSelector', 'chartDataType', 'chartOptions', 'labels', 'selectedMempoolOpt',
-      'selectedNumberOfRows', 'numPageWrapper'
+      'selectedNumberOfRows', 'numPageWrapper', 'loadingData'
     ]
   }
 
@@ -110,17 +110,24 @@ export default class extends Controller {
       url = `/mempoolcharts?chartFilter=${this.dataType}&viewOption=${this.selectedViewOption}`
       window.history.pushState(window.history.state, this.addr, url + `&refresh=${1}`)
     }
+    let elementsToToggle = [this.tableWrapperTarget, this.chartWrapperTarget]
+    showLoading(this.loadingDataTarget, elementsToToggle)
 
     const _this = this
     axios.get(url).then(function (response) {
+      hideLoading(_this.loadingDataTarget, elementsToToggle)
       let result = response.data
+
       if (display === 'table') {
+        hide(_this.chartWrapperTarget)
         _this.totalPageCountTarget.textContent = result.totalPages
         _this.currentPageTarget.textContent = result.currentPage
-        window.history.pushState(window.history.state, _this.addr, `/mempool?page=${result.currentPage}&recordsPerPage=${result.selectedNumberOfRows}&viewOption=${_this.selectedViewOption}`)
-
-        _this.currentPage = result.currentPage
+        window.history.pushState(
+          window.history.state, _this.addr,
+          `/mempool?page=${result.currentPage}&recordsPerPage=${result.selectedNumberOfRows}&viewOption=${_this.selectedViewOption}`
+        )
         if (_this.currentPage <= 1) {
+          _this.currentPage = result.currentPage
           hide(_this.previousPageButtonTarget)
         } else {
           show(_this.previousPageButtonTarget)
@@ -134,9 +141,11 @@ export default class extends Controller {
 
         _this.displayMempool(result.mempoolData)
       } else {
+        hide(_this.tableWrapperTarget)
         _this.plotGraph(result)
       }
     }).catch(function (e) {
+      hideLoading(_this.loadingDataTarget, elementsToToggle)
       console.log(e) // todo: handle error
     })
   }
