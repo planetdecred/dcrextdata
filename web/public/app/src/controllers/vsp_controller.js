@@ -174,17 +174,6 @@ export default class extends Controller {
   }
 
   chartSourceCheckChanged (event) {
-    this.vsps = []
-    this.chartSourceTargets.forEach(chartSource => {
-      if (chartSource.checked) {
-        this.vsps.push(chartSource.value)
-      }
-    })
-    const element = event.currentTarget
-    if (this.vsps.length === 0 && !element.checked) {
-      element.checked = true
-      this.vsps.push(element.value)
-    }
     this.fetchDataAndPlotGraph()
   }
 
@@ -202,15 +191,20 @@ export default class extends Controller {
     window.history.pushState(window.history.state, _this.addr, `/vsp?${queryString}`)
     axios.get(`/vspchartdata?${queryString}`).then(function (response) {
       _this.plotGraph(response.data)
+    }).catch(function (e) {
+      _this.drawInitialGraph()
     })
   }
 
   // vsp chart
   plotGraph (dataSet) {
     const _this = this
-    let yLabel = this.dataType.split('_').join(' ')
-    if ((yLabel.toLowerCase() === 'proportion live' || yLabel.toLowerCase() === 'proportion missed')) {
-      yLabel += ' (%)'
+    _this.yLabel = this.graphTypeTarget.value.split('_').join(' ')
+    if ((_this.yLabel.toLowerCase() === 'proportion live' || _this.yLabel.toLowerCase() === 'proportion missed')) {
+      _this.yLabel += ' (%)'
+    }
+    if (_this.yLabel === '') {
+      _this.yLabel = 'n/a'
     }
 
     let options = {
@@ -218,7 +212,7 @@ export default class extends Controller {
       includeZero: true,
       legendFormatter: legendFormatter,
       labelsDiv: _this.labelsTarget,
-      ylabel: yLabel,
+      ylabel: _this.yLabel,
       xlabel: 'Date',
       labelsUTC: true,
       labelsKMB: true,
@@ -233,6 +227,32 @@ export default class extends Controller {
     _this.chartsView = new Dygraph(
       _this.chartsViewTarget,
       dataSet.csv,
+      options
+    )
+  }
+
+  drawInitialGraph () {
+    var options = {
+      legend: 'always',
+      includeZero: true,
+      legendFormatter: legendFormatter,
+      labelsDiv: this.labelsTarget,
+      ylabel: this.yLabel,
+      xlabel: 'Date',
+      labelsUTC: true,
+      labelsKMB: true,
+      connectSeparatedPoints: true,
+      showRangeSelector: true,
+      axes: {
+        x: {
+          drawGrid: false
+        }
+      }
+    }
+
+    this.chartsView = new Dygraph(
+      this.chartsViewTarget,
+      [[0, 0]],
       options
     )
   }
