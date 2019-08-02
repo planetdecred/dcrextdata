@@ -20,8 +20,8 @@ export default class extends Controller {
     if (this.currentPage < 1) {
       this.currentPage = 1
     }
-    this.dataType = 'size'
-
+    this.dataType = this.chartDataTypeTarget.getAttribute('data-initial-value')
+    setActiveOptionBtn(this.dataType, this.chartDataTypeTargets)
     this.selectedViewOption = this.viewOptionControlTarget.getAttribute('data-initial-value')
     if (this.selectedViewOption === 'chart') {
       this.setChart()
@@ -54,17 +54,14 @@ export default class extends Controller {
     this.fetchData(this.selectedViewOption)
   }
 
-  MempoolOptionChanged () {
+  mempoolOptionChanged () {
     this.chartFilter = this.selectedMempoolOptTarget.value
     this.fetchData(this.selectedViewOption)
   }
 
-  setSizeDataType (event) {
-    this.dataType = 'size'
-    this.chartDataTypeTargets.forEach(el => {
-      el.classList.remove('active')
-    })
-    event.currentTarget.classList.add('active')
+  setDataType (event) {
+    this.dataType = event.currentTarget.getAttribute('data-option')
+    setActiveOptionBtn(this.dataType, this.chartDataTypeTargets)
     this.fetchData('chart')
   }
 
@@ -102,13 +99,12 @@ export default class extends Controller {
   }
 
   fetchData (display) {
-    var url
+    let url
     if (display === 'table') {
-      var numberOfRows = this.selectedNumberOfRowsTarget.value
-      url = `/getmempool?page=${this.nextPage}&recordsPerPage=${numberOfRows}&viewOption=${this.selectedViewOption}`
+      const numberOfRows = this.selectedNumberOfRowsTarget.value
+      url = `/getmempool?page=${this.nextPage}&records-per-page=${numberOfRows}&view-option=${this.selectedViewOption}`
     } else {
-      url = `/mempoolcharts?chartFilter=${this.dataType}&viewOption=${this.selectedViewOption}`
-      window.history.pushState(window.history.state, this.addr, url + `&refresh=${1}`)
+      url = `/mempoolcharts?chart-data-type=${this.dataType}&view-option=${this.selectedViewOption}`
     }
     let elementsToToggle = [this.tableWrapperTarget, this.chartWrapperTarget]
     showLoading(this.loadingDataTarget, elementsToToggle)
@@ -122,10 +118,10 @@ export default class extends Controller {
         hide(_this.chartWrapperTarget)
         _this.totalPageCountTarget.textContent = result.totalPages
         _this.currentPageTarget.textContent = result.currentPage
-        window.history.pushState(
-          window.history.state, _this.addr,
-          `/mempool?page=${result.currentPage}&recordsPerPage=${result.selectedNumberOfRows}&viewOption=${_this.selectedViewOption}`
-        )
+        let url = `/mempool?page=${result.currentPage}&records-per-page=${result.selectedNumberOfRows}&view-option=${_this.selectedViewOption}`
+        window.history.pushState(window.history.state, _this.addr, url)
+
+        _this.currentPage = result.currentPage
         if (_this.currentPage <= 1) {
           _this.currentPage = result.currentPage
           hide(_this.previousPageButtonTarget)
@@ -141,7 +137,8 @@ export default class extends Controller {
 
         _this.displayMempool(result.mempoolData)
       } else {
-        hide(_this.tableWrapperTarget)
+        let url = `/mempool?chart-data-type=${_this.dataType}&view-option=${_this.selectedViewOption}`
+        window.history.pushState(window.history.state, _this.addr, url)
         _this.plotGraph(result)
       }
     }).catch(function (e) {

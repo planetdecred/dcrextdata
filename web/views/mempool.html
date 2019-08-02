@@ -28,14 +28,14 @@
                     <div data-target="mempool.chartOptions" class="control-div p-0 d-hide">
                         <div class="control-label ">Mempool Charts:</div>
 
-                        <select data-target="mempool.selectedMempoolOpt"
-                        data-action="change->mempool#MempoolOptionChanged" class="form-control mr-5 "
-                        style="width: 200px;">
-                        <option value="size">Size Chart</option>
-                        <option value="total_fee">Total fees Chart</option>
-                        <option value="number_of_transactions">Number of Transactions</option>
-                    </select>
-                </div>
+                                <select data-target="mempool.selectedMempoolOpt"
+                                    data-action="change->mempool#mempoolOptionChanged" class="form-control mr-5 "
+                                    style="width: 200px;">
+                                    <option value="size">Size Chart</option>
+                                    <option value="total_fee">Total fees Chart</option>
+                                    <option value="number_of_transactions">Number of Transactions</option>
+                                </select>
+                            </div>
 
                 <div class="chart-control-wrapper control-div p-0 d-none"
                 data-target="mempool.chartDataTypeSelector">
