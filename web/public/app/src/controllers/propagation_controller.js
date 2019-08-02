@@ -1,6 +1,6 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { hide, show, setActiveOptionBtn, legendFormatter } from '../utils'
+import { hide, show, setActiveOptionBtn, legendFormatter, showLoading, hideLoading } from '../utils'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
 
@@ -11,7 +11,7 @@ export default class extends Controller {
       'bothRecordSetOption', 'selectedRecordSet', 'selectedNum', 'numPageWrapper', 'paginationButtonsWrapper',
       'tablesWrapper', 'table', 'blocksTbody', 'votesTbody', 'chartWrapper', 'chartsView', 'labels',
       'blocksTable', 'blocksTableBody', 'blocksRowTemplate', 'votesTable', 'votesTableBody', 'votesRowTemplate',
-      'totalPageCount', 'currentPage', 'viewOptionControl', 'chartSelector', 'viewOption'
+      'totalPageCount', 'currentPage', 'viewOptionControl', 'chartSelector', 'viewOption', 'loadingData'
     ]
   }
 
@@ -85,6 +85,9 @@ export default class extends Controller {
   fetchData (page) {
     const _this = this
 
+    let elementsToToggle = [this.tablesWrapperTarget]
+    showLoading(this.loadingDataTarget, elementsToToggle)
+
     var numberOfRows = this.selectedNumTarget.value
     let url = '/getpropagationdata'
     switch (this.selectedRecordSet) {
@@ -99,6 +102,7 @@ export default class extends Controller {
         break
     }
     axios.get(`/${url}?page=${page}&recordsPerPage=${numberOfRows}&viewOption=${_this.selectedViewOption}`).then(function (response) {
+      hideLoading(_this.loadingDataTarget, elementsToToggle)
       let result = response.data
       console.log(result)
       _this.totalPageCountTarget.textContent = result.totalPages
@@ -120,7 +124,8 @@ export default class extends Controller {
 
       _this.displayData(result)
     }).catch(function (e) {
-      // console.log(e) // todo: handle error
+      hideLoading(_this.loadingDataTarget, elementsToToggle)
+      console.log(e) // todo: handle error
     })
   }
 
@@ -245,13 +250,18 @@ export default class extends Controller {
   }
 
   fetchChartDataAndPlot () {
+    let elementsToToggle = [this.chartWrapperTarget]
+    showLoading(this.loadingDataTarget, elementsToToggle)
+
     const _this = this
     const url = '/propagationchartdata?recordset=' + this.selectedRecordSet + `&viewOption=${_this.selectedViewOption}`
     window.history.pushState(window.history.state, _this.addr, url + `&refresh=${1}`)
 
     axios.get(url).then(function (response) {
+      hideLoading(_this.loadingDataTarget, elementsToToggle)
       _this.plotGraph(response.data)
     }).catch(function (e) {
+      hideLoading(_this.loadingDataTarget, elementsToToggle)
       console.log(e) // todo: handle error
     })
   }
