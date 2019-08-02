@@ -728,7 +728,7 @@ func (s *Server) fetchMempoolData(req *http.Request) (map[string]interface{}, er
 
 	data := map[string]interface{}{
 		"chartView":            true,
-		"chartDataType":        chartDataType,
+		"chartDataType":		chartDataType,
 		"selectedViewOption":   viewOption,
 		"pageSizeSelector":     pageSizeSelector,
 		"selectedNumberOfRows": pageSize,
