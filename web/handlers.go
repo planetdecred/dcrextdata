@@ -15,11 +15,12 @@ import (
 )
 
 const (
-	defaultViewOption     = "chart"
-	defaultChartDataType  = "size"
-	maxPageSize           = 250
-	recordsPerPage        = 20
-	defaultInterval       = 1440 // All
+	chartViewOption             = "chart"
+	defaultViewOption           = chartViewOption
+	mempoolDefaultChartDataType = "size"
+	maxPageSize                 = 250
+	recordsPerPage              = 20
+	defaultInterval             = 1440 // All
 )
 
 var (
@@ -39,7 +40,7 @@ var (
 		150: 150,
 	}
 
-	propagationFilter = map[string]string{
+	propagationRecordSet = map[string]string{
 		"blocks": "Blocks",
 		"votes":  "Votes",
 	}
@@ -704,7 +705,7 @@ func (s *Server) fetchMempoolData(req *http.Request) (map[string]interface{}, er
 	chartDataType := req.FormValue("chart-data-type")
 
 	if chartDataType == "" {
-		chartDataType = defaultChartDataType
+		chartDataType = mempoolDefaultChartDataType
 	}
 
 	if viewOption == "" {
@@ -730,7 +731,7 @@ func (s *Server) fetchMempoolData(req *http.Request) (map[string]interface{}, er
 
 	data := map[string]interface{}{
 		"chartView":            true,
-		"chartDataType":		chartDataType,
+		"chartDataType":        chartDataType,
 		"selectedViewOption":   viewOption,
 		"pageSizeSelector":     pageSizeSelector,
 		"selectedNumberOfRows": pageSize,
@@ -812,13 +813,7 @@ func (s *Server) getPropagationData(res http.ResponseWriter, req *http.Request) 
 
 // /propagationchartdata
 func (s *Server) propagationChartData(res http.ResponseWriter, req *http.Request) {
-	requestedRecordSet := req.FormValue("recordset")
-	refresh := req.FormValue("refresh")
-
-	if refresh == "1" {
-		s.propagation(res, req)
-		return
-	}
+	requestedRecordSet := req.FormValue("record-set")
 
 	var data []mempool.PropagationChartData
 	var err error
@@ -862,8 +857,21 @@ func (s *Server) propagationChartData(res http.ResponseWriter, req *http.Request
 func (s *Server) fetchPropagationData(req *http.Request) (map[string]interface{}, error) {
 	req.ParseForm()
 	page := req.FormValue("page")
-	numberOfRows := req.FormValue("recordsPerPage")
-	viewOption := req.FormValue("viewOption")
+	numberOfRows := req.FormValue("records-per-page")
+	viewOption := req.FormValue("view-option")
+	recordSet := req.FormValue("record-set")
+
+	if viewOption == "" {
+		viewOption = defaultViewOption
+	}
+
+	if recordSet == "" {
+		if viewOption == chartViewOption {
+			recordSet = "blocks"
+		} else {
+			recordSet = "both"
+		}
+	}
 
 	var pageSize int
 	numRows, err := strconv.Atoi(numberOfRows)
@@ -884,20 +892,21 @@ func (s *Server) fetchPropagationData(req *http.Request) (map[string]interface{}
 
 	ctx := req.Context()
 
-	if viewOption == "" || viewOption == "chart" {
-		data := map[string]interface{}{
-			"chartView":          true,
-			"selectedViewOption": defaultViewOption,
-			"currentPage":        pageToLoad,
-			"propagationFilter":  propagationFilter,
-			"pageSizeSelector":   pageSizeSelector,
-			"selectedFilter":     "both",
-			"both":               true,
-			"selectedNum":        pageSize,
-			"url":                "/propagation",
-			"previousPage":       pageToLoad,
-			"totalPages":         pageToLoad,
-		}
+	data := map[string]interface{}{
+		"chartView":            true,
+		"selectedViewOption":   viewOption,
+		"currentPage":          pageToLoad,
+		"propagationRecordSet": propagationRecordSet,
+		"pageSizeSelector":     pageSizeSelector,
+		"selectedRecordSet":    recordSet,
+		"both":                 true,
+		"selectedNum":          pageSize,
+		"url":                  "/propagation",
+		"previousPage":         pageToLoad - 1,
+		"totalPages":           0,
+	}
+
+	if viewOption == "chart" {
 		return data, nil
 	}
 
@@ -911,20 +920,10 @@ func (s *Server) fetchPropagationData(req *http.Request) (map[string]interface{}
 		return nil, err
 	}
 
-	data := map[string]interface{}{
-		"records":           blockSlice,
-		"currentPage":       pageToLoad,
-		"propagationFilter": propagationFilter,
-		"pageSizeSelector":  pageSizeSelector,
-		"selectedFilter":    "both",
-		"both":              true,
-		"selectedNum":       pageSize,
-		"url":               "/propagation",
-		"previousPage":      pageToLoad - 1,
-		"totalPages":        int(math.Ceil(float64(totalCount) / float64(pageSize))),
-	}
+	data["records"] = blockSlice
+	data["totalPages"] = int(math.Ceil(float64(totalCount) / float64(pageSize)))
 
-	totalTxLoaded := int(offset) + len(blockSlice)
+	totalTxLoaded := offset + len(blockSlice)
 	if int64(totalTxLoaded) < totalCount {
 		data["nextPage"] = pageToLoad + 1
 	}
@@ -959,8 +958,8 @@ func (s *Server) getBlockData(res http.ResponseWriter, req *http.Request) {
 func (s *Server) fetchBlockData(req *http.Request) (map[string]interface{}, error) {
 	req.ParseForm()
 	page := req.FormValue("page")
-	numberOfRows := req.FormValue("recordsPerPage")
-	viewOption := req.FormValue("viewOption")
+	numberOfRows := req.FormValue("records-per-page")
+	viewOption := req.FormValue("view-option")
 
 	var pageSize int
 	numRows, err := strconv.Atoi(numberOfRows)
@@ -983,17 +982,16 @@ func (s *Server) fetchBlockData(req *http.Request) (map[string]interface{}, erro
 
 	if viewOption == "" || viewOption == "chart" {
 		data := map[string]interface{}{
-			"chartView":          true,
-			"selectedViewOption": defaultViewOption,
-			"currentPage":        pageToLoad,
-			"propagationFilter":  propagationFilter,
-			"pageSizeSelector":   pageSizeSelector,
-			"selectedFilter":     "blocks",
-			"blocks":             true,
-			"selectedNum":        pageSize,
-			"url":                "/blockdata",
-			"previousPage":       pageToLoad,
-			"totalPages":         pageToLoad,
+			"chartView":            true,
+			"selectedViewOption":   defaultViewOption,
+			"currentPage":          pageToLoad,
+			"propagationRecordSet": propagationRecordSet,
+			"pageSizeSelector":     pageSizeSelector,
+			"selectedFilter":       "blocks",
+			"blocks":               true,
+			"selectedNum":          pageSize,
+			"previousPage":         pageToLoad,
+			"totalPages":           pageToLoad,
 		}
 		return data, nil
 	}
@@ -1009,16 +1007,16 @@ func (s *Server) fetchBlockData(req *http.Request) (map[string]interface{}, erro
 	}
 
 	data := map[string]interface{}{
-		"records":           voteSlice,
-		"currentPage":       pageToLoad,
-		"propagationFilter": propagationFilter,
-		"pageSizeSelector":  pageSizeSelector,
-		"selectedFilter":    "blocks",
-		"blocks":            true,
-		"selectedNum":       pageSize,
-		"url":               "/blockdata",
-		"previousPage":      int(pageToLoad - 1),
-		"totalPages":        int(math.Ceil(float64(totalCount) / float64(pageSize))),
+		"records":              voteSlice,
+		"currentPage":          pageToLoad,
+		"propagationRecordSet": propagationRecordSet,
+		"pageSizeSelector":     pageSizeSelector,
+		"selectedFilter":       "blocks",
+		"blocks":               true,
+		"selectedNum":          pageSize,
+		"url":                  "/blockdata",
+		"previousPage":         int(pageToLoad - 1),
+		"totalPages":           int(math.Ceil(float64(totalCount) / float64(pageSize))),
 	}
 
 	totalTxLoaded := int(offset) + len(voteSlice)
@@ -1056,8 +1054,8 @@ func (s *Server) getVoteData(res http.ResponseWriter, req *http.Request) {
 func (s *Server) fetchVoteData(req *http.Request) (map[string]interface{}, error) {
 	req.ParseForm()
 	page := req.FormValue("page")
-	numberOfRows := req.FormValue("recordsPerPage")
-	viewOption := req.FormValue("viewOption")
+	numberOfRows := req.FormValue("records-per-page")
+	viewOption := req.FormValue("view-option")
 
 	var pageSize int
 	numRows, err := strconv.Atoi(numberOfRows)
@@ -1080,17 +1078,17 @@ func (s *Server) fetchVoteData(req *http.Request) (map[string]interface{}, error
 
 	if viewOption == "" || viewOption == "chart" {
 		data := map[string]interface{}{
-			"chartView":          true,
-			"selectedViewOption": defaultViewOption,
-			"currentPage":        pageToLoad,
-			"propagationFilter":  propagationFilter,
-			"pageSizeSelector":   pageSizeSelector,
-			"selectedFilter":     "votes",
-			"votes":              true,
-			"selectedNum":        pageSize,
-			"url":                "/votesdata",
-			"previousPage":       pageToLoad,
-			"totalPages":         pageToLoad,
+			"chartView":            true,
+			"selectedViewOption":   defaultViewOption,
+			"currentPage":          pageToLoad,
+			"propagationRecordSet": propagationRecordSet,
+			"pageSizeSelector":     pageSizeSelector,
+			"selectedFilter":       "votes",
+			"votes":                true,
+			"selectedNum":          pageSize,
+			"url":                  "/votesdata",
+			"previousPage":         pageToLoad,
+			"totalPages":           pageToLoad,
 		}
 		return data, nil
 	}
@@ -1106,16 +1104,16 @@ func (s *Server) fetchVoteData(req *http.Request) (map[string]interface{}, error
 	}
 
 	data := map[string]interface{}{
-		"voteRecords":       voteSlice,
-		"currentPage":       pageToLoad,
-		"propagationFilter": propagationFilter,
-		"pageSizeSelector":  pageSizeSelector,
-		"selectedFilter":    "votes",
-		"votes":             true,
-		"selectedNum":       pageSize,
-		"url":               "/votesdata",
-		"previousPage":      int(pageToLoad - 1),
-		"totalPages":        int(math.Ceil(float64(totalCount) / float64(pageSize))),
+		"voteRecords":          voteSlice,
+		"currentPage":          pageToLoad,
+		"propagationRecordSet": propagationRecordSet,
+		"pageSizeSelector":     pageSizeSelector,
+		"selectedFilter":       "votes",
+		"votes":                true,
+		"selectedNum":          pageSize,
+		"url":                  "/votesdata",
+		"previousPage":         int(pageToLoad - 1),
+		"totalPages":           int(math.Ceil(float64(totalCount) / float64(pageSize))),
 	}
 
 	totalTxLoaded := int(offset) + len(voteSlice)
