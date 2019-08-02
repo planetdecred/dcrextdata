@@ -478,6 +478,7 @@ func (s *Server) fetchPoWData(req *http.Request) (map[string]interface{}, error)
 	selectedDataType := req.FormValue("data-type")
 	numberOfRows := req.FormValue("records-per-page")
 	viewOption := req.FormValue("view-option")
+	pools := strings.Split(req.FormValue("pools"), "|")
 
 	if viewOption == "" {
 		viewOption = defaultViewOption
@@ -517,9 +518,10 @@ func (s *Server) fetchPoWData(req *http.Request) (map[string]interface{}, error)
 
 	data := map[string]interface{}{
 		"chartView":          true,
-		"selectedViewOption": defaultViewOption,
+		"selectedViewOption": viewOption,
 		"selectedFilter":     selectedPow,
 		"selectedDataType":	  selectedDataType,
+		"selectedPools":	  pools,
 		"pageSizeSelector":   pageSizeSelector,
 		"selectedNum":        pageSize,
 		"powSource":          powSource,
