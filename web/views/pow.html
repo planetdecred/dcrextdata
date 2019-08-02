@@ -41,13 +41,13 @@
                                         <a class="nav-link {{ if eq .pow.selectedDataType "pool_hashrate" }}active{{ end }}" href="javascript:void(0);"
                                            data-target="pow.dataType"
                                            data-option="pool_hashrate" data-initial-value="{{ .pow.selectedDataType }}"
-                                        data-action="click->pow#setDataType">Hashrate</a>
+                                        data-action="click->pow#dataTypeChanged">Hashrate</a>
                                     </li>
                                     <li class="nav-item">
                                         <a class="nav-link {{ if eq .pow.selectedDataType "workers" }}active{{ end }}" href="javascript:void(0);"
                                            data-target="pow.dataType"
                                            data-option="workers" data-initial-value="{{ .pow.selectedDataType }}"
-                                        data-action="click->pow#setDataType">Workers</a>
+                                        data-action="click->pow#dataTypeChanged">Workers</a>
                                     </li>
                                 </ul>
                             </div>
