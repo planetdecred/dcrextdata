@@ -448,7 +448,7 @@ func (s *Server) vspChartData(res http.ResponseWriter, req *http.Request) {
 }
 
 // /PoW
-func (s *Server) getPowData(res http.ResponseWriter, req *http.Request) {
+func (s *Server) powPage(res http.ResponseWriter, req *http.Request) {
 	data := map[string]interface{}{}
 
 	pows, err := s.fetchPoWData(req)
@@ -475,8 +475,17 @@ func (s *Server) fetchPoWData(req *http.Request) (map[string]interface{}, error)
 	req.ParseForm()
 	page := req.FormValue("page")
 	selectedPow := req.FormValue("filter")
-	numberOfRows := req.FormValue("recordsPerPage")
-	viewOption := req.FormValue("viewOption")
+	selectedDataType := req.FormValue("data-type")
+	numberOfRows := req.FormValue("records-per-page")
+	viewOption := req.FormValue("view-option")
+
+	if viewOption == "" {
+		viewOption = defaultViewOption
+	}
+
+	if selectedDataType == "" {
+		selectedDataType = "pool_hashrate"
+	}
 
 	var pageSize int
 	numRows, err := strconv.Atoi(numberOfRows)
@@ -506,18 +515,20 @@ func (s *Server) fetchPoWData(req *http.Request) (map[string]interface{}, error)
 		return nil, err
 	}
 
-	if viewOption == "" || viewOption == "chart" {
-		data := map[string]interface{}{
-			"chartView":          true,
-			"selectedViewOption": defaultViewOption,
-			"selectedFilter":     selectedPow,
-			"pageSizeSelector":   pageSizeSelector,
-			"selectedNum":        pageSize,
-			"powSource":          powSource,
-			"currentPage":        pageToLoad,
-			"previousPage":       pageToLoad,
-			"totalPages":         pageToLoad,
-		}
+	data := map[string]interface{}{
+		"chartView":          true,
+		"selectedViewOption": defaultViewOption,
+		"selectedFilter":     selectedPow,
+		"selectedDataType":	  selectedDataType,
+		"pageSizeSelector":   pageSizeSelector,
+		"selectedNum":        pageSize,
+		"powSource":          powSource,
+		"currentPage":        pageToLoad,
+		"previousPage":       pageToLoad - 1,
+		"totalPages":         pageToLoad,
+	}
+
+	if viewOption == "chart" {
 		return data, nil
 	}
 
@@ -535,16 +546,8 @@ func (s *Server) fetchPoWData(req *http.Request) (map[string]interface{}, error)
 		}
 	}
 
-	data := map[string]interface{}{
-		"powData":          allPowDataSlice,
-		"selectedFilter":   selectedPow,
-		"pageSizeSelector": pageSizeSelector,
-		"selectedNum":      pageSize,
-		"powSource":        powSource,
-		"currentPage":      pageToLoad,
-		"previousPage":     pageToLoad - 1,
-		"totalPages":       int(math.Ceil(float64(totalCount) / float64(recordsPerPage))),
-	}
+	data["powData"] = allPowDataSlice
+	data["totalPages"] = int(math.Ceil(float64(totalCount) / float64(recordsPerPage)))
 
 	totalTxLoaded := int(offset) + len(allPowDataSlice)
 	if int64(totalTxLoaded) < totalCount {
@@ -557,13 +560,7 @@ func (s *Server) fetchPoWData(req *http.Request) (map[string]interface{}, error)
 func (s *Server) getPowChartData(res http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 	sources := req.FormValue("pools")
-	dataType := req.FormValue("datatype")
-	refresh := req.FormValue("refresh")
-
-	if refresh == "1" {
-		s.getPowData(res, req)
-		return
-	}
+	dataType := req.FormValue("data-type")
 
 	pools := strings.Split(sources, "|")
 

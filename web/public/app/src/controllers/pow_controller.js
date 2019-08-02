@@ -20,10 +20,10 @@ export default class extends Controller {
     if (this.currentPage < 1) {
       this.currentPage = 1
     }
-    this.dataType = 'pool_hashrate'
+    this.dataType = this.dataTypeTarget.getAttribute('data-initial-value')
+    setActiveOptionBtn(this.dataType, this.dataTypeTargets)
 
     this.selectedViewOption = this.viewOptionControlTarget.getAttribute('data-initial-value')
-    console.log(this.selectedViewOption)
     if (this.selectedViewOption === 'chart') {
       this.setChart()
     } else {
@@ -87,10 +87,11 @@ export default class extends Controller {
     var numberOfRows = this.selectedNumTarget.value
 
     const _this = this
-    axios.get(`/filteredpow?page=${this.nextPage}&filter=${selectedFilter}&recordsPerPage=${numberOfRows}&viewOption=${_this.selectedViewOption}`)
+    axios.get(`/filteredpow?page=${this.nextPage}&filter=${selectedFilter}&records-per-page=${numberOfRows}&view-option=${_this.selectedViewOption}`)
       .then(function (response) {
         let result = response.data
-        window.history.pushState(window.history.state, _this.addr, `pow?page=${result.currentPage}&filter=${selectedFilter}&recordsPerPage=${result.selectedNum}&viewOption=${_this.selectedViewOption}`)
+        const url = `pow?page=${result.currentPage}&filter=${selectedFilter}&records-per-page=${result.selectedNum}&view-option=${_this.selectedViewOption}`
+        window.history.pushState(window.history.state, _this.addr, url)
 
         _this.currentPage = result.currentPage
         if (_this.currentPage <= 1) {
@@ -146,12 +147,13 @@ export default class extends Controller {
     })
 
     const _this = this
-    const url = `/powchart?pools=${selectedPools.join('|')}&datatype=${this.dataType}&viewOption=${_this.selectedViewOption}`
-    window.history.pushState(window.history.state, _this.addr, url + `&refresh=${1}`)
-    axios.get(url).then(function (response) {
+    const queryString = `pools=${selectedPools.join('|')}&data-type=${this.dataType}`
+    window.history.pushState(window.history.state, _this.addr, `/pow?${queryString}&view-option=${_this.selectedViewOption}`)
+
+    axios.get(`/powchart?${queryString}`).then(function (response) {
       let result = response.data
       if (result.error) {
-        console.log(result.error) // todo show error page fron front page
+        console.log(result.error) // todo show error page from front page
         return
       }
 
