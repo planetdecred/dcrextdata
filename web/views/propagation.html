@@ -8,28 +8,32 @@
         <div class="content">
             <div class="container-fluid">
                 <div class="control-div p-0">
-                    <div class="d-flex flex-row mb-3 mt-1 mx-auto j">
-                        <div class="offset-md-4 mr-3 d-flex">
-                            <div class="chart-control " data-target="propagation.viewOptionControl" data-initial-value="{{ .propagation.selectedViewOption }}">
-                                <ul class="nav nav-pills">
-                                    <li class="nav-item">
-                                        <a
-                                        class="nav-link active"
-                                        href="javascript:void(0);"
-                                        data-target="propagation.viewOption"
-                                        data-action="click->propagation#setTable"
-                                        data-option="table"
-                                        >Table</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a
-                                        class="nav-link"
-                                        href="javascript:void(0);"
-                                        data-target="propagation.viewOption"
-                                        data-action="click->propagation#setChart"
-                                        data-option="chart"
-                                        >Chart</a>
-                                    </li>
+                    <div class="d-flex flex-row mb-3 mt-1">
+                        <div class="mx-auto d-flex">
+                            <div class="chart-control-wrapper mr-3" data-target="propagation.chartSelector">
+                                <div class="chart-control " data-target="propagation.viewOptionControl" data-initial-value="{{ .propagation.selectedViewOption }}">
+                                    <ul class="nav nav-pills">
+                                        <li class="nav-item">
+                                            <a
+                                                    class="nav-link active"
+                                                    href="javascript:void(0);"
+                                                    data-target="propagation.viewOption"
+                                                    data-action="click->propagation#setChart"
+                                                    data-option="chart"
+                                            >Chart</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a
+                                                    class="nav-link"
+                                                    href="javascript:void(0);"
+                                                    data-target="propagation.viewOption"
+                                                    data-action="click->propagation#setTable"
+                                                    data-option="table"
+                                            >Table</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
 
                                 </ul>
                             </div>

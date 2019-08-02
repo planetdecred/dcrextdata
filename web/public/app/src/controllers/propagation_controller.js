@@ -34,11 +34,14 @@ export default class extends Controller {
     } else {
       this.setTable()
     }
+    this.selectedRecordSet = this.selectedRecordSetTarget.value = this.selectedRecordSetTarget.getAttribute('data-initial-value')
   }
 
   setTable () {
     this.selectedViewOption = 'table'
-    this.selectedRecordSet = 'both'
+    setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
+    show(this.selectedRecordSetTarget.options[0])
+    this.selectedRecordSet = this.selectedRecordSetTarget.value
     hide(this.chartWrapperTarget)
     show(this.paginationButtonsWrapperTarget)
     show(this.numPageWrapperTarget)
@@ -60,6 +63,11 @@ export default class extends Controller {
     setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
     setActiveRecordSetBtn(this.selectedRecordSet, this.selectedRecordSetTargets)
     displayPillBtnOption(this.selectedViewOption, this.selectedRecordSetTargets)
+
+    if (this.selectedRecordSet === 'both') {
+      this.selectedRecordSet = this.selectedRecordSetTarget.value = 'blocks'
+    }
+
     this.fetchChartDataAndPlot()
   }
 
@@ -131,12 +139,13 @@ export default class extends Controller {
         url = 'getpropagationdata'
         break
     }
-    axios.get(`/${url}?page=${page}&recordsPerPage=${numberOfRows}&viewOption=${_this.selectedViewOption}`).then(function (response) {
+    axios.get(`/${url}?page=${page}&records-per-page=${numberOfRows}&view-option=${_this.selectedViewOption}`).then(function (response) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       let result = response.data
       _this.totalPageCountTarget.textContent = result.totalPages
       _this.currentPageTarget.textContent = result.currentPage
-      window.history.pushState(window.history.state, _this.addr, `${result.url}?page=${result.currentPage}&recordsPerPage=${result.selectedNum}&viewOption=${_this.selectedViewOption}`)
+      const pageUrl = `propagation?page=${result.currentPage}&records-per-page=${result.selectedNum}&record-set=${_this.selectedRecordSet}&view-option=${_this.selectedViewOption}`
+      window.history.pushState(window.history.state, _this.addr, pageUrl)
 
       _this.currentPage = result.currentPage
       if (_this.currentPage <= 1) {
@@ -283,12 +292,11 @@ export default class extends Controller {
     showLoading(this.loadingDataTarget, elementsToToggle)
 
     const _this = this
-    const url = '/propagationchartdata?recordset=' + this.selectedRecordSet + `&viewOption=${_this.selectedViewOption}`
-    window.history.pushState(window.history.state, _this.addr, url + `&refresh=${1}`)
-
-    axios.get(url).then(function (response) {
+    axios.get('/propagationchartdata?record-set=' + this.selectedRecordSet).then(function (response) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       _this.plotGraph(response.data)
+      const url = '/propagation?record-set=' + _this.selectedRecordSet + `&view-option=${_this.selectedViewOption}`
+      window.history.pushState(window.history.state, _this.addr, url)
     }).catch(function (e) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       console.log(e) // todo: handle error
