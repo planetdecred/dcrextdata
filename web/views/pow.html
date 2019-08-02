@@ -37,11 +37,15 @@
                             <div class="chart-control ml-auto mr-3" data-target="pow.chartDataTypeSelector">
                                 <ul class="nav nav-pills">
                                     <li class="nav-item">
-                                        <a class="nav-link active" href="javascript:void(0);" data-target="pow.dataType" data-option="pool_hashrate"
+                                        <a class="nav-link {{ if eq .pow.selectedDataType "pool_hashrate" }}active{{ end }}" href="javascript:void(0);"
+                                           data-target="pow.dataType"
+                                           data-option="pool_hashrate" data-initial-value="{{ .pow.selectedDataType }}"
                                         data-action="click->pow#setDataType">Hashrate</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="javascript:void(0);" data-target="pow.dataType" data-option="workers"
+                                        <a class="nav-link {{ if eq .pow.selectedDataType "workers" }}active{{ end }}" href="javascript:void(0);"
+                                           data-target="pow.dataType"
+                                           data-option="workers" data-initial-value="{{ .pow.selectedDataType }}"
                                         data-action="click->pow#setDataType">Workers</a>
                                     </li>
                                 </ul>
