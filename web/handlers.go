@@ -44,6 +44,18 @@ var (
 		"blocks": "Blocks",
 		"votes":  "Votes",
 	}
+
+	allVspDataTypes = []string{
+		"Immature",
+		"Live",
+		"Voted",
+		"Missed",
+		"Pool_Fees",
+		"Proportion_Live",
+		"Proportion_Missed",
+		"User_Count",
+		"Users_Active",
+	}
 )
 
 // /home
@@ -248,9 +260,18 @@ func (s *Server) fetchVSPData(req *http.Request) (map[string]interface{}, error)
 	req.ParseForm()
 	page := req.FormValue("page")
 	selectedVsp := req.FormValue("filter")
-	numberOfRows := req.FormValue("recordsPerPage")
-	refresh := req.FormValue("refresh")
-	viewOption := req.FormValue("viewOption")
+	numberOfRows := req.FormValue("records-per-page")
+	viewOption := req.FormValue("view-option")
+	dataType := req.FormValue("data-type")
+	selectedVsps := strings.Split(req.FormValue("vsps"), "|")
+
+	if viewOption == "" {
+		viewOption = defaultViewOption
+	}
+
+	if dataType == "" {
+		dataType = "Immature"
+	}
 
 	var pageSize int
 	numRows, err := strconv.Atoi(numberOfRows)
@@ -263,11 +284,11 @@ func (s *Server) fetchVSPData(req *http.Request) (map[string]interface{}, error)
 	}
 
 	pageToLoad, err := strconv.Atoi(page)
-	if err != nil || pageToLoad <= 0 || refresh == "1" {
+	if err != nil || pageToLoad <= 0 {
 		pageToLoad = 1
 	}
 
-	if selectedVsp == "" || refresh == "1" {
+	if selectedVsp == "" {
 		selectedVsp = "All"
 	}
 
@@ -280,18 +301,22 @@ func (s *Server) fetchVSPData(req *http.Request) (map[string]interface{}, error)
 		return nil, err
 	}
 
-	if viewOption == "" || viewOption == "chart" {
-		data := map[string]interface{}{
-			"chartView":          true,
-			"selectedViewOption": defaultViewOption,
-			"allVspData":         allVspData,
-			"selectedFilter":     selectedVsp,
-			"pageSizeSelector":   pageSizeSelector,
-			"selectedNum":        pageSize,
-			"currentPage":        pageToLoad,
-			"previousPage":       pageToLoad,
-			"totalPages":         pageToLoad,
-		}
+	data := map[string]interface{}{
+		"chartView":          true,
+		"selectedViewOption": viewOption,
+		"allVspData":         allVspData,
+		"selectedFilter":     selectedVsp,
+		"pageSizeSelector":   pageSizeSelector,
+		"selectedNum":        pageSize,
+		"currentPage":        pageToLoad,
+		"previousPage":       pageToLoad - 1,
+		"totalPages":         0,
+		"allDataTypes":       allVspDataTypes,
+		"dataType":           dataType,
+		"selectedVsps":       selectedVsps,
+	}
+
+	if viewOption == "chart" {
 		return data, nil
 	}
 
@@ -309,16 +334,9 @@ func (s *Server) fetchVSPData(req *http.Request) (map[string]interface{}, error)
 		}
 	}
 
-	data := map[string]interface{}{
-		"vspData":          allVSPSlice,
-		"allVspData":       allVspData,
-		"selectedFilter":   selectedVsp,
-		"pageSizeSelector": pageSizeSelector,
-		"selectedNum":      pageSize,
-		"currentPage":      pageToLoad,
-		"previousPage":     pageToLoad - 1,
-		"totalPages":       int(math.Ceil(float64(totalCount) / float64(pageSize))),
-	}
+	data["vspData"] = allVSPSlice
+	data["allVspData"] = allVspData
+	data["totalPages"] = int(math.Ceil(float64(totalCount) / float64(pageSize)))
 
 	totalTxLoaded := int(offset) + len(allVSPSlice)
 	if int64(totalTxLoaded) < totalCount {
@@ -332,13 +350,7 @@ func (s *Server) fetchVSPData(req *http.Request) (map[string]interface{}, error)
 func (s *Server) vspChartData(res http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 	selectedExchange := req.FormValue("vsps")
-	selectedAttribute := req.FormValue("selectedAttribute")
-	refresh := req.FormValue("refresh")
-
-	if refresh == "1" {
-		s.getVspTicks(res, req)
-		return
-	}
+	selectedAttribute := req.FormValue("data-type")
 
 	vsps := strings.Split(selectedExchange, "|")
 
