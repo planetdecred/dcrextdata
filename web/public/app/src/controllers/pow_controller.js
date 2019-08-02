@@ -1,6 +1,6 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { hide, show, legendFormatter, setActiveOptionBtn } from '../utils'
+import { hide, show, legendFormatter, setActiveOptionBtn, showLoading, hideLoading } from '../utils'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
 
@@ -11,7 +11,7 @@ export default class extends Controller {
       'previousPageButton', 'totalPageCount', 'nextPageButton', 'viewOptionControl',
       'powRowTemplate', 'currentPage', 'selectedNum', 'powTableWrapper',
       'chartSourceWrapper', 'pool', 'chartWrapper', 'chartDataTypeSelector', 'dataType', 'labels',
-      'chartsView', 'viewOption', 'pageSizeWrapper', 'poolDiv'
+      'chartsView', 'viewOption', 'pageSizeWrapper', 'poolDiv', 'loadingData'
     ]
   }
 
@@ -85,9 +85,13 @@ export default class extends Controller {
     const selectedFilter = this.selectedFilterTarget.value
     var numberOfRows = this.selectedNumTarget.value
 
+    let elementsToToggle = [this.powTableWrapperTarget]
+    showLoading(this.loadingDataTarget, elementsToToggle)
+
     const _this = this
     axios.get(`/filteredpow?page=${this.nextPage}&filter=${selectedFilter}&recordsPerPage=${numberOfRows}&viewOption=${_this.selectedViewOption}`)
       .then(function (response) {
+        hideLoading(_this.loadingDataTarget, elementsToToggle)
         let result = response.data
         window.history.pushState(window.history.state, _this.addr, `pow?page=${result.currentPage}&filter=${selectedFilter}&recordsPerPage=${result.selectedNum}&viewOption=${_this.selectedViewOption}`)
 
@@ -109,6 +113,7 @@ export default class extends Controller {
 
         _this.displayPoW(result.powData)
       }).catch(function (e) {
+        hideLoading(_this.loadingDataTarget, elementsToToggle)
         console.log(e)
       })
   }
@@ -155,10 +160,14 @@ export default class extends Controller {
       }
     })
 
+    let elementsToToggle = [this.chartWrapperTarget]
+    showLoading(this.loadingDataTarget, elementsToToggle)
+
     const _this = this
     const url = `/powchart?pools=${selectedPools.join('|')}&datatype=${this.dataType}&viewOption=${_this.selectedViewOption}`
     window.history.pushState(window.history.state, _this.addr, url + `&refresh=${1}`)
     axios.get(url).then(function (response) {
+      hideLoading(_this.loadingDataTarget, elementsToToggle)
       let result = response.data
       if (result.error) {
         console.log(result.error) // todo show error page fron front page
@@ -167,6 +176,7 @@ export default class extends Controller {
 
       _this.plotGraph(result)
     }).catch(function (e) {
+      hideLoading(_this.loadingDataTarget, elementsToToggle)
       console.log(e)
     })
   }
