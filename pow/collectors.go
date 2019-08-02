@@ -18,7 +18,6 @@ var (
 		Coinmine,
 		Luxor,
 		F2pool,
-		Btc,
 		Uupool,
 	}
 )
@@ -109,6 +108,10 @@ func (pc *Collector) CollectAsync(ctx context.Context) {
 					break
 				}
 			}
+			completeCollectionCycle := pc.store.LastPowEntryTime("")
+			collectionCycleDate := time.Unix(completeCollectionCycle, 0)
+			timeInterval := time.Since(collectionCycleDate)
+			log.Info("The next collection cycle begins in", timeInterval)
 
 			log.Info("Starting a new PoW collection cycle")
 			pc.Collect(ctx)
@@ -124,13 +127,6 @@ func (pc *Collector) Collect(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		default:
-			/*lastEntryTime := pc.store.LastPowEntryTime(powInfo.Name())
-			lastStr := helpers.UnixTimeToString(in.LastUpdateTime())
-			if lastEntryTime == 0 {
-				lastStr = "never"
-			}
-			log.Infof("Starting PoW collector for %s, last collect time: %s", powInfo.Name(), lastStr)*/
-
 			data, err := powInfo.Collect(ctx)
 			if err != nil {
 				log.Error(err)

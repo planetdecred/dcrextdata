@@ -29,18 +29,16 @@ type DataQuery interface {
 	AllExchangeTicksInterval(ctx context.Context) ([]ticks.TickDtoInterval, error)
 
 	FetchVSPs(ctx context.Context) ([]vsp.VSPDto, error)
-	FiltredVSPTicks(ctx context.Context, vspName string, offset int, limit int) ([]vsp.VSPTickDto, error)
-	FiltredVSPTicksCount(ctx context.Context, vspName string) (int64, error)
-	AllVSPTicks(ctx context.Context, offset int, limit int) ([]vsp.VSPTickDto, error)
-	AllVSPTickCount(ctx context.Context) (int64, error)
-	FetchChartData(ctx context.Context, attribute string, vspName string) (records []vsp.ChartData, err error)
+	FiltredVSPTicks(ctx context.Context, vspName string, offset, limit int) ([]vsp.VSPTickDto, int64, error)
+	AllVSPTicks(ctx context.Context, offset, limit int) ([]vsp.VSPTickDto, int64, error)
+	FetchChartData(ctx context.Context, attribute, vspName string) (records []vsp.ChartData, err error)
 	GetVspTickDistinctDates(ctx context.Context, vsps []string) ([]time.Time, error)
 
-	FetchPowData(ctx context.Context, offset int, limit int) ([]pow.PowDataDto, error)
-	CountPowData(ctx context.Context) (int64, error)
-	FetchPowDataBySource(ctx context.Context, source string, offset int, limit int) ([]pow.PowDataDto, error)
-	CountPowDataBySource(ctx context.Context, source string) (int64, error)
+	FetchPowData(ctx context.Context, offset, limit int) ([]pow.PowDataDto, int64, error)
+	FetchPowDataBySource(ctx context.Context, source string, offset, limit int) ([]pow.PowDataDto, int64, error)
 	FetchPowSourceData(ctx context.Context) ([]pow.PowDataSource, error)
+	FetchPowChartData(ctx context.Context, pool string, dataType string) ([]pow.PowChartData, error)
+	GetPowDistinctDates(ctx context.Context, vsps []string) ([]time.Time, error)
 
 	MempoolCount(ctx context.Context) (int64, error)
 	Mempools(ctx context.Context, offtset int, limit int) ([]mempool.MempoolDto, error)
@@ -52,6 +50,8 @@ type DataQuery interface {
 
 	Votes(ctx context.Context, offset int, limit int) ([]mempool.VoteDto, error)
 	VotesCount(ctx context.Context) (int64, error)
+	PropagationVoteChartData(ctx context.Context) ([]mempool.PropagationChartData, error)
+	PropagationBlockChartData(ctx context.Context) ([]mempool.PropagationChartData, error)
 }
 
 type Server struct {
@@ -108,18 +108,22 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 func (s *Server) registerHandlers(r *chi.Mux) {
 	r.Get("/", s.homePage)
 	r.Get("/exchanges", s.getExchangeTicks)
-	r.Get("/filteredEx", s.getFilteredExchangeTicks)
-	r.Get("/chartExchange", s.getChartData)
+	r.Get("/exchange", s.getFilteredExchangeTicks)
+	r.Get("/exchangechart", s.getChartData)
 	r.Get("/vsp", s.getVspTicks)
 	r.Get("/vspchartdata", s.vspChartData)
-	r.Get("/filteredvspticks", s.getFilteredVspTicks)
+	r.Get("/vsps", s.getFilteredVspTicks)
 	r.Get("/pow", s.getPowData)
 	r.Get("/filteredpow", s.getFilteredPowData)
+	r.Get("/powchart", s.getPowChartData)
 	r.Get("/mempool", s.mempoolPage)
-	r.Get("/getmempoolCharts", s.getMempoolChartData)
+	r.Get("/mempoolcharts", s.getMempoolChartData)
 	r.Get("/getmempool", s.getMempool)
 	r.Get("/propagation", s.propagation)
 	r.Get("/getpropagationdata", s.getPropagationData)
+	r.Get("/propagationchartdata", s.propagationChartData)
 	r.Get("/getblocks", s.getBlocks)
+	r.Get("/blockdata", s.getBlockData)
 	r.Get("/getvotes", s.getVotes)
+	r.Get("/votesdata", s.getVoteData)
 }

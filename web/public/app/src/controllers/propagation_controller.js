@@ -1,23 +1,18 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { hide, isHidden, show } from '../utils'
+import { hide, show, setActiveOptionBtn, legendFormatter } from '../utils'
+
+const Dygraph = require('../../../dist/js/dygraphs.min.js')
 
 export default class extends Controller {
   static get targets () {
     return [
       'nextPageButton', 'previousPageButton',
-      'selectedRecordSet', 'selectedNum', 'numPageWrapper',
-      'table', 'blocksTbody', 'votesTbody',
+      'bothRecordSetOption', 'selectedRecordSet', 'selectedNum', 'numPageWrapper', 'paginationButtonsWrapper',
+      'tablesWrapper', 'table', 'blocksTbody', 'votesTbody', 'chartWrapper', 'chartsView', 'labels',
       'blocksTable', 'blocksTableBody', 'blocksRowTemplate', 'votesTable', 'votesTableBody', 'votesRowTemplate',
-      'totalPageCount', 'currentPage'
+      'totalPageCount', 'currentPage', 'viewOptionControl', 'chartSelector', 'viewOption'
     ]
-  }
-
-  connect () {
-    var filter = this.selectedRecordSetTarget.options
-    var num = this.selectedNumTarget.options
-    this.selectedRecordSetTarget.value = filter[0].value
-    this.selectedNumTarget.value = num[0].text
   }
 
   initialize () {
@@ -25,24 +20,64 @@ export default class extends Controller {
     if (this.currentPage < 1) {
       this.currentPage = 1
     }
-    this.selectedRecordSet = 'both'
+
+    this.selectedViewOption = this.viewOptionControlTarget.getAttribute('data-initial-value')
+    if (this.selectedViewOption === 'chart') {
+      this.setChart()
+    } else {
+      this.setTable()
+    }
+  }
+
+  setTable () {
+    this.selectedViewOption = 'table'
+    this.selectedRecordSet = this.selectedRecordSetTarget.value = this.selectedRecordSetTarget.options[0].value
+    setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
+    show(this.selectedRecordSetTarget.options[0])
+    this.selectedRecordSet = this.selectedRecordSetTarget.value
+    hide(this.chartWrapperTarget)
+    show(this.bothRecordSetOptionTarget)
+    show(this.paginationButtonsWrapperTarget)
+    show(this.numPageWrapperTarget)
+    hide(this.chartWrapperTarget)
+    show(this.tablesWrapperTarget)
+    this.fetchData(this.currentPage)
+  }
+
+  setChart () {
+    this.selectedViewOption = 'chart'
+    setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
+    hide(this.selectedRecordSetTarget.options[0])
+    hide(this.numPageWrapperTarget)
+    hide(this.paginationButtonsWrapperTarget)
+    hide(this.tablesWrapperTarget)
+    show(this.chartWrapperTarget)
+    this.selectedRecordSet = this.selectedRecordSetTarget.value = this.selectedRecordSetTarget.options[1].value
+
+    this.fetchChartDataAndPlot()
   }
 
   selectedRecordSetChanged () {
     this.currentPage = 1
+    this.selectedNumTarget.value = this.selectedNumTarget.options[0].text
     this.selectedRecordSet = this.selectedRecordSetTarget.value
-    this.fetchData(1)
+    if (this.selectedViewOption === 'table') {
+      this.fetchData(1)
+    } else {
+      this.fetchChartDataAndPlot()
+    }
   }
 
-  gotoPreviousPage () {
+  loadPreviousPage () {
     this.fetchData(this.currentPage - 1)
   }
 
-  gotoNextPage () {
+  loadNextPage () {
     this.fetchData(this.currentPage + 1)
   }
 
   numberOfRowsChanged () {
+    this.selectedRecordSet = this.selectedRecordSetTarget.value
     this.selectedNum = this.selectedNumTarget.value
     this.fetchData(1)
   }
@@ -51,22 +86,24 @@ export default class extends Controller {
     const _this = this
 
     var numberOfRows = this.selectedNumTarget.value
-    let uri = '/getpropagationdata'
+    let url = '/getpropagationdata'
     switch (this.selectedRecordSet) {
       case 'blocks':
-        uri = 'getblocks'
+        url = 'getblocks'
         break
       case 'votes':
-        uri = 'getvotes'
+        url = 'getvotes'
         break
       default:
-        uri = 'getpropagationdata'
+        url = 'getpropagationdata'
         break
     }
-    axios.get(`/${uri}?page=${page}&recordsPerPage=${numberOfRows}`).then(function (response) {
+    axios.get(`/${url}?page=${page}&recordsPerPage=${numberOfRows}&viewOption=${_this.selectedViewOption}`).then(function (response) {
       let result = response.data
+      console.log(result)
       _this.totalPageCountTarget.textContent = result.totalPages
       _this.currentPageTarget.textContent = result.currentPage
+      window.history.pushState(window.history.state, _this.addr, `${result.url}?page=${result.currentPage}&recordsPerPage=${result.selectedNum}&viewOption=${_this.selectedViewOption}`)
 
       _this.currentPage = result.currentPage
       if (_this.currentPage <= 1) {
@@ -81,22 +118,22 @@ export default class extends Controller {
         show(_this.nextPageButtonTarget)
       }
 
-      _this.displayData(result.records)
+      _this.displayData(result)
     }).catch(function (e) {
-      console.log(e) // todo: handle error
+      // console.log(e) // todo: handle error
     })
   }
 
   displayData (data) {
     switch (this.selectedRecordSet) {
       case 'blocks':
-        this.displayBlocks(data)
+        this.displayBlocks(data.records)
         break
       case 'votes':
-        this.displayVotes(data)
+        this.displayVotes(data.voteRecords)
         break
       default:
-        this.displayPropagationData(data)
+        this.displayPropagationData(data.records)
         break
     }
   }
@@ -126,21 +163,25 @@ export default class extends Controller {
     const _this = this
     this.votesTableBodyTarget.innerHTML = ''
 
-    data.forEach(item => {
-      const exRow = document.importNode(_this.votesRowTemplateTarget.content, true)
-      const fields = exRow.querySelectorAll('td')
+    if (data) {
+      data.forEach(item => {
+        const exRow = document.importNode(_this.votesRowTemplateTarget.content, true)
+        const fields = exRow.querySelectorAll('td')
 
-      fields[0].innerHTML = `<a target="_blank" href="https://explorer.dcrdata.org/block/${item.voting_on}">${item.voting_on}</a>`
-      fields[1].innerHTML = `<a target="_blank" href="https://explorer.dcrdata.org/block/${item.block_hash}">...${item.short_block_hash}</a>`
-      fields[2].innerText = item.validator_id
-      fields[3].innerText = item.validity
-      fields[4].innerText = item.receive_time
-      fields[5].innerText = item.block_time_diff
-      fields[6].innerText = item.block_receive_time_diff
-      fields[7].innerHTML = `<a target="_blank" href="https://explorer.dcrdata.org/tx/${item.hash}">${item.hash}</a>`
+        fields[0].innerHTML = `<a target="_blank" href="https://explorer.dcrdata.org/block/${item.voting_on}">${item.voting_on}</a>`
+        fields[1].innerHTML = `<a target="_blank" href="https://explorer.dcrdata.org/block/${item.block_hash}">...${item.short_block_hash}</a>`
+        fields[2].innerText = item.validator_id
+        fields[3].innerText = item.validity
+        fields[4].innerText = item.receive_time
+        fields[5].innerText = item.block_time_diff
+        fields[6].innerText = item.block_receive_time_diff
+        fields[7].innerHTML = `<a target="_blank" href="https://explorer.dcrdata.org/tx/${item.hash}">${item.hash}</a>`
 
-      _this.votesTableBodyTarget.appendChild(exRow)
-    })
+        _this.votesTableBodyTarget.appendChild(exRow)
+      })
+    } else {
+      this.votesTableBodyTarget.innerHTML = 'No votes to show'
+    }
 
     hide(this.tableTarget)
     hide(this.blocksTableTarget)
@@ -201,5 +242,37 @@ export default class extends Controller {
     show(this.tableTarget)
     hide(this.blocksTableTarget)
     hide(this.votesTableTarget)
+  }
+
+  fetchChartDataAndPlot () {
+    const _this = this
+    const url = '/propagationchartdata?recordset=' + this.selectedRecordSet + `&viewOption=${_this.selectedViewOption}`
+    window.history.pushState(window.history.state, _this.addr, url + `&refresh=${1}`)
+
+    axios.get(url).then(function (response) {
+      _this.plotGraph(response.data)
+    }).catch(function (e) {
+      console.log(e) // todo: handle error
+    })
+  }
+
+  plotGraph (csv) {
+    const _this = this
+
+    let yLabel = this.selectedRecordSet === 'votes' ? 'Time Difference (s)' : 'Delay (s)'
+    let options = {
+      legend: 'always',
+      includeZero: true,
+      legendFormatter: legendFormatter,
+      labelsDiv: _this.labelsTarget,
+      ylabel: yLabel,
+      xlabel: 'Height',
+      labelsKMB: true,
+      drawPoints: true,
+      strokeWidth: 0.0,
+      showRangeSelector: true
+    }
+
+    _this.chartsView = new Dygraph(_this.chartsViewTarget, csv, options)
   }
 }

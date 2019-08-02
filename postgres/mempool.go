@@ -279,3 +279,37 @@ func (pg *PgDb) voteModelToDto(vote *models.Vote) mempool.VoteDto {
 func (pg *PgDb) VotesCount(ctx context.Context) (int64, error) {
 	return models.Votes().Count(ctx, pg.db)
 }
+
+func (pg *PgDb) PropagationVoteChartData(ctx context.Context) ([]mempool.PropagationChartData, error) {
+	voteSlice, err := models.Votes(qm.OrderBy(models.VoteColumns.VotingOn)).All(ctx, pg.db)
+	if err != nil {
+		return nil, err
+	}
+
+	var chartData []mempool.PropagationChartData
+	for _, vote := range voteSlice {
+		blockReceiveTimeDiff := vote.ReceiveTime.Time.Sub(vote.BlockReceiveTime.Time).Seconds()
+		chartData = append(chartData, mempool.PropagationChartData{
+			BlockHeight: vote.VotingOn.Int64, TimeDifference: blockReceiveTimeDiff,
+		})
+	}
+
+	return chartData, nil
+}
+
+func (pg *PgDb) PropagationBlockChartData(ctx context.Context) ([]mempool.PropagationChartData, error) {
+	blockSlice, err := models.Blocks(qm.OrderBy(models.BlockColumns.Height)).All(ctx, pg.db)
+	if err != nil {
+		return nil, err
+	}
+
+	var chartData []mempool.PropagationChartData
+	for _, vote := range blockSlice {
+		blockReceiveTimeDiff := vote.ReceiveTime.Time.Sub(vote.InternalTimestamp.Time).Seconds()
+		chartData = append(chartData, mempool.PropagationChartData{
+			BlockHeight: int64(vote.Height), TimeDifference: blockReceiveTimeDiff,
+		})
+	}
+
+	return chartData, nil
+}

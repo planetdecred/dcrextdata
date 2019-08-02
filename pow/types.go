@@ -1,5 +1,7 @@
 package pow
 
+import "time"
+
 type PowDataSource struct {
 	Source string
 }
@@ -20,6 +22,11 @@ type PowDataDto struct {
 	CoinPrice      float64 `json:"coin_price"`
 	BtcPrice       float64 `json:"btc_price"`
 	Source         string  `json:"source"`
+}
+
+type PowChartData struct {
+	Date   time.Time `json:"date"`
+	Record string    `json:"record"`
 }
 
 type luxorPowData struct {
@@ -43,21 +50,6 @@ type f2poolAPIResponse struct {
 type coinmineAPIResponse struct {
 	PoolHashrate float64 `json:"hashrate"`
 	Workers      int64   `json:"workers"`
-}
-
-type btcData struct {
-	NetworkHashrateUnit string              `json:"network_hashrate_unit"`
-	PoolHashrate        string              `json:"pool_hashrate"`
-	PoolHashrateUnit    string              `json:"pool_hashrate_unit"`
-	Rates               btcExchangeRateData `json:"exchange_rate"`
-}
-
-type btcExchangeRateData struct {
-	CoinPrice float64 `json:"DCR2USD"`
-}
-
-type btcAPIResponse struct {
-	BtcData btcData `json:"data"`
 }
 
 type uupoolData struct {

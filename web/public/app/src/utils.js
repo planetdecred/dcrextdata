@@ -16,6 +16,10 @@ export const isHidden = (el) => {
   return el.classList.contains('d-none')
 }
 
+export const isLoading = (el) => {
+  return el.classList.add('loading')
+}
+
 export function legendFormatter (data) {
   let html = ''
   if (data.x == null) {
@@ -117,4 +121,14 @@ export function getRandomColor () {
     color += letters[Math.floor(Math.random() * 16)]
   }
   return color
+}
+
+export function setActiveOptionBtn (opt, optTargets) {
+  optTargets.forEach(li => {
+    if (li.dataset.option === opt) {
+      li.classList.add('active')
+    } else {
+      li.classList.remove('active')
+    }
+  })
 }
