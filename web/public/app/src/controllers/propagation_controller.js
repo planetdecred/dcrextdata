@@ -1,6 +1,6 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { hide, show, setActiveOptionBtn, legendFormatter } from '../utils'
+import { hide, legendFormatter, setActiveOptionBtn, show } from '../utils'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
 
@@ -27,11 +27,11 @@ export default class extends Controller {
     } else {
       this.setTable()
     }
+    this.selectedRecordSet = this.selectedRecordSetTarget.value = this.selectedRecordSetTarget.getAttribute('data-initial-value')
   }
 
   setTable () {
     this.selectedViewOption = 'table'
-    this.selectedRecordSet = this.selectedRecordSetTarget.value = this.selectedRecordSetTarget.options[0].value
     setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
     show(this.selectedRecordSetTarget.options[0])
     this.selectedRecordSet = this.selectedRecordSetTarget.value
@@ -52,7 +52,10 @@ export default class extends Controller {
     hide(this.paginationButtonsWrapperTarget)
     hide(this.tablesWrapperTarget)
     show(this.chartWrapperTarget)
-    this.selectedRecordSet = this.selectedRecordSetTarget.value = this.selectedRecordSetTarget.options[1].value
+
+    if (this.selectedRecordSet === 'both') {
+      this.selectedRecordSet = this.selectedRecordSetTarget.value = 'blocks'
+    }
 
     this.fetchChartDataAndPlot()
   }
@@ -98,12 +101,12 @@ export default class extends Controller {
         url = 'getpropagationdata'
         break
     }
-    axios.get(`/${url}?page=${page}&recordsPerPage=${numberOfRows}&viewOption=${_this.selectedViewOption}`).then(function (response) {
+    axios.get(`/${url}?page=${page}&records-per-page=${numberOfRows}&view-option=${_this.selectedViewOption}`).then(function (response) {
       let result = response.data
-      console.log(result)
       _this.totalPageCountTarget.textContent = result.totalPages
       _this.currentPageTarget.textContent = result.currentPage
-      window.history.pushState(window.history.state, _this.addr, `${result.url}?page=${result.currentPage}&recordsPerPage=${result.selectedNum}&viewOption=${_this.selectedViewOption}`)
+      const pageUrl = `propagation?page=${result.currentPage}&records-per-page=${result.selectedNum}&record-set=${_this.selectedRecordSet}&view-option=${_this.selectedViewOption}`
+      window.history.pushState(window.history.state, _this.addr, pageUrl)
 
       _this.currentPage = result.currentPage
       if (_this.currentPage <= 1) {
@@ -246,11 +249,10 @@ export default class extends Controller {
 
   fetchChartDataAndPlot () {
     const _this = this
-    const url = '/propagationchartdata?recordset=' + this.selectedRecordSet + `&viewOption=${_this.selectedViewOption}`
-    window.history.pushState(window.history.state, _this.addr, url + `&refresh=${1}`)
-
-    axios.get(url).then(function (response) {
+    axios.get('/propagationchartdata?record-set=' + this.selectedRecordSet).then(function (response) {
       _this.plotGraph(response.data)
+      const url = '/propagation?record-set=' + _this.selectedRecordSet + `&view-option=${_this.selectedViewOption}`
+      window.history.pushState(window.history.state, _this.addr, url)
     }).catch(function (e) {
       console.log(e) // todo: handle error
     })

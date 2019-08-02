@@ -35,12 +35,13 @@
                                 </div>
                             </div>
                             <div class="chart-control control-div p-0">
+                                {{$selectedRecordSet := .propagation.selectedRecordSet}}
                                 <select data-target="propagation.selectedRecordSet" data-action="change->propagation#selectedRecordSetChanged"
+                                        data-initial-value="{{ $selectedRecordSet }}"
                                     class="form-control " style="width: 150px;">
-                                    {{$selectedFilter := .propagation.selectedFilter}}
                                     <option data-target="propagation.bothRecordSetOption" value="both">Both</option>
-                                    {{ range $index, $filter := .propagation.propagationFilter}}
-                                    <option value="{{$index}}" {{ if eq $index $selectedFilter}} selected {{ end }}>{{$filter}}</option>
+                                    {{ range $index, $recordSet := .propagation.propagationRecordSet}}
+                                    <option value="{{$index}}" {{ if eq $index $selectedRecordSet}} selected {{ end }}>{{$recordSet}}</option>
                                     {{ end }}
                                 </select>
                             </div>
