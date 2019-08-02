@@ -91,6 +91,10 @@
                         </div>
                     </div>
                 </div>
+                <div class="p-5 text-center d-hide loading" data-target="exchange.loadingData">
+                    <div class="loading-icon"></div>
+                    <div class="loading-text">loading data... </div>
+                </div>
                 <div class="{{ if .chartView }}d-none{{ end }}" data-target="exchange.exchangeTableWrapper">
                     <table class="table mx-auto">
                         <thead>

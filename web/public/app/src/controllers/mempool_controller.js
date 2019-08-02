@@ -9,7 +9,7 @@ export default class extends Controller {
     return [
       'nextPageButton', 'previousPageButton', 'tableBody', 'rowTemplate',
       'totalPageCount', 'currentPage', 'btnWrapper', 'tableWrapper', 'chartsView',
-      'chartWrapper', 'viewOption', 'labels', 'viewOptionControl',
+      'chartWrapper', 'viewOption', 'labels', 'viewOptionControl', 'loadingData',
       'chartDataTypeSelector', 'chartDataType', 'chartOptions', 'labels', 'selectedMempoolOpt',
       'selectedNumberOfRows', 'numPageWrapper'
     ]
@@ -111,6 +111,8 @@ export default class extends Controller {
       window.history.pushState(window.history.state, this.addr, url + `&refresh=${1}`)
     }
 
+    this.showLoading()
+
     const _this = this
     axios.get(url).then(function (response) {
       let result = response.data
@@ -133,10 +135,14 @@ export default class extends Controller {
         }
 
         _this.displayMempool(result.mempoolData)
+        show(_this.tableWrapperTarget)
       } else {
+        show(_this.chartWrapperTarget)
         _this.plotGraph(result)
       }
+      _this.hideLoading()
     }).catch(function (e) {
+      _this.hideLoading()
       console.log(e) // todo: handle error
     })
   }
@@ -156,6 +162,7 @@ export default class extends Controller {
 
       _this.tableBodyTarget.appendChild(exRow)
     })
+    show(this.tableWrapperTarget)
   }
 
   // exchange chart
@@ -228,5 +235,15 @@ export default class extends Controller {
         }
       }
     )
+  }
+
+  showLoading () {
+    hide(this.tableWrapperTarget)
+    hide(this.chartWrapperTarget)
+    show(this.loadingDataTarget)
+  }
+
+  hideLoading () {
+    hide(this.loadingDataTarget)
   }
 }

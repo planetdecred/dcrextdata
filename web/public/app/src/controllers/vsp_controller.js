@@ -12,7 +12,7 @@ export default class extends Controller {
       'vspRowTemplate', 'currentPage', 'selectedNum', 'vspTableWrapper',
       'graphTypeWrapper', 'graphType', 'pageSizeWrapper', 'viewOptionControl',
       'vspSelectorWrapper', 'chartSourceWrapper', 'chartSource',
-      'chartWrapper', 'labels', 'chartsView', 'viewOption'
+      'chartWrapper', 'labels', 'chartsView', 'viewOption', 'loadingData'
     ]
   }
 
@@ -102,6 +102,7 @@ export default class extends Controller {
       numberOfRows = this.selectedNumTarget.value
     }
 
+    this.showLoading()
     const _this = this
     axios.get(`/vsps?page=${this.nextPage}&filter=${selectedFilter}&recordsPerPage=${numberOfRows}&viewOption=${_this.selectedViewOption}`)
       .then(function (response) {
@@ -124,11 +125,15 @@ export default class extends Controller {
           _this.totalPageCountTarget.textContent = result.totalPages
           _this.currentPageTarget.textContent = result.currentPage
 
+          show(_this.vspTableWrapperTarget)
           _this.displayVSPs(result.vspData)
         } else {
+          show(_this.chartWrapperTarget)
           _this.plotGraph(result.vspData)
         }
+        _this.hideLoading()
       }).catch(function (e) {
+        _this.hideLoading()
         console.log(e)
       })
   }
@@ -223,5 +228,16 @@ export default class extends Controller {
       dataSet.csv,
       options
     )
+  }
+
+  showLoading () {
+    hide(this.vspTableWrapperTarget)
+    hide(this.chartWrapperTarget)
+    hide(this.messageViewTarget)
+    show(this.loadingDataTarget)
+  }
+
+  hideLoading () {
+    hide(this.loadingDataTarget)
   }
 }

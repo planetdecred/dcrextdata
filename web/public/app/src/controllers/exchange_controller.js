@@ -1,13 +1,13 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { hide, show, legendFormatter, options } from '../utils'
+import { hide, show, legendFormatter, options, setActiveOptionBtn } from '../utils'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
 
 export default class extends Controller {
   static get targets () {
     return [
-      'selectedFilter', 'exchangeTable', 'selectedCurrencyPair', 'numPageWrapper', 'intervalsWapper',
+      'selectedFilter', 'exchangeTable', 'selectedCurrencyPair', 'numPageWrapper', 'intervalsWapper', 'loadingData',
       'previousPageButton', 'totalPageCount', 'nextPageButton', 'selectedTicks', 'selectedInterval',
       'exRowTemplate', 'currentPage', 'selectedNum', 'exchangeTableWrapper', 'tickWapper', 'viewOptionControl',
       'chartWrapper', 'labels', 'chartsView', 'selectedViewOption', 'hideOption', 'sourceWrapper', 'chartSelector',
@@ -27,7 +27,6 @@ export default class extends Controller {
   }
 
   initialize () {
-    this.setChart()
     this.selectedFilter = this.selectedFilterTarget.value
     this.selectedCurrencyPair = this.selectedCurrencyPairTarget.value
     this.numberOfRows = this.selectedNumTarget.value
@@ -38,6 +37,7 @@ export default class extends Controller {
       this.currentPage = 1
     }
 
+    this.selectedExchange = this.selectedFilterTarget.value
     this.selectedViewOption = this.viewOptionControlTarget.getAttribute('data-initial-value')
     if (this.selectedViewOption === 'chart') {
       this.setChart()
@@ -47,7 +47,7 @@ export default class extends Controller {
   }
 
   setTable () {
-    this.selectedViewOption = 'table'
+    this.viewOption = this.selectedViewOption = 'table'
     hide(this.messageViewTarget)
     hide(this.tickWapperTarget)
     show(this.hideOptionTarget)
@@ -65,14 +65,14 @@ export default class extends Controller {
     this.selectedCurrencyPair = this.selectedCurrencyPairTarget.value = cpair[0].text
     this.selectedNum = this.selectedNumTarget.value = num[0].value
     this.selectedInterval = this.selectedIntervalTarget.value = interval[4].value
-    this.setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
-    this.selectedTicksTarget.value = 'close'
+    setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
+    this.selectedTick = this.selectedTicksTarget.value = 'close'
     this.nextPage = 1
     this.fetchExchange(this.viewOption)
   }
 
   setChart () {
-    this.selectedViewOption = 'chart'
+    this.viewOption = this.selectedViewOption = 'chart'
     hide(this.messageViewTarget)
     var intervals = this.selectedIntervalTarget.options
     var filters = this.selectedFilterTarget.options
@@ -84,7 +84,7 @@ export default class extends Controller {
     hide(this.currencyPairHideOptionTarget)
     hide(this.numPageWrapperTarget)
     hide(this.exchangeTableWrapperTarget)
-    this.setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
+    setActiveOptionBtn(this.viewOption, this.viewOptionTargets)
     this.selectedInterval = this.selectedIntervalTarget.value = intervals[4].value
     this.selectedFilter = this.selectedFilterTarget.value = filters[1].text
     this.selectedTick = this.selectedTicksTarget.value = 'close'
@@ -140,22 +140,13 @@ export default class extends Controller {
       url = `/exchangechart?selectedTick=${_this.selectedTick}&selectedCurrencyPair=${_this.selectedCurrencyPair}&selectedInterval=${_this.selectedInterval}&selectedExchange=${_this.selectedExchange}&viewOption=${_this.selectedViewOption}`
       window.history.pushState(window.history.state, this.addr, url + `&refresh=${1}`)
     }
-
+    this.showLoading()
     axios.get(url)
       .then(function (response) {
         let result = response.data
         console.log(result)
         if (display === 'table') {
           if (result.message) {
-            let messageHTML = ''
-            messageHTML += `<div class="alert alert-primary">
-                           <strong>${result.message}</strong>
-                      </div>`
-
-            _this.messageViewTarget.innerHTML = messageHTML
-            show(_this.messageViewTarget)
-            hide(_this.exchangeTableWrapperTarget)
-            hide(_this.pageSizeWrapperTarget)
             _this.totalPageCountTarget.textContent = 0
             _this.currentPageTarget.textContent = 0
           } else {
@@ -183,17 +174,24 @@ export default class extends Controller {
             _this.currentPageTarget.textContent = result.currentPage
             _this.displayExchange(result.exData)
           }
+          show(_this.exchangeTableWrapperTarget)
         } else {
+          show(_this.chartWrapperTarget)
           _this.plotGraph(result)
         }
+        _this.hideLoading()
+      })
+      .catch(function (e) {
       }).catch(function (e) {
         console.log(e)
+        _this.hideLoading()
       })
   }
 
   displayExchange (exs) {
     const _this = this
     this.exchangeTableTarget.innerHTML = ''
+    show(this.exchangeTableWrapperTarget)
 
     exs.forEach(ex => {
       const exRow = document.importNode(_this.exRowTemplateTarget.content, true)
@@ -216,46 +214,47 @@ export default class extends Controller {
   // exchange chart
   plotGraph (exs) {
     if (exs.chartData) {
-      hide(this.messageViewTarget)
-      show(this.chartsViewTarget)
 
-      var data = []
-      var dataSet = []
+    hide(this.messageViewTarget)
 
-      const _this = this
-      exs.chartData.forEach(ex => {
-        data.push(new Date(ex.time))
-        data.push(ex.filter)
+    var data = []
+    var dataSet = []
 
-        dataSet.push(data)
-        data = []
-      })
+    const _this = this
+    exs.chartData.forEach(ex => {
+      data.push(new Date(ex.time))
+      data.push(ex.filter)
 
-      let labels = ['Date', _this.selectedFilter]
-      let colors = ['#007bff']
+      dataSet.push(data)
+      data = []
+    })
 
-      var extra = {
-        legendFormatter: legendFormatter,
-        labelsDiv: this.labelsTarget,
-        ylabel: 'Price',
-        labels: labels,
-        colors: colors,
-        digitsAfterDecimal: 8
-      }
+    let labels = ['Date', _this.selectedFilter]
+    let colors = ['#007bff']
 
-      _this.chartsView = new Dygraph(
-        _this.chartsViewTarget,
-        dataSet, { ...options, ...extra }
-      )
-    } else {
-      let messageHTML = ''
-      messageHTML += `<div class="alert alert-primary">
-                           <strong>${exs.message}</strong>
-                      </div>`
-
-      this.messageViewTarget.innerHTML = messageHTML
-      show(this.messageViewTarget)
-      hide(this.chartsViewTarget)
+    var extra = {
+      legendFormatter: legendFormatter,
+      labelsDiv: this.labelsTarget,
+      ylabel: 'Price',
+      labels: labels,
+      colors: colors,
+      digitsAfterDecimal: 8
     }
+
+    _this.chartsView = new Dygraph(
+      _this.chartsViewTarget,
+      dataSet, { ...options, ...extra }
+    )
+  }
+
+  showLoading () {
+    hide(this.exchangeTableWrapperTarget)
+    hide(this.chartWrapperTarget)
+    hide(this.messageViewTarget)
+    show(this.loadingDataTarget)
+  }
+
+  hideLoading () {
+    hide(this.loadingDataTarget)
   }
 }

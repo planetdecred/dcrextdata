@@ -11,7 +11,7 @@ export default class extends Controller {
       'bothRecordSetOption', 'selectedRecordSet', 'selectedNum', 'numPageWrapper', 'paginationButtonsWrapper',
       'tablesWrapper', 'table', 'blocksTbody', 'votesTbody', 'chartWrapper', 'chartsView', 'labels',
       'blocksTable', 'blocksTableBody', 'blocksRowTemplate', 'votesTable', 'votesTableBody', 'votesRowTemplate',
-      'totalPageCount', 'currentPage', 'viewOptionControl', 'chartSelector', 'viewOption'
+      'totalPageCount', 'currentPage', 'viewOptionControl', 'chartSelector', 'viewOption', 'loadingData'
     ]
   }
 
@@ -100,6 +100,8 @@ export default class extends Controller {
         url = 'getpropagationdata'
         break
     }
+
+    this.showLoading()
     axios.get(`/${url}?page=${page}&recordsPerPage=${numberOfRows}&viewOption=${_this.selectedViewOption}`).then(function (response) {
       let result = response.data
       console.log(result)
@@ -120,8 +122,11 @@ export default class extends Controller {
         show(_this.nextPageButtonTarget)
       }
 
+      show(_this.tablesWrapperTarget)
+      _this.hideLoading()
       _this.displayData(result)
     }).catch(function (e) {
+      _this.hideLoading()
       // console.log(e) // todo: handle error
     })
   }
@@ -250,10 +255,13 @@ export default class extends Controller {
     const _this = this
     const url = '/propagationchartdata?recordset=' + this.selectedRecordSet + `&viewOption=${_this.selectedViewOption}`
     window.history.pushState(window.history.state, _this.addr, url + `&refresh=${1}`)
-
+    this.showLoading()
     axios.get(url).then(function (response) {
+      show(_this.chartWrapperTarget)
+      _this.hideLoading()
       _this.plotGraph(response.data)
     }).catch(function (e) {
+      _this.hideLoading()
       console.log(e) // todo: handle error
     })
   }
@@ -276,5 +284,15 @@ export default class extends Controller {
     }
 
     _this.chartsView = new Dygraph(_this.chartsViewTarget, csv, options)
+  }
+
+  showLoading () {
+    hide(this.tablesWrapperTarget)
+    hide(this.chartWrapperTarget)
+    show(this.loadingDataTarget)
+  }
+
+  hideLoading () {
+    hide(this.loadingDataTarget)
   }
 }

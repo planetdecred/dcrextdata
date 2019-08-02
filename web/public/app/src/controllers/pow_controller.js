@@ -9,7 +9,7 @@ export default class extends Controller {
     return [
       'powFilterWrapper', 'selectedFilter', 'powTable', 'numPageWrapper',
       'previousPageButton', 'totalPageCount', 'nextPageButton', 'viewOptionControl',
-      'powRowTemplate', 'currentPage', 'selectedNum', 'powTableWrapper',
+      'powRowTemplate', 'currentPage', 'selectedNum', 'powTableWrapper', 'loadingData',
       'chartSourceWrapper', 'pool', 'chartWrapper', 'chartDataTypeSelector', 'dataType', 'labels',
       'chartsView', 'viewOption', 'pageSizeWrapper'
     ]
@@ -86,6 +86,8 @@ export default class extends Controller {
     const selectedFilter = this.selectedFilterTarget.value
     var numberOfRows = this.selectedNumTarget.value
 
+    this.showLoading()
+
     const _this = this
     axios.get(`/filteredpow?page=${this.nextPage}&filter=${selectedFilter}&recordsPerPage=${numberOfRows}&viewOption=${_this.selectedViewOption}`)
       .then(function (response) {
@@ -108,8 +110,11 @@ export default class extends Controller {
         _this.totalPageCountTarget.textContent = result.totalPages
         _this.currentPageTarget.textContent = result.currentPage
 
+        show(_this.powTableWrapperTarget)
         _this.displayPoW(result.powData)
+        _this.hideLoading()
       }).catch(function (e) {
+        _this.hideLoading()
         console.log(e)
       })
   }
@@ -131,20 +136,6 @@ export default class extends Controller {
     })
   }
 
-  // pow chart
-  plotGraph (pows) {
-    const _this = this
-
-    var data = []
-    pows.forEach(pow => {
-      pow.time = _this.formatPowDateTime(pow.time)
-      data.push(new Date(pow.time))
-      data.push(Number(pow.pool_hashrate_th))
-    })
-
-    this.plotVSPGraph(data)
-  }
-
   setDataType (event) {
     this.dataType = event.currentTarget.getAttribute('data-option')
     setActiveOptionBtn(this.dataType, this.dataTypeTargets)
@@ -158,7 +149,7 @@ export default class extends Controller {
         selectedPools.push(el.value)
       }
     })
-
+    this.showLoading()
     const _this = this
     const url = `/powchart?pools=${selectedPools.join('|')}&datatype=${this.dataType}&viewOption=${_this.selectedViewOption}`
     window.history.pushState(window.history.state, _this.addr, url + `&refresh=${1}`)
@@ -169,14 +160,18 @@ export default class extends Controller {
         return
       }
 
+      show(_this.chartWrapperTarget)
+
       _this.plotGraph(result)
+      _this.hideLoading()
     }).catch(function (e) {
+      _this.hideLoading()
       console.log(e)
     })
   }
 
   // vsp chart
-  plotVSPGraph (dataSet) {
+  plotGraph (dataSet) {
     const _this = this
     let dataTypeLabel = 'Pool Hashrate (Th/s)'
     if (_this.dataType === 'workers') {
@@ -204,9 +199,14 @@ export default class extends Controller {
     _this.chartsView = new Dygraph(_this.chartsViewTarget, dataSet.csv, options)
   }
 
-  formatPowDateTime (dateTime) {
-    // dateTime is coming in format yy-mm-dd hh:mm
-    // Date method expects format yy-mm-ddThh:mm:ss
-    return (dateTime + ':00').split(' ').join('T')
+  showLoading () {
+    hide(this.powTableWrapperTarget)
+    hide(this.chartWrapperTarget)
+    hide(this.messageViewTarget)
+    show(this.loadingDataTarget)
+  }
+
+  hideLoading () {
+    hide(this.loadingDataTarget)
   }
 }
