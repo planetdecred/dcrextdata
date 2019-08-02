@@ -14,11 +14,15 @@ import (
 	"github.com/raedahgroup/dcrextdata/vsp"
 )
 
-var (
+const (
 	defaultViewOption     = "chart"
+	defaultChartDataType  = "size"
 	maxPageSize           = 250
 	recordsPerPage        = 20
 	defaultInterval       = 1440 // All
+)
+
+var (
 	exchangeTickIntervals = map[int]string{
 		-1:   "All",
 		5:    "5m",
@@ -695,9 +699,17 @@ func (s *Server) getMempool(res http.ResponseWriter, req *http.Request) {
 func (s *Server) fetchMempoolData(req *http.Request) (map[string]interface{}, error) {
 	req.ParseForm()
 	page := req.FormValue("page")
-	numberOfRows := req.FormValue("recordsPerPage")
-	refresh := req.FormValue("refresh")
-	viewOption := req.FormValue("viewOption")
+	numberOfRows := req.FormValue("records-per-page")
+	viewOption := req.FormValue("view-option")
+	chartDataType := req.FormValue("chart-data-type")
+
+	if chartDataType == "" {
+		chartDataType = defaultChartDataType
+	}
+
+	if viewOption == "" {
+		viewOption = defaultViewOption
+	}
 
 	var pageSize int
 	numRows, err := strconv.Atoi(numberOfRows)
@@ -710,27 +722,28 @@ func (s *Server) fetchMempoolData(req *http.Request) (map[string]interface{}, er
 	}
 
 	pageToLoad, err := strconv.Atoi(page)
-	if err != nil || pageToLoad <= 0 || refresh == "1" {
+	if err != nil || pageToLoad <= 0 {
 		pageToLoad = 1
 	}
 
 	offset := (pageToLoad - 1) * pageSize
 
-	ctx := req.Context()
+	data := map[string]interface{}{
+		"chartView":            true,
+		"chartDataType":		chartDataType,
+		"selectedViewOption":   viewOption,
+		"pageSizeSelector":     pageSizeSelector,
+		"selectedNumberOfRows": pageSize,
+		"currentPage":          pageToLoad,
+		"previousPage":         pageToLoad - 1,
+		"totalPages":           0,
+	}
 
-	if viewOption == "" || viewOption == "chart" {
-		data := map[string]interface{}{
-			"chartView":            true,
-			"selectedViewOption":   defaultViewOption,
-			"pageSizeSelector":     pageSizeSelector,
-			"selectedNumberOfRows": pageSize,
-			"currentPage":          pageToLoad,
-			"previousPage":         pageToLoad,
-			"totalPages":           pageToLoad,
-		}
+	if viewOption == "chart" {
 		return data, nil
 	}
 
+	ctx := req.Context()
 	mempoolSlice, err := s.db.Mempools(ctx, offset, pageSize)
 	if err != nil {
 		return nil, err
@@ -741,14 +754,8 @@ func (s *Server) fetchMempoolData(req *http.Request) (map[string]interface{}, er
 		return nil, err
 	}
 
-	data := map[string]interface{}{
-		"mempoolData":          mempoolSlice,
-		"pageSizeSelector":     pageSizeSelector,
-		"selectedNumberOfRows": pageSize,
-		"currentPage":          pageToLoad,
-		"previousPage":         pageToLoad - 1,
-		"totalPages":           int(math.Ceil(float64(totalCount) / float64(pageSize))),
-	}
+	data["mempoolData"] = mempoolSlice
+	data["totalPages"] = int(math.Ceil(float64(totalCount) / float64(pageSize)))
 
 	totalTxLoaded := int(offset) + len(mempoolSlice)
 	if int64(totalTxLoaded) < totalCount {
@@ -760,14 +767,7 @@ func (s *Server) fetchMempoolData(req *http.Request) (map[string]interface{}, er
 
 func (s *Server) getMempoolChartData(res http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
-	chartFilter := req.FormValue("chartFilter")
-	refresh := req.FormValue("refresh")
-
-	if refresh == "1" {
-		s.mempoolPage(res, req)
-		return
-	}
-
+	chartFilter := req.FormValue("chart-data-type")
 	ctx := req.Context()
 
 	mempoolDataSlice, err := s.db.MempoolsChartData(ctx, chartFilter)

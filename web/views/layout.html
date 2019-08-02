@@ -37,6 +37,11 @@
             <div class="collapse navbar-collapse" id="nav">
                 <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
+                        <a class="nav-link" id="nav-home" href="/">
+                            <span class="text">Home</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" id="nav-mempool" href="/mempool">
                             <span class="text">Mempool</span>
                         </a>
@@ -73,7 +78,7 @@
     $(function () {
         var pathname = window.location.pathname;
         var paths = pathname.split("/")
-        var currentNavItem = "#nav-exchange";
+        var currentNavItem = "#nav-home";
         if (pathname != "/" && paths.length > 1) {
             currentNavItem = "#nav-" + paths[1];
         }

@@ -29,7 +29,7 @@
                                 <div class="control-label ">Mempool Charts:</div>
 
                                 <select data-target="mempool.selectedMempoolOpt"
-                                    data-action="change->mempool#MempoolOptionChanged" class="form-control mr-5 "
+                                    data-action="change->mempool#mempoolOptionChanged" class="form-control mr-5 "
                                     style="width: 200px;">
                                     <option value="size">Size Chart</option>
                                     <option value="total_fee">Total fees Chart</option>
@@ -43,18 +43,21 @@
                                     <ul class="nav nav-pills">
                                         <li class="nav-item">
                                             <a data-target="mempool.chartDataType"
-                                                data-action="click->mempool#setSizeDataType" class="nav-link active"
-                                                href="javascript:void(0);" data-option="table">Size</a>
+                                                data-action="click->mempool#setDataType"
+                                               class="nav-link {{ if eq .mempool.chartDataType "size" }}active{{ end }}"
+                                                href="javascript:void(0);" data-option="size" data-initial-value="{{ .mempool.chartDataType }}">Size</a>
                                         </li>
                                         <li class="nav-item">
                                             <a data-target="mempool.chartDataType"
-                                                data-action="click->mempool#setFeesDataType" class="nav-link"
-                                                href="javascript:void(0);" data-option="table">Fees</a>
+                                                data-action="click->mempool#setDataType"
+                                               class="nav-link {{ if eq .mempool.chartDataType "total_fee" }}active{{ end }}"
+                                                href="javascript:void(0);" data-option="total_fee" data-initial-value="{{ .mempool.chartDataType }}">Fees</a>
                                         </li>
                                         <li class="nav-item">
                                             <a data-target="mempool.chartDataType"
-                                                data-action="click->mempool#setTransactionsDataType" class="nav-link"
-                                                href="javascript:void(0);" data-option="table">Transactions</a>
+                                                data-action="click->mempool#setDataType"
+                                               class="nav-link {{ if eq .mempool.chartDataType "number_of_transactions" }}active{{ end }}"
+                                                href="javascript:void(0);" data-option="number_of_transactions" data-initial-value="{{ .mempool.chartDataType }}">Transactions</a>
                                         </li>
                                     </ul>
                                 </div>
@@ -64,8 +67,8 @@
                                 <div class="control-label">Page Size:</div>
                             <select data-target="mempool.selectedNumberOfRows" data-action="change->mempool#numberOfRowsChanged" class="form-control" style="width: 70px;">
                                 {{$selectedNumberOfRows := .mempool.selectedNumberOfRows}}
-                                {{ range $index, $filter := .mempool.pageSizeSelector}}
-                                <option value="{{$index}}" {{ if eq $index $selectedNumberOfRows}} selected {{ end }}>{{$filter}}</option>
+                                {{ range $index, $numberOfRow := .mempool.pageSizeSelector}}
+                                <option value="{{$index}}" {{ if eq $index $selectedNumberOfRows}} selected {{ end }}>{{$numberOfRow}}</option>
                                 {{ end }}
                             </select>
                         </div>
