@@ -91,7 +91,7 @@
                                 </tr>
                             </thead>
                             <tbody data-target="vsp.vspTicksTable">
-                            {{range $index, $vspticks := .vspData}}
+                                {{range $index, $vspticks := .vspData}}
                                 <tr>
                                     <td>{{$vspticks.VSP}}</td>
                                     <td>{{$vspticks.Immature}}</td>
@@ -141,21 +141,19 @@
                                 </div>
                             </div>
 
-                            <div class="col-xs-12 col-md-10 chart-panel">
-                                <div id="chart" data-target="vsp.chartsView"
-                                style="width:100%; height:73vh; margin:0 auto;">
-                            </div>
+                            <div class="col-md-9 chart-panel">
+                                <div id="chart" data-target="vsp.chartsView" style="width:100%; height:73vh; margin:0 auto;">
+                                </div>
+                                <div class="d-flex justify-content-center legend-wrapper">
+                                    <div class="legend d-flex" data-target="vsp.labels"></div>
+                                </div>
+                           </div>
                         </div>
-
-                    </div>
-                    <div class="d-flex justify-content-center legend-wrapper">
-                        <div class="legend d-flex" data-target="vsp.labels"></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-{{ template "footer" }}
+    {{ template "footer" }}
 </body>
 </html>
