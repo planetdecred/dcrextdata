@@ -128,7 +128,6 @@ func (vsp *Collector) collectAndStore(ctx context.Context) error {
 	}
 
 	numberStored, errs := vsp.dataStore.StoreVSPs(ctx, *resp)
-	log.Info("Creating VSP table")
 	for _, err = range errs {
 		if err != nil {
 			if e, ok := err.(PoolTickTimeExistsError); ok {

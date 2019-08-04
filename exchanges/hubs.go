@@ -200,7 +200,6 @@ func (hub *TickHub) Run(ctx context.Context) {
 
 	registerStarter()
 	hub.CollectAll(ctx)
-	log.Info("Creating Exchange table")
 	app.ReleaseForNewModule()
 
 	go func() {

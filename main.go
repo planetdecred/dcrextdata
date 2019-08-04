@@ -203,6 +203,8 @@ func _main(ctx context.Context) error {
 		}
 
 		go collector.StartMonitoring(ctx)
+	}else {
+		fmt.Println("Creating memepool table...")
 	}
 
 	if !cfg.DisableVSP {
@@ -212,7 +214,6 @@ func _main(ctx context.Context) error {
 				return err
 			}
 		}
-
 		if exists := db.VSPTickTableExits(); !exists {
 			if err := db.CreateVSPTickTables(); err != nil {
 				log.Error("Error creating vsp data table: ", err)
@@ -231,6 +232,8 @@ func _main(ctx context.Context) error {
 		} else {
 			log.Error(err)
 		}
+	}else {
+		fmt.Println("Creating vsp tables...")
 	}
 
 	if !cfg.DisableExchangeTicks {
@@ -259,6 +262,8 @@ func _main(ctx context.Context) error {
 		} else {
 			log.Error(err)
 		}
+	}else {
+		fmt.Println("Creating exchange table...")
 	}
 
 	if !cfg.DisablePow {
@@ -276,6 +281,8 @@ func _main(ctx context.Context) error {
 		} else {
 			log.Error(err)
 		}
+	}else {
+		fmt.Println("Craeting poW tables...")
 	}
 
 	if cfg.HttpMode {
