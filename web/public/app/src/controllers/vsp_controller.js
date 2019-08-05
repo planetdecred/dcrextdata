@@ -193,6 +193,7 @@ export default class extends Controller {
     if (this.vsps.length === 0) {
       return
     }
+
     const queryString = `data-type=${this.dataType}&vsps=${this.vsps.join('|')}&view-option=${_this.selectedViewOption}`
     window.history.pushState(window.history.state, _this.addr, `/vsp?${queryString}`)
     axios.get(`/vspchartdata?${queryString}`).then(function (response) {

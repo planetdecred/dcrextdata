@@ -41,7 +41,7 @@
                                 <select data-target="vsp.dataType" data-action="change->vsp#dataTypeChanged" data-initial-value="{{ $selectedDataType }}"
                                     class="form-control" style="width: 150px;">
                                     {{ range $index, $dataType := .allDataTypes}}
-                                    <option value="{{$dataType}}" {{ if eq $dataType $selectedDataType}}selected{{ end }}>{{ replace $dataType "_" " " }}</option>
+                                    <option value="{{$dataType}}" {{ if eq $dataType $selectedDataType}}selected{{ end }}>{{ stringsReplace $dataType "_" " " }}</option>
                                     {{ end }}
                                 </select>
                             </div>
