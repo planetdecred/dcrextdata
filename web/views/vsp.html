@@ -130,6 +130,11 @@
                         <div class="row">
                             <div class="col-sm-3 side-vsp-panel">
                                 <div class="p-0 d-none" data-target="vsp.chartSourceWrapper">
+                                    <div class="form-check">
+                                        <input name="chartSource" data-action="click->vsp#vspCheckboxCheckChanged"
+                                               class="form-check-input" type="checkbox" id="vspCheckbox-all">
+                                        <label class="form-check-label" for="vspCheckbox-all">Select All</label>
+                                    </div>
                                     {{ range $index, $filter := .allVspData}}
                                     <div class="form-check">
                                         <input name="chartSource" data-target="vsp.chartSource" data-action="click->vsp#chartSourceCheckChanged"
