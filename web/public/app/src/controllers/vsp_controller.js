@@ -11,7 +11,7 @@ export default class extends Controller {
       'previousPageButton', 'totalPageCount', 'nextPageButton',
       'vspRowTemplate', 'currentPage', 'selectedNum', 'vspTableWrapper',
       'graphTypeWrapper', 'dataType', 'pageSizeWrapper', 'viewOptionControl',
-      'vspSelectorWrapper', 'chartSourceWrapper', 'chartSource',
+      'vspSelectorWrapper', 'chartSourceWrapper', 'allChartSource', 'chartSource',
       'chartWrapper', 'labels', 'chartsView', 'viewOption', 'loadingData'
     ]
   }
@@ -31,19 +31,21 @@ export default class extends Controller {
 
     this.dataType = this.dataTypeTarget.value = this.dataTypeTarget.getAttribute('data-initial-value')
 
-    this.vsps = []
     // if no vsp is selected, select the first one
     let noVspSelected = true
+    let allVspSelected = true
     this.chartSourceTargets.forEach(el => {
       if (el.checked) {
         noVspSelected = false
-        this.vsps.push(el.value)
+      } else {
+        allVspSelected = false
       }
     })
     if (noVspSelected) {
       this.chartSourceTarget.checked = true
-      this.vsps.push(this.chartSourceTarget.value)
     }
+
+    this.allChartSourceTarget.checked = allVspSelected
 
     this.selectedViewOption = this.viewOptionControlTarget.getAttribute('data-initial-value')
     if (this.selectedViewOption === 'chart') {
@@ -206,7 +208,7 @@ export default class extends Controller {
     let _this = this
     const queryString = `data-type=${this.dataType}&vsps=${this.vsps.join('|')}&view-option=${_this.selectedViewOption}`
     window.history.pushState(window.history.state, _this.addr, `/vsp?${queryString}`)
-    axios.get(url).then(function (response) {
+    axios.get(`/vspchartdata?${queryString}`).then(function (response) {
       let result = response.data
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       if (result.error) {
