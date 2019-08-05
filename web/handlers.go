@@ -115,13 +115,13 @@ func (s *Server) fetchExchangeData(req *http.Request) (map[string]interface{}, e
 		pageSize = numRows
 	}
 
-	filterInterval, err := strconv.Atoi(interval)
-	if err != nil || filterInterval <= 0 {
-		filterInterval = defaultInterval
+	selectedInterval, err := strconv.Atoi(interval)
+	if err != nil || selectedInterval <= 0 {
+		selectedInterval = defaultInterval
 	}
 
-	if _, found := exchangeTickIntervals[filterInterval]; !found {
-		filterInterval = defaultInterval
+	if _, found := exchangeTickIntervals[selectedInterval]; !found {
+		selectedInterval = defaultInterval
 	}
 
 	pageToLoad, err := strconv.Atoi(page)
@@ -160,7 +160,7 @@ func (s *Server) fetchExchangeData(req *http.Request) (map[string]interface{}, e
 		"pageSizeSelector":     pageSizeSelector,
 		"selectedCurrencyPair": selectedCurrencyPair,
 		"selectedNum":          pageSize,
-		"selectedInterval":     filterInterval,
+		"selectedInterval":     selectedInterval,
 		"selectedTick":         selectedTick,
 		"selectedExchange":     selectedExchange,
 		"currentPage":          pageToLoad,
@@ -172,19 +172,19 @@ func (s *Server) fetchExchangeData(req *http.Request) (map[string]interface{}, e
 		return data, nil
 	}
 
-	allExchangeTicksSlice, totalCount, err := s.db.FetchExchangeTicks(ctx, selectedCurrencyPair, selectedExchange, filterInterval, offset, pageSize)
+	allExchangeTicksSlice, totalCount, err := s.db.FetchExchangeTicks(ctx, selectedCurrencyPair, selectedExchange, selectedInterval, offset, pageSize)
 	if err != nil {
 		return nil, fmt.Errorf("error in fetching exchange ticks, %s", err.Error())
 	}
 
 	if len(allExchangeTicksSlice) == 0 {
-		return nil, fmt.Errorf("%s does not have %s data", strings.Title(selectedExchange), exchangeTickIntervals[filterInterval])
+		return nil, fmt.Errorf("%s does not have %s data", strings.Title(selectedExchange), exchangeTickIntervals[selectedInterval])
 	}
 
 	data["exData"] = allExchangeTicksSlice
 	data["totalPages"] = int(math.Ceil(float64(totalCount) / float64(pageSize)))
 
-	totalTxLoaded := int(offset) + len(allExchangeTicksSlice)
+	totalTxLoaded := offset + len(allExchangeTicksSlice)
 	if int64(totalTxLoaded) < totalCount {
 		data["nextPage"] = pageToLoad + 1
 	}
@@ -204,7 +204,7 @@ func (s *Server) getExchangeChartData(res http.ResponseWriter, req *http.Request
 	ctx := req.Context()
 	interval, err := strconv.Atoi(selectedInterval)
 	if err != nil {
-		s.renderErrorJSON(fmt.Sprintf("invalid intervale, %s", err.Error()), res)
+		s.renderErrorJSON(fmt.Sprintf("Invalid interval, %s", err.Error()), res)
 		return
 	}
 
@@ -326,7 +326,7 @@ func (s *Server) fetchVSPData(req *http.Request) (map[string]interface{}, error)
 	data["allVspData"] = allVspData
 	data["totalPages"] = int(math.Ceil(float64(totalCount) / float64(pageSize)))
 
-	totalTxLoaded := int(offset) + len(allVSPSlice)
+	totalTxLoaded := offset + len(allVSPSlice)
 	if int64(totalTxLoaded) < totalCount {
 		data["nextPage"] = pageToLoad + 1
 	}
@@ -549,7 +549,7 @@ func (s *Server) fetchPoWData(req *http.Request) (map[string]interface{}, error)
 	data["powData"] = allPowDataSlice
 	data["totalPages"] = int(math.Ceil(float64(totalCount) / float64(recordsPerPage)))
 
-	totalTxLoaded := int(offset) + len(allPowDataSlice)
+	totalTxLoaded := offset + len(allPowDataSlice)
 	if int64(totalTxLoaded) < totalCount {
 		data["nextPage"] = pageToLoad + 1
 	}
@@ -755,7 +755,7 @@ func (s *Server) fetchMempoolData(req *http.Request) (map[string]interface{}, er
 	data["mempoolData"] = mempoolSlice
 	data["totalPages"] = int(math.Ceil(float64(totalCount) / float64(pageSize)))
 
-	totalTxLoaded := int(offset) + len(mempoolSlice)
+	totalTxLoaded := offset + len(mempoolSlice)
 	if int64(totalTxLoaded) < totalCount {
 		data["nextPage"] = pageToLoad + 1
 	}
@@ -968,12 +968,12 @@ func (s *Server) fetchBlockData(req *http.Request) (map[string]interface{}, erro
 		pageSize = numRows
 	}
 
-	pageToLoad, err := strconv.ParseInt(page, 10, 32)
+	pageToLoad, err := strconv.Atoi(page)
 	if err != nil || pageToLoad <= 0 {
 		pageToLoad = 1
 	}
 
-	offset := (int(pageToLoad) - 1) * pageSize
+	offset := (pageToLoad - 1) * pageSize
 
 	ctx := req.Context()
 
@@ -1012,13 +1012,13 @@ func (s *Server) fetchBlockData(req *http.Request) (map[string]interface{}, erro
 		"blocks":               true,
 		"selectedNum":          pageSize,
 		"url":                  "/blockdata",
-		"previousPage":         int(pageToLoad - 1),
+		"previousPage":         pageToLoad - 1,
 		"totalPages":           int(math.Ceil(float64(totalCount) / float64(pageSize))),
 	}
 
-	totalTxLoaded := int(offset) + len(voteSlice)
+	totalTxLoaded := offset + len(voteSlice)
 	if int64(totalTxLoaded) < totalCount {
-		data["nextPage"] = int(pageToLoad + 1)
+		data["nextPage"] = pageToLoad + 1
 	}
 
 	return data, nil
@@ -1064,12 +1064,12 @@ func (s *Server) fetchVoteData(req *http.Request) (map[string]interface{}, error
 		pageSize = numRows
 	}
 
-	pageToLoad, err := strconv.ParseInt(page, 10, 32)
+	pageToLoad, err := strconv.Atoi(page)
 	if err != nil || pageToLoad <= 0 {
 		pageToLoad = 1
 	}
 
-	offset := (int(pageToLoad) - 1) * pageSize
+	offset := (pageToLoad - 1) * pageSize
 
 	ctx := req.Context()
 
@@ -1109,13 +1109,13 @@ func (s *Server) fetchVoteData(req *http.Request) (map[string]interface{}, error
 		"votes":                true,
 		"selectedNum":          pageSize,
 		"url":                  "/votesdata",
-		"previousPage":         int(pageToLoad - 1),
+		"previousPage":         pageToLoad - 1,
 		"totalPages":           int(math.Ceil(float64(totalCount) / float64(pageSize))),
 	}
 
-	totalTxLoaded := int(offset) + len(voteSlice)
+	totalTxLoaded := offset + len(voteSlice)
 	if int64(totalTxLoaded) < totalCount {
-		data["nextPage"] = int(pageToLoad + 1)
+		data["nextPage"] = pageToLoad + 1
 	}
 
 	return data, nil

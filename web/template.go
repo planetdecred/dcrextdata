@@ -56,7 +56,7 @@ func templateFuncMap() template.FuncMap {
 			}
 			return false
 		},
-		"replace": func(input string, old string, new string) string {
+		"stringsReplace": func(input string, old string, new string) string {
 			return strings.Replace(input, old, new, -1)
 		},
 	}
