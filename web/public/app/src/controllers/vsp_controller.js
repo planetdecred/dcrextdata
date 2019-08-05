@@ -223,9 +223,9 @@ export default class extends Controller {
   // vsp chart
   plotGraph (dataSet) {
     const _this = this
-    let yLabel = this.dataType.split('_').join(' ')
-    if ((yLabel.toLowerCase() === 'proportion live' || yLabel.toLowerCase() === 'proportion missed')) {
-      yLabel += ' (%)'
+    _this.yLabel = this.dataType.split('_').join(' ')
+    if ((_this.yLabel.toLowerCase() === 'proportion live' || _this.yLabel.toLowerCase() === 'proportion missed')) {
+      _this.yLabel += ' (%)'
     }
     if (_this.yLabel === '') {
       _this.yLabel = 'n/a'
