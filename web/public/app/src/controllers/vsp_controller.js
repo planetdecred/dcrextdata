@@ -173,6 +173,14 @@ export default class extends Controller {
     })
   }
 
+  vspCheckboxCheckChanged (event) {
+    const checked = event.currentTarget.checked
+    this.chartSourceTargets.forEach(el => {
+      el.checked = checked
+    })
+    this.fetchDataAndPlotGraph()
+  }
+
   chartSourceCheckChanged (event) {
     this.vsps = []
     this.chartSourceTargets.forEach(chartSource => {
