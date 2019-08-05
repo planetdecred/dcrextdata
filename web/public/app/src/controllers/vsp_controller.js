@@ -174,6 +174,12 @@ export default class extends Controller {
   }
 
   chartSourceCheckChanged (event) {
+    this.vsps = []
+    this.chartSourceTargets.forEach(chartSource => {
+      if (chartSource.checked) {
+        this.vsps.push(chartSource.value)
+      }
+    })
     this.fetchDataAndPlotGraph()
   }
 
@@ -199,7 +205,7 @@ export default class extends Controller {
   // vsp chart
   plotGraph (dataSet) {
     const _this = this
-    _this.yLabel = this.graphTypeTarget.value.split('_').join(' ')
+    _this.yLabel = this.dataType.split('_').join(' ')
     if ((_this.yLabel.toLowerCase() === 'proportion live' || _this.yLabel.toLowerCase() === 'proportion missed')) {
       _this.yLabel += ' (%)'
     }
