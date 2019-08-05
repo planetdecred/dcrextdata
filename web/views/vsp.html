@@ -8,7 +8,7 @@
         <div class="content">
             <div class="container-fluid">
                 <div class="control-wrapper">
-                    <div class="d-flex flex-row">
+                    <div class="d-flex flex-row mb-3">
                         <div class="chart-control ml-auto mr-3" data-target="vsp.viewOptionControl" data-initial-value="{{ .selectedViewOption }}">
                             <ul class="nav nav-pills">
                                 <li class="nav-item">
@@ -73,84 +73,84 @@
                         </div>
                     </div>
 
-                    <div class="{{ if .chartView }}d-none{{ end }}" data-target="vsp.vspTableWrapper">
-                        <table class="table mx-auto">
-                            <thead>
-                                <tr>
-                                    <th>VSP</th>
-                                    <th>Immature</th>
-                                    <th>Live</th>
-                                    <th>Voted</th>
-                                    <th>Missed</th>
-                                    <th>Pool Fees</th>
-                                    <th>% Live</th>
-                                    <th>% Missed</th>
-                                    <th>User Count</th>
-                                    <th>Users Active</th>
-                                    <th>Time(UTC)</th>
-                                </tr>
-                            </thead>
-                            <tbody data-target="vsp.vspTicksTable">
-                            {{range $index, $vspticks := .vspData}}
-                                <tr>
-                                    <td>{{$vspticks.VSP}}</td>
-                                    <td>{{$vspticks.Immature}}</td>
-                                    <td>{{$vspticks.Live}}</td>
-                                    <td>{{$vspticks.Voted}}</td>
-                                    <td>{{$vspticks.Missed}}</td>
-                                    <td>{{$vspticks.PoolFees}}</td>
-                                    <td>{{$vspticks.ProportionLive}}</td>
-                                    <td>{{$vspticks.ProportionMissed}}</td>
-                                    <td>{{$vspticks.UserCount}}</td>
-                                    <td>{{$vspticks.UsersActive}}</td>
-                                    <td>{{$vspticks.Time}}</td>
-                                </tr>
-                                {{end}}
-                            </tbody>
-                        </table>
+                </div>
 
-                        <template data-target="vsp.vspRowTemplate">
+                <div class="{{ if .chartView }}d-none{{ end }}" data-target="vsp.vspTableWrapper">
+                    <table class="table mx-auto">
+                        <thead>
                             <tr>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
+                                <th>VSP</th>
+                                <th>Immature</th>
+                                <th>Live</th>
+                                <th>Voted</th>
+                                <th>Missed</th>
+                                <th>Pool Fees</th>
+                                <th>% Live</th>
+                                <th>% Missed</th>
+                                <th>User Count</th>
+                                <th>Users Active</th>
+                                <th>Time(UTC)</th>
                             </tr>
-                        </template>
-                    </div>
-
-                    <div data-target="vsp.chartWrapper" class="chart-wrapper pl-2 pr-2 mb-5">
-                        <div class="row">
-                            <div class="col-xs-10 col-xs-offset-1 col-md-2 col-md-offset-0 side-vsp-panel">
-                                <div class="p-0 d-none" data-target="vsp.chartSourceWrapper">
-                                    {{ range $index, $filter := .allVspData}}
-                                    <div class="form-check">
-                                        <input name="chartSource" data-target="vsp.chartSource" data-action="click->vsp#chartSourceCheckChanged"
-                                        class="form-check-input" type="checkbox" id="inlineCheckbox-{{$filter.Name}}"
-                                        value="{{$filter.Name}}" {{ if eq $index 0 }} checked {{ end }}>
-                                        <label class="form-check-label" for="inlineCheckbox-{{$filter.Name}}">{{$filter.Host}} ({{$filter.Name}})</label>
-                                    </div>
-                                    {{ end }}
+                        </thead>
+                        <tbody data-target="vsp.vspTicksTable">
+                        {{range $index, $vspticks := .vspData}}
+                            <tr>
+                                <td>{{$vspticks.VSP}}</td>
+                                <td>{{$vspticks.Immature}}</td>
+                                <td>{{$vspticks.Live}}</td>
+                                <td>{{$vspticks.Voted}}</td>
+                                <td>{{$vspticks.Missed}}</td>
+                                <td>{{$vspticks.PoolFees}}</td>
+                                <td>{{$vspticks.ProportionLive}}</td>
+                                <td>{{$vspticks.ProportionMissed}}</td>
+                                <td>{{$vspticks.UserCount}}</td>
+                                <td>{{$vspticks.UsersActive}}</td>
+                                <td>{{$vspticks.Time}}</td>
+                            </tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                    <template data-target="vsp.vspRowTemplate">
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </template>
+                </div>
+                <div data-target="vsp.chartWrapper" class="chart-wrapper pl-2 pr-2 mb-5">
+                    <div class="row">
+                        <div class="col-xs-10 col-xs-offset-1 col-md-2 col-md-offset-0 side-vsp-panel">
+                            <div class="p-0 d-none" data-target="vsp.chartSourceWrapper">
+                                {{ range $index, $filter := .allVspData}}
+                                <div class="form-check">
+                                    <input name="chartSource" data-target="vsp.chartSource" data-action="click->vsp#chartSourceCheckChanged"
+                                    class="form-check-input" type="checkbox" id="inlineCheckbox-{{$filter.Name}}"
+                                    value="{{$filter.Name}}" {{ if eq $index 0 }} checked {{ end }}>
+                                    <label class="form-check-label" for="inlineCheckbox-{{$filter.Name}}">{{$filter.Host}} ({{$filter.Name}})</label>
                                 </div>
-                            </div>
-
-                            <div class="col-xs-12 col-md-10 chart-panel">
-                                <div id="chart" data-target="vsp.chartsView"
-                                style="width:100%; height:73vh; margin:0 auto;">
+                                {{ end }}
                             </div>
                         </div>
 
+                        <div class="col-xs-12 col-md-10 chart-panel">
+                            <div id="chart" data-target="vsp.chartsView"
+                            style="width:100%; height:73vh; margin:0 auto;">
+                            </div>
+                        </div>
                     </div>
-                    <div class="d-flex justify-content-center legend-wrapper">
-                        <div class="legend d-flex" data-target="vsp.labels"></div>
-                    </div>
+
+                </div>
+                <div class="d-flex justify-content-center legend-wrapper">
+                    <div class="legend d-flex" data-target="vsp.labels"></div>
                 </div>
             </div>
         </div>
