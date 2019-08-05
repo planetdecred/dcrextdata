@@ -2,6 +2,8 @@ import dompurify from 'dompurify'
 
 const Dygraph = require('../../dist/js/dygraphs.min.js')
 
+export const appName = 'dcrextdata'
+
 export const hide = (el) => {
   el.classList.add('d-none')
   el.classList.add('d-hide')
