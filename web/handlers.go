@@ -88,12 +88,20 @@ func (s *Server) getFilteredExchangeTicks(res http.ResponseWriter, req *http.Req
 func (s *Server) fetchExchangeData(req *http.Request) (map[string]interface{}, error) {
 	req.ParseForm()
 	page := req.FormValue("page")
-	selectedExchange := req.FormValue("selectedExchange")
-	numberOfRows := req.FormValue("recordsPerPage")
-	selectedCurrencyPair := req.FormValue("selectedCurrencyPair")
-	interval := req.FormValue("selectedInterval")
-	refresh := req.FormValue("refresh")
-	viewOption := req.FormValue("viewOption")
+	selectedExchange := req.FormValue("selected-exchange")
+	numberOfRows := req.FormValue("records-per-page")
+	selectedCurrencyPair := req.FormValue("selected-currency-pair")
+	interval := req.FormValue("selected-interval")
+	selectedTick := req.FormValue("selected-tick")
+	viewOption := req.FormValue("view-option")
+
+	if viewOption == "" {
+		viewOption = defaultViewOption
+	}
+
+	if selectedTick == "" {
+		selectedTick = "close"
+	}
 
 	ctx := req.Context()
 
@@ -108,7 +116,7 @@ func (s *Server) fetchExchangeData(req *http.Request) (map[string]interface{}, e
 	}
 
 	filterInterval, err := strconv.Atoi(interval)
-	if err != nil || filterInterval <= 0 || refresh == "1" {
+	if err != nil || filterInterval <= 0 {
 		filterInterval = defaultInterval
 	}
 
@@ -117,79 +125,66 @@ func (s *Server) fetchExchangeData(req *http.Request) (map[string]interface{}, e
 	}
 
 	pageToLoad, err := strconv.Atoi(page)
-	if err != nil || pageToLoad <= 0 || refresh == "1" {
+	if err != nil || pageToLoad <= 0 {
 		pageToLoad = 1
 	}
 
-	if selectedExchange == "" || refresh == "1" {
-		selectedExchange = "All"
-	}
-
-	if selectedCurrencyPair == "" || refresh == "1" {
+	if selectedCurrencyPair == "" {
 		selectedCurrencyPair = "All"
 	}
 
 	offset := (pageToLoad - 1) * pageSize
 
-	allExhangeSlice, err := s.db.AllExchange(ctx)
+	allExchangeSlice, err := s.db.AllExchange(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot fetch exchanges, %s", err.Error())
 	}
 
 	currencyPairs, err := s.db.AllExchangeTicksCurrencyPair(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot fetch currency pair, %s", err.Error())
 	}
 
-	if viewOption == "" || viewOption == "chart" {
-		data := map[string]interface{}{
-			"chartView":            true,
-			"selectedViewOption":   defaultViewOption,
-			"currencyPairs":        currencyPairs,
-			"allExData":            allExhangeSlice,
-			"intervals":            exchangeTickIntervals,
-			"pageSizeSelector":     pageSizeSelector,
-			"selectedCurrencyPair": selectedCurrencyPair,
-			"selectedNum":          pageSize,
-			"selectedInterval":     filterInterval,
-			"selectedExchange":     selectedExchange,
-			"currentPage":          pageToLoad,
-			"previousPage":         pageToLoad,
-			"totalPages":           pageToLoad,
-		}
-		return data, nil
-	}
-
-	allExhangeTicksSlice, totalCount, err := s.db.FetchExchangeTicks(ctx, selectedCurrencyPair, selectedExchange, filterInterval, offset, pageSize)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(allExhangeTicksSlice) == 0 {
-		data := map[string]interface{}{
-			"message": fmt.Sprintf("%s does not have %s data.", strings.Title(selectedExchange), exchangeTickIntervals[filterInterval]),
-		}
-		return data, nil
+	if selectedExchange == "" && viewOption == "table" {
+		selectedExchange = "All"
+	} else if (selectedExchange == "" || selectedExchange == "All") && len(allExchangeSlice) > 0{
+		selectedExchange = allExchangeSlice[0].Name
 	}
 
 	data := map[string]interface{}{
-		"exData":               allExhangeTicksSlice,
-		"allExData":            allExhangeSlice,
+		"chartView":            true,
+		"selectedViewOption":   viewOption,
 		"currencyPairs":        currencyPairs,
+		"allExData":            allExchangeSlice,
 		"intervals":            exchangeTickIntervals,
 		"pageSizeSelector":     pageSizeSelector,
-		"currentPage":          pageToLoad,
-		"chartView":            false,
-		"selectedViewOption":   "table",
-		"previousPage":         pageToLoad - 1,
-		"totalPages":           int(math.Ceil(float64(totalCount) / float64(pageSize))),
-		"selectedExchange":     selectedExchange,
 		"selectedCurrencyPair": selectedCurrencyPair,
 		"selectedNum":          pageSize,
 		"selectedInterval":     filterInterval,
+		"selectedTick":         selectedTick,
+		"selectedExchange":     selectedExchange,
+		"currentPage":          pageToLoad,
+		"previousPage":         pageToLoad - 1,
+		"totalPages":           0,
 	}
 
-	totalTxLoaded := int(offset) + len(allExhangeTicksSlice)
+	if viewOption == "chart" {
+		return data, nil
+	}
+
+	allExchangeTicksSlice, totalCount, err := s.db.FetchExchangeTicks(ctx, selectedCurrencyPair, selectedExchange, filterInterval, offset, pageSize)
+	if err != nil {
+		return nil, fmt.Errorf("error in fetching exchange ticks, %s", err.Error())
+	}
+
+	if len(allExchangeTicksSlice) == 0 {
+		return nil, fmt.Errorf("%s does not have %s data", strings.Title(selectedExchange), exchangeTickIntervals[filterInterval])
+	}
+
+	data["exData"] = allExchangeTicksSlice
+	data["totalPages"] = int(math.Ceil(float64(totalCount) / float64(pageSize)))
+
+	totalTxLoaded := int(offset) + len(allExchangeTicksSlice)
 	if int64(totalTxLoaded) < totalCount {
 		data["nextPage"] = pageToLoad + 1
 	}
@@ -197,36 +192,29 @@ func (s *Server) fetchExchangeData(req *http.Request) (map[string]interface{}, e
 	return data, nil
 }
 
-func (s *Server) getChartData(res http.ResponseWriter, req *http.Request) {
+func (s *Server) getExchangeChartData(res http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
-	selectedTick := req.FormValue("selectedTick")
-	selectedCurrencyPair := req.FormValue("selectedCurrencyPair")
-	selectedInterval := req.FormValue("selectedInterval")
-	selectedExchange := req.FormValue("selectedExchange")
-	refresh := req.FormValue("refresh")
-
-	if refresh == "1" {
-		s.getExchangeTicks(res, req)
-		return
-	}
+	selectedTick := req.FormValue("selected-tick")
+	selectedCurrencyPair := req.FormValue("selected-currency-pair")
+	selectedInterval := req.FormValue("selected-interval")
+	selectedExchange := req.FormValue("selected-exchange")
 
 	data := map[string]interface{}{}
 
 	ctx := req.Context()
 	interval, err := strconv.Atoi(selectedInterval)
 	if err != nil {
-		s.renderErrorJSON(err.Error(), res)
+		s.renderErrorJSON(fmt.Sprintf("invalid intervale, %s", err.Error()), res)
 		return
 	}
 
 	chartData, err := s.db.ExchangeTicksChartData(ctx, selectedTick, selectedCurrencyPair, interval, selectedExchange)
 	if err != nil {
-		s.renderErrorJSON(err.Error(), res)
+		s.renderErrorJSON(fmt.Sprintf("Cannot fetch chart data, %s", err.Error()), res)
 		return
 	}
 	if len(chartData) == 0 {
-		data["message"] = fmt.Sprintf("No data to generate %s chart.", selectedExchange)
-		s.renderJSON(data, res)
+		s.renderErrorJSON(fmt.Sprintf("No data to generate %s chart.", selectedExchange), res)
 		return
 	}
 

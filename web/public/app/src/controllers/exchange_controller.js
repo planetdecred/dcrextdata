@@ -1,6 +1,6 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { hide, show, legendFormatter, setActiveOptionBtn, options, showLoading, hideLoading } from '../utils'
+import { hide, show, legendFormatter, setActiveOptionBtn, options, appName, showLoading, hideLoading } from '../utils'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
 
@@ -25,6 +25,11 @@ export default class extends Controller {
     if (this.currentPage < 1) {
       this.currentPage = 1
     }
+
+    this.selectedCurrencyPair = this.selectedCurrencyPairTarget.value = this.selectedCurrencyPairTarget.getAttribute('data-initial-value')
+    this.selectedInterval = this.selectedIntervalTarget.value = this.selectedIntervalTarget.getAttribute('data-initial-value')
+    this.selectedExchange = this.selectedFilterTarget.value = this.selectedFilterTarget.getAttribute('data-initial-value')
+    this.selectedTick = this.selectedTicksTarget.value = this.selectedTicksTarget.getAttribute('data-initial-value')
 
     this.selectedViewOption = this.viewOptionControlTarget.getAttribute('data-initial-value')
     if (this.selectedViewOption === 'chart') {
@@ -58,7 +63,6 @@ export default class extends Controller {
     this.selectedViewOption = 'chart'
     hide(this.messageViewTarget)
     var intervals = this.selectedIntervalTarget.options
-    var exhange = this.selectedFilterTarget.options
     show(this.chartWrapperTarget)
     hide(this.pageSizeWrapperTarget)
     show(this.tickWapperTarget)
@@ -68,10 +72,14 @@ export default class extends Controller {
     hide(this.numPageWrapperTarget)
     hide(this.exchangeTableWrapperTarget)
     setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
-    this.selectedInterval = this.selectedIntervalTarget.value = intervals[4].value
-    this.selectedExchange = this.selectedFilterTarget.value = exhange[1].text
-    this.selectedTick = this.selectedTicksTarget.value = 'close'
-    this.selectedCurrencyPair = this.selectedCurrencyPairTarget.value = 'BTC/DCR'
+    if (this.selectedCurrencyPair === '' || this.selectedCurrencyPair === 'All') {
+      this.selectedCurrencyPair = this.selectedCurrencyPairTarget.value = this.selectedCurrencyPairTarget.options[1].text
+      this.selectedCurrencyPairTarget.text = this.selectedCurrencyPair
+    }
+    if (this.selectedExchange === '' || this.selectedExchange === 'All') {
+      this.selectedExchange = this.selectedFilterTarget.value = this.selectedFilterTarget.options[1].text
+      this.selectedFilterTarget.text = this.selectedExchange
+    }
     this.fetchExchange(this.selectedViewOption)
   }
 
@@ -122,22 +130,23 @@ export default class extends Controller {
 
     var url
     if (display === 'table') {
-      url = `/exchange?page=${_this.nextPage}&selectedExchange=${_this.selectedExchange}&recordsPerPage=${_this.numberOfRows}&selectedCurrencyPair=${_this.selectedCurrencyPair}&selectedInterval=${_this.selectedInterval}&viewOption=${_this.selectedViewOption}`
+      url = `/exchangedata?page=${_this.nextPage}&selected-exchange=${_this.selectedExchange}&records-per-page=${_this.numberOfRows}&selected-currency-pair=${_this.selectedCurrencyPair}&selected-interval=${_this.selectedInterval}&view-option=${_this.selectedViewOption}`
     } else {
-      url = `/exchangechart?selectedTick=${_this.selectedTick}&selectedCurrencyPair=${_this.selectedCurrencyPair}&selectedInterval=${_this.selectedInterval}&selectedExchange=${_this.selectedExchange}&viewOption=${_this.selectedViewOption}`
-      window.history.pushState(window.history.state, this.addr, url + `&refresh=${1}`)
+      const queryString = `selected-tick=${_this.selectedTick}&selected-currency-pair=${_this.selectedCurrencyPair}&selected-interval=${_this.selectedInterval}&selected-exchange=${_this.selectedExchange}&view-option=${_this.selectedViewOption}`
+      window.history.pushState(window.history.state, appName, `/exchanges?${queryString}`)
+      url = `/exchangechart?${queryString}`
     }
 
     axios.get(url)
       .then(function (response) {
         let result = response.data
-        console.log(result)
+        console.log(result) // todo: debug - remove
         if (display === 'table') {
           hideLoading(_this.loadingDataTarget, [_this.exchangeTableWrapperTarget])
           if (result.message) {
             let messageHTML = ''
             messageHTML += `<div class="alert alert-primary">
-                           <strong>${result.message}</strong>
+                           <strong>${result.error}</strong>
                       </div>`
 
             _this.messageViewTarget.innerHTML = messageHTML
@@ -147,7 +156,7 @@ export default class extends Controller {
             _this.totalPageCountTarget.textContent = 0
             _this.currentPageTarget.textContent = 0
           } else {
-            window.history.pushState(window.history.state, _this.addr, `/exchanges?page=${result.currentPage}&selectedExchange=${_this.selectedExchange}&recordsPerPage=${result.selectedNum}&selectedCurrencyPair=${result.selectedCurrencyPair}&selectedInterval=${result.selectedInterval}&viewOption=${result.selectedViewOption}`)
+            window.history.pushState(window.history.state, appName, `/exchanges?page=${result.currentPage}&selected-exchange=${_this.selectedExchange}&records-per-page=${result.selectedNum}&selected-currency-pair=${result.selectedCurrencyPair}&selected-interval=${result.selectedInterval}&view-option=${result.selectedViewOption}`)
             hide(_this.messageViewTarget)
             show(_this.exchangeTableWrapperTarget)
             _this.currentPage = result.currentPage
@@ -205,6 +214,7 @@ export default class extends Controller {
 
   // exchange chart
   plotGraph (exs) {
+    console.log(exs)
     if (exs.chartData) {
       hide(this.messageViewTarget)
       show(this.chartsViewTarget)
@@ -228,6 +238,7 @@ export default class extends Controller {
         legendFormatter: legendFormatter,
         labelsDiv: this.labelsTarget,
         ylabel: 'Price',
+        xlabel: 'Date',
         labels: labels,
         colors: colors,
         digitsAfterDecimal: 8
@@ -240,7 +251,7 @@ export default class extends Controller {
     } else {
       let messageHTML = ''
       messageHTML += `<div class="alert alert-primary">
-                           <strong>${exs.message}</strong>
+                           <strong>${exs.error}</strong>
                       </div>`
 
       this.messageViewTarget.innerHTML = messageHTML

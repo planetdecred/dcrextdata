@@ -27,9 +27,10 @@
                         <div class="mr-auto d-flex my-2">
                             <div class="control-div p-0">
                                 <div class="control-label">Currency Pair:</div>
-                                <select data-target="exchange.selectedCurrencyPair" data-action="change->exchange#selectedCurrencyPairChanged"
+                                {{$selectedCurrencyPair := .selectedCurrencyPair}}
+                                <select data-target="exchange.selectedCurrencyPair" data-initial-value="{{ $selectedCurrencyPair }}"
+                                        data-action="change->exchange#selectedCurrencyPairChanged"
                                     class="form-control" style="width: 105px;">
-                                    {{$selectedCurrencyPair := .selectedCurrencyPair}}
                                     <option data-target="exchange.currencyPairHideOption" class="{{ if .chartView }}d-none{{ end }}" value="All">All</option>
                                     {{ range $index, $cpair := .currencyPairs}}
                                     <option value="{{$cpair.CurrencyPair}}" {{ if eq $cpair.CurrencyPair $selectedCurrencyPair}} selected {{ end }}>{{$cpair.CurrencyPair}}</option>
@@ -38,9 +39,10 @@
                             </div>
                             <div data-target=exchange.sourceWrapper class="control-div p-0">
                                 <div class="control-label">Exchanges:</div>
+                                {{$selectedExchange := .selectedExchange}}
                                 <select data-target="exchange.selectedFilter" data-action="change->exchange#selectedFilterChanged"
+                                        data-initial-value="{{ $selectedExchange }}"
                                     class="form-control" style="width: 100px;">
-                                    {{$selectedExchange := .selectedExchange}}
                                     <option data-target="exchange.hideOption" class="{{ if .chartView }}d-none{{ end }}" value="All">All</option>
                                     {{ range $index, $filter := .allExData}}
                                     <option value="{{$filter.Name}}"  {{ if eq $filter.Name $selectedExchange}} selected {{ end }}>{{$filter.Name}}</option>
@@ -50,6 +52,7 @@
                             <div data-target="exchange.intervalWapper" class="control-div p-0">
                                 <div class="control-label">Interval:</div>
                                 <select data-target="exchange.selectedInterval" data-action="change->exchange#selectedIntervalChanged"
+                                        data-initial-value="{{ .selectedInterval }}"
                                     class="form-control" style="width: 60px;">
                                     {{$selectedInterval := .selectedInterval}}
                                     {{ range $index, $filter := .intervals}}
@@ -60,7 +63,7 @@
 
                             <div data-target="exchange.tickWapper" class="control-div  p-0 d-hide">
                                 <div class="control-label">Data Ticks:</div>
-                                <select data-target="exchange.selectedTicks"
+                                <select data-target="exchange.selectedTicks" data-initial-value="{{ .selectedTick }}"
                                 data-action="change->exchange#selectedTicksChanged" class="form-control"
                                 style="width: 90px;">
                                 <option value="close">Close</option>
