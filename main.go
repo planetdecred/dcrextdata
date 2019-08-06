@@ -131,7 +131,12 @@ func _main(ctx context.Context) error {
 
 		return nil
 	}
-	if err = createTablesAndIndex(db); err !=nil {
+
+	if cfg.HttpMode {
+		go web.StartHttpServer(cfg.HTTPHost, cfg.HTTPPort, db)
+	}
+
+	if err = createTablesAndIndex(db); err != nil {
 		return err
 	}
 
@@ -167,9 +172,10 @@ func _main(ctx context.Context) error {
 			return nil
 		}
 	}
+
 	// Display app version.
 	log.Infof("%s version %v (Go version %s)", app.AppName, app.Version(), runtime.Version())
-	
+
 	if !cfg.DisableMempool {
 		// register the close function to be run before shutdown
 		app.ShutdownOps = append(app.ShutdownOps, func() {
@@ -216,10 +222,6 @@ func _main(ctx context.Context) error {
 		}
 	}
 
-	if cfg.HttpMode {
-		go web.StartHttpServer(cfg.HTTPHost, cfg.HTTPPort, db)
-	}
-
 	// wait for shutdown signal
 	<-ctx.Done()
 
@@ -262,20 +264,31 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			log.Error("Error creating mempool table: ", err)
 			return err
 		}
+		fmt.Println("Mempool table created sucessfully.")
 	}
 	if !db.BlockTableExits() {
 		if err := db.CreateBlockTable(); err != nil {
 			log.Error("Error creating block table: ", err)
 			return err
 		}
+		fmt.Println("Blocks table created sucessfully.")
+
 	}
 	if !db.VoteTableExits() {
 		if err := db.CreateVoteTable(); err != nil {
 			log.Error("Error creating vote table: ", err)
 			return err
 		}
-	}else {
-		fmt.Println("Creating mempool tables")
+		fmt.Println("Votes table created sucessfully.")
+	}
+
+	if exists := db.VSPInfoTableExits(); !exists {
+		if err := db.CreateVSPInfoTables(); err != nil {
+			log.Error("Error creating vsp info table: ", err)
+			return err
+		}
+
+		fmt.Println("VSP table created sucessfully.")
 	}
 
 	if exists := db.VSPTickTableExits(); !exists {
@@ -283,6 +296,7 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			log.Error("Error creating vsp data table: ", err)
 			return err
 		}
+		fmt.Println("VSPTicks table created sucessfully.")
 
 		if err := db.CreateVSPTickIndex(); err != nil {
 			log.Error("Error creating vsp data index: ", err)
@@ -295,8 +309,7 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			log.Error("Error creating exchange table: ", err)
 			return err
 		}
-	}else {
-		fmt.Println("Creating exchange table...")
+		fmt.Println("Exchange table created sucessfully.")
 	}
 
 	if exists := db.ExchangeTickTableExits(); !exists {
@@ -304,13 +317,12 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			log.Error("Error creating exchange tick table: ", err)
 			return err
 		}
+		fmt.Println("ExchangeTicks table created sucessfully.")
 
 		if err := db.CreateExchangeTickIndex(); err != nil {
 			log.Error("Error creating exchange tick index: ", err)
 			return err
 		}
-	}else {
-		fmt.Println("Creating exchange tick index..")
 	}
 
 	if exists := db.PowDataTableExits(); !exists {
@@ -318,10 +330,8 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			log.Error("Error creating PoW data table: ", err)
 			return err
 		}
-	}else {
-		fmt.Println("Creating PoW table...")
+		fmt.Println("Pow table created sucessfully.")
 	}
-
 
 	return nil
 }
