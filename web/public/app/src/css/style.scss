@@ -786,6 +786,8 @@ table.collapsible tbody.clickable:hover {
 }
 
 .loading {
+  padding-top: 30vh !important;
+
   .loading-icon {
     border: 2px solid #3498db; /* Blue */
     border-top: 2px solid #f3f3f3; /* Light grey */
