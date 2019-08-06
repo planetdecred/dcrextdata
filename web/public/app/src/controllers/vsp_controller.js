@@ -188,12 +188,11 @@ export default class extends Controller {
     window.history.pushState(window.history.state, _this.addr, url + `&refresh=${1}`)
     axios.get(url).then(function (response) {
       let result = response.data
+      hideLoading(_this.loadingDataTarget, elementsToToggle)
       if (result.error) {
         _this.drawInitialGraph()
         return
       }
-
-      hideLoading(_this.loadingDataTarget, elementsToToggle)
       _this.plotGraph(result)
     }).catch(function (e) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
