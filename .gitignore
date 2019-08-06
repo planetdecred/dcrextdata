@@ -1,6 +1,7 @@
 *.exe
 *.exe~
 dcrextdata
+dcrd
 dcrextdata.conf
 vendor
 .vscode

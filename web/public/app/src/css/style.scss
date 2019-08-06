@@ -432,20 +432,6 @@ table.collapsible .labels tr td {
   padding-right: 0.2rem;
 }
 
-.side-vsp-panel {
-  -webkit-box-flex: 0;
-  -ms-flex: 0 0 23%;
-  flex: 0 0 23%;
-  max-width: 23%;
-}
-
-.chart-panel {
-  -webkit-box-flex: 0;
-  -ms-flex: 0 0 77%;
-  flex: 0 0 77%;
-  max-width: 77%;
-}
-
 .chart-control {
   width: max-content;
   border-radius: 3px;

@@ -7,7 +7,7 @@
         {{ template "header" }}
         <div class="content">
             <div class="container-fluid">
-                <div class="control-wrapper">
+                <div class="control-wrapper mb-3">
                     <div class="d-flex flex-row">
                         <div class="chart-control ml-auto mr-3" data-target="mempool.viewOptionControl" data-initial-value="{{ .mempool.selectedViewOption }}">
                             <ul class="nav nav-pills">
@@ -75,12 +75,13 @@
                         <div data-target="mempool.btnWrapper" class="d-flex {{ if .mempool.chartView }}d-none{{ end }}">
                             <a href="javascript:void(0)" data-target="mempool.previousPageButton" data-action="click->mempool#loadPreviousPage" class="mr-2 {{ if lt .mempool.previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
 
-                            <p class="text-muted" style="white-space: nowrap;"> Page <span data-target="mempool.currentPage" class="text-muted" data-current-page="{{ .mempool.currentPage }}"> {{ .mempool.currentPage }}</span> of <span data-target="mempool.totalPageCount" class="text-muted">{{ .mempool.totalPages }}</span>
-                            </p>    
-                            <a href="javascript:void(0)" data-target="mempool.nextPageButton" data-action="click->mempool#loadNextPage" class="ml-2 {{ if not .mempool.nextPage }}d-none{{ end }}"> Next&gt;</a>
-                        </div>
+								<p class="text-muted" style="white-space: nowrap;"> Page <span data-target="mempool.currentPage" class="text-muted" data-current-page="{{ .mempool.currentPage }}"> {{ .mempool.currentPage }}</span> of <span data-target="mempool.totalPageCount" class="text-muted">{{ .mempool.totalPages }}</span>
+								</p>    
+								<a href="javascript:void(0)" data-target="mempool.nextPageButton" data-action="click->mempool#loadNextPage" class="ml-2 {{ if not .mempool.nextPage }}d-none{{ end }}"> Next&gt;</a>
+							</div>
                         
-                    </div>
+                    	</div>
+					</div>
                 </div>
 
                 <div>
@@ -115,7 +116,7 @@
                             </tr>
                         </template>
                     </div>
-                    <div data-target="mempool.chartWrapper" class="chart-wrapper pl-2 pr-2 mb-5">
+                    <div data-target="mempool.chartWrapper" class="chart-wrapper pl-2 pr-2 mb-5 d-hide">
                         <div id="chart" data-target="mempool.chartsView"
                             style="width:100%; height:73vh; margin:0 auto;"></div>
                         <div class="d-flex justify-content-center legend-wrapper">
@@ -128,4 +129,5 @@
     </div>
     {{ template "footer" }}
 </body>
+
 </html>
