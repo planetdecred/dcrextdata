@@ -165,7 +165,7 @@ func _main(ctx context.Context) error {
 		if err != nil {
 			dcrNotRunningErr := "No connection could be made because the target machine actively refused it"
 			if strings.Contains(err.Error(), dcrNotRunningErr) {
-				fmt.Println(fmt.Sprintf("Unable to connect to dcrd at %s. Is it running?", cfg.DcrdRpcServer))
+				log.Errorf(fmt.Sprintf("Unable to connect to dcrd at %s. Is it running?", cfg.DcrdRpcServer))
 				return nil
 			} //running on port
 			fmt.Println(fmt.Sprintf("Error in opening a dcrd connection: %s", err.Error()))
@@ -264,14 +264,14 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			log.Error("Error creating mempool table: ", err)
 			return err
 		}
-		fmt.Println("Mempool table created sucessfully.")
+		log.Infof("Mempool table created sucessfully.")
 	}
 	if !db.BlockTableExits() {
 		if err := db.CreateBlockTable(); err != nil {
 			log.Error("Error creating block table: ", err)
 			return err
 		}
-		fmt.Println("Blocks table created sucessfully.")
+		log.Infof("Blocks table created sucessfully.")
 
 	}
 	if !db.VoteTableExits() {
@@ -279,7 +279,7 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			log.Error("Error creating vote table: ", err)
 			return err
 		}
-		fmt.Println("Votes table created sucessfully.")
+		log.Infof("Votes table created sucessfully.")
 	}
 
 	if exists := db.VSPInfoTableExits(); !exists {
@@ -288,7 +288,7 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			return err
 		}
 
-		fmt.Println("VSP table created sucessfully.")
+		log.Infof("VSP table created sucessfully.")
 	}
 
 	if exists := db.VSPTickTableExits(); !exists {
@@ -296,7 +296,7 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			log.Error("Error creating vsp data table: ", err)
 			return err
 		}
-		fmt.Println("VSPTicks table created sucessfully.")
+		log.Infof("VSPTicks table created sucessfully.")
 
 		if err := db.CreateVSPTickIndex(); err != nil {
 			log.Error("Error creating vsp data index: ", err)
@@ -309,7 +309,7 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			log.Error("Error creating exchange table: ", err)
 			return err
 		}
-		fmt.Println("Exchange table created sucessfully.")
+		log.Infof("Exchange table created sucessfully.")
 	}
 
 	if exists := db.ExchangeTickTableExits(); !exists {
@@ -317,7 +317,7 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			log.Error("Error creating exchange tick table: ", err)
 			return err
 		}
-		fmt.Println("ExchangeTicks table created sucessfully.")
+		log.Infof("ExchangeTicks table created sucessfully.")
 
 		if err := db.CreateExchangeTickIndex(); err != nil {
 			log.Error("Error creating exchange tick index: ", err)
@@ -330,8 +330,9 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			log.Error("Error creating PoW data table: ", err)
 			return err
 		}
-		fmt.Println("Pow table created sucessfully.")
+		log.Infof("Pow table created sucessfully.")
 	}
 
 	return nil
 }
+

@@ -2,7 +2,6 @@ package web
 
 import (
 	"fmt"
-	"log"
 	"text/template"
 	"time"
 )
@@ -22,7 +21,7 @@ func (s *Server) loadTemplates() {
 	for i, v := range tpls {
 		tpl, err := template.New(i).Funcs(templateFuncMap()).ParseFiles(v, layout)
 		if err != nil {
-			log.Fatalf("error loading templates: %s", err.Error())
+			log.Errorf("error loading templates: %s", err.Error())
 		}
 
 		s.lock.Lock()
