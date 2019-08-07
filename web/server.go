@@ -78,7 +78,7 @@ func StartHttpServer(httpHost, httpPort string, db DataQuery) {
 
 	address := net.JoinHostPort(httpHost, httpPort)
 
-	log.Infof("starting http server on %s\n", address)
+	log.Infof("starting http server on %s", address)
 	err := http.ListenAndServe(address, router)
 	if err != nil {
 		log.Errorf("Error starting web server")
@@ -126,5 +126,4 @@ func (s *Server) registerHandlers(r *chi.Mux) {
 	r.Get("/blockdata", s.getBlockData)
 	r.Get("/getvotes", s.getVotes)
 	r.Get("/votesdata", s.getVoteData)
-}
 }

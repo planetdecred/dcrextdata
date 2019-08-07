@@ -88,7 +88,6 @@ func _main(ctx context.Context) error {
 		cfg.ConfigFileOptions.VSPInterval = 300
 	}
 
-	// check if we can execute the needed op without connecting to a wallet
 	// if len(args) == 0, then there's nothing to execute as all command-line args were parsed as app options
 	if len(args) > 0 {
 		err := executeHelpCommand()
@@ -132,6 +131,10 @@ func _main(ctx context.Context) error {
 		return nil
 	}
 
+	// Display app version.
+	log.Infof("%s version %v (Go version %s)", app.AppName, app.Version(), runtime.Version())
+
+	// http server method
 	if cfg.HttpMode {
 		go web.StartHttpServer(cfg.HTTPHost, cfg.HTTPPort, db)
 	}
@@ -172,9 +175,6 @@ func _main(ctx context.Context) error {
 			return nil
 		}
 	}
-
-	// Display app version.
-	log.Infof("%s version %v (Go version %s)", app.AppName, app.Version(), runtime.Version())
 
 	if !cfg.DisableMempool {
 		// register the close function to be run before shutdown
