@@ -207,8 +207,17 @@ export default class extends Controller {
       return
     }
 
+    let elementsToToggle = [this.chartWrapperTarget]
+
+    showLoading(this.loadingDataTarget, elementsToToggle)
     axios.get(`/vspchartdata?${queryString}`).then(function (response) {
-      _this.plotGraph(response.data)
+      hideLoading(_this.loadingDataTarget, elementsToToggle)
+      const data = response.data
+      if (data.error) {
+        _this.drawInitialGraph()
+        return
+      }
+      _this.plotGraph(data)
     }).catch(function (e) {
       _this.drawInitialGraph()
     })

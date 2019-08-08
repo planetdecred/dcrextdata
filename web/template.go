@@ -2,7 +2,6 @@ package web
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"text/template"
 	"time"
