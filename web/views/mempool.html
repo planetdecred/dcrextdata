@@ -43,18 +43,18 @@
                     <ul class="nav nav-pills">
                         <li class="nav-item">
                             <a data-target="mempool.chartDataType"
-                            data-action="click->mempool#setSizeDataType" class="nav-link active"
-                            href="javascript:void(0);" data-option="table">Size</a>
+                            data-action="click->mempool#setDataType" class="nav-link active"
+                            href="javascript:void(0);" data-option="size" data-initial-value="{{ .mempool.chartDataType }}">Size</a>
                         </li>
                         <li class="nav-item">
                             <a data-target="mempool.chartDataType"
-                            data-action="click->mempool#setFeesDataType" class="nav-link"
-                            href="javascript:void(0);" data-option="table">Fees</a>
+                            data-action="click->mempool#setDataType" class="nav-link"
+                            href="javascript:void(0);" data-option="total_fee" data-initial-value="{{ .mempool.chartDataType }}">Fees</a>
                         </li>
                         <li class="nav-item">
                             <a data-target="mempool.chartDataType"
-                            data-action="click->mempool#setTransactionsDataType" class="nav-link"
-                            href="javascript:void(0);" data-option="table">Transactions</a>
+                            data-action="click->mempool#setDataType" class="nav-link"
+                            href="javascript:void(0);" data-option="number_of_transactions" data-initial-value="{{ .mempool.chartDataType }}">Transactions</a>
                         </li>
                     </ul>
                 </div>

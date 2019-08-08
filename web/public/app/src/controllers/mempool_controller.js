@@ -65,24 +65,6 @@ export default class extends Controller {
     this.fetchData('chart')
   }
 
-  setFeesDataType (event) {
-    this.dataType = 'total_fee'
-    this.chartDataTypeTargets.forEach(el => {
-      el.classList.remove('active')
-    })
-    event.currentTarget.classList.add('active')
-    this.fetchData('chart')
-  }
-
-  setTransactionsDataType (event) {
-    this.dataType = 'number_of_transactions'
-    this.chartDataTypeTargets.forEach(el => {
-      el.classList.remove('active')
-    })
-    event.currentTarget.classList.add('active')
-    this.fetchData('chart')
-  }
-
   numberOfRowsChanged () {
     this.selectedNumberOfRowsberOfRows = this.selectedNumberOfRowsTarget.value
     this.fetchData(this.selectedViewOption)

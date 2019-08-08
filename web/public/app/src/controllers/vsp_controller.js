@@ -80,7 +80,7 @@ export default class extends Controller {
     show(this.chartSourceWrapperTarget)
     hide(this.pageSizeWrapperTarget)
     setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
-    this.fetchData('chart')
+    this.fetchDataAndPlotGraph()
   }
 
   selectedFilterChanged () {
@@ -181,6 +181,10 @@ export default class extends Controller {
     })
   }
 
+  chartSourceCheckChanged () {
+    this.fetchDataAndPlotGraph()
+  }
+
   vspCheckboxCheckChanged (event) {
     const checked = event.currentTarget.checked
     this.chartSourceTargets.forEach(el => {
@@ -206,7 +210,7 @@ export default class extends Controller {
     showLoading(this.loadingDataTarget, elementsToToggle)
 
     let _this = this
-    const queryString = `data-type=${this.dataType}&vsps=${this.vsps.join('|')}&view-option=${_this.selectedViewOption}`
+    const queryString = `data-type=${this.dataType}&vsps=${vsps.join('|')}&view-option=${_this.selectedViewOption}`
     window.history.pushState(window.history.state, _this.addr, `/vsp?${queryString}`)
     axios.get(`/vspchartdata?${queryString}`).then(function (response) {
       let result = response.data
