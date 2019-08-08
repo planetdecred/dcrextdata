@@ -264,14 +264,14 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			log.Error("Error creating mempool table: ", err)
 			return err
 		}
-		log.Infof("Mempool table created sucessfully.")
+		log.Info("Mempool table created sucessfully.")
 	}
 	if !db.BlockTableExits() {
 		if err := db.CreateBlockTable(); err != nil {
 			log.Error("Error creating block table: ", err)
 			return err
 		}
-		log.Infof("Blocks table created sucessfully.")
+		log.Info("Blocks table created sucessfully.")
 
 	}
 	if !db.VoteTableExits() {
@@ -279,7 +279,7 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			log.Error("Error creating vote table: ", err)
 			return err
 		}
-		log.Infof("Votes table created sucessfully.")
+		log.Info("Votes table created sucessfully.")
 	}
 
 	if exists := db.VSPInfoTableExits(); !exists {
@@ -288,7 +288,7 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			return err
 		}
 
-		log.Infof("VSP table created sucessfully.")
+		log.Info("VSP table created sucessfully.")
 	}
 
 	if exists := db.VSPTickTableExits(); !exists {
@@ -296,7 +296,7 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			log.Error("Error creating vsp data table: ", err)
 			return err
 		}
-		log.Infof("VSPTicks table created sucessfully.")
+		log.Info("VSPTicks table created sucessfully.")
 
 		if err := db.CreateVSPTickIndex(); err != nil {
 			log.Error("Error creating vsp data index: ", err)
@@ -309,7 +309,7 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			log.Error("Error creating exchange table: ", err)
 			return err
 		}
-		log.Infof("Exchange table created sucessfully.")
+		log.Info("Exchange table created sucessfully.")
 	}
 
 	if exists := db.ExchangeTickTableExits(); !exists {
@@ -317,7 +317,7 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			log.Error("Error creating exchange tick table: ", err)
 			return err
 		}
-		log.Infof("ExchangeTicks table created sucessfully.")
+		log.Info("ExchangeTicks table created sucessfully.")
 
 		if err := db.CreateExchangeTickIndex(); err != nil {
 			log.Error("Error creating exchange tick index: ", err)
@@ -330,7 +330,7 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			log.Error("Error creating PoW data table: ", err)
 			return err
 		}
-		log.Infof("Pow table created sucessfully.")
+		log.Info("Pow table created sucessfully.")
 	}
 
 	return nil

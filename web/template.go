@@ -21,7 +21,7 @@ func (s *Server) loadTemplates() {
 	for i, v := range tpls {
 		tpl, err := template.New(i).Funcs(templateFuncMap()).ParseFiles(v, layout)
 		if err != nil {
-			log.Errorf("error loading templates: %s", err.Error())
+			log.Errorf("Error loading templates: %s", err.Error())
 		}
 
 		s.lock.Lock()

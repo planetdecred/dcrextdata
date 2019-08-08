@@ -78,7 +78,7 @@ func StartHttpServer(httpHost, httpPort string, db DataQuery) {
 
 	address := net.JoinHostPort(httpHost, httpPort)
 
-	log.Infof("starting http server on %s", address)
+	log.Infof("Starting http server on %s", address)
 	err := http.ListenAndServe(address, router)
 	if err != nil {
 		log.Errorf("Error starting web server")
