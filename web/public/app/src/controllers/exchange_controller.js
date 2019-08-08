@@ -21,16 +21,6 @@ export default class extends Controller {
     this.numberOfRows = this.selectedNumTarget.value
     this.selectedInterval = this.selectedIntervalTarget.value
 
-    this.currentPage = parseInt(this.currentPageTarget.getAttribute('data-current-page'))
-    if (this.currentPage < 1) {
-      this.currentPage = 1
-    }
-
-    this.selectedCurrencyPair = this.selectedCurrencyPairTarget.value = this.selectedCurrencyPairTarget.getAttribute('data-initial-value')
-    this.selectedInterval = this.selectedIntervalTarget.value = this.selectedIntervalTarget.getAttribute('data-initial-value')
-    this.selectedExchange = this.selectedFilterTarget.value = this.selectedFilterTarget.getAttribute('data-initial-value')
-    this.selectedTick = this.selectedTicksTarget.value = this.selectedTicksTarget.getAttribute('data-initial-value')
-
     this.selectedViewOption = this.viewOptionControlTarget.getAttribute('data-initial-value')
     if (this.selectedViewOption === 'chart') {
       this.setChart()
@@ -50,6 +40,7 @@ export default class extends Controller {
     show(this.currencyPairHideOptionTarget)
     show(this.exchangeTableWrapperTarget)
     show(this.numPageWrapperTarget)
+    this.resetCommonFilter()
     this.selectedExchange = this.selectedFilterTarget.value
     this.selectedCurrencyPair = this.selectedCurrencyPairTarget.value
     this.numberOfRows = this.selectedNumTarget.value
@@ -72,6 +63,7 @@ export default class extends Controller {
     hide(this.numPageWrapperTarget)
     hide(this.exchangeTableWrapperTarget)
     setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
+    this.resetCommonFilter()
     if (this.selectedCurrencyPair === '' || this.selectedCurrencyPair === 'All') {
       this.selectedCurrencyPair = this.selectedCurrencyPairTarget.value = this.selectedCurrencyPairTarget.options[1].text
       this.selectedCurrencyPairTarget.text = this.selectedCurrencyPair
@@ -81,6 +73,18 @@ export default class extends Controller {
       this.selectedFilterTarget.text = this.selectedExchange
     }
     this.fetchExchange(this.selectedViewOption)
+  }
+
+  resetCommonFilter () {
+    this.currentPage = parseInt(this.currentPageTarget.getAttribute('data-current-page'))
+    if (this.currentPage < 1) {
+      this.currentPage = 1
+    }
+
+    this.selectedCurrencyPair = this.selectedCurrencyPairTarget.value = this.selectedCurrencyPairTarget.getAttribute('data-initial-value')
+    this.selectedInterval = this.selectedIntervalTarget.value = this.selectedIntervalTarget.getAttribute('data-initial-value')
+    this.selectedExchange = this.selectedFilterTarget.value = this.selectedFilterTarget.getAttribute('data-initial-value')
+    this.selectedTick = this.selectedTicksTarget.value = this.selectedTicksTarget.getAttribute('data-initial-value')
   }
 
   selectedIntervalChanged () {
