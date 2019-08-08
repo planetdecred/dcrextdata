@@ -1,6 +1,6 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { hide, show, legendFormatter, setActiveOptionBtn, options, appName, showLoading, hideLoading } from '../utils'
+import { hide, show, legendFormatter, setActiveOptionBtn, options, appName } from '../utils'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
 
@@ -8,7 +8,7 @@ export default class extends Controller {
   static get targets () {
     return [
       'selectedFilter', 'exchangeTable', 'selectedCurrencyPair', 'numPageWrapper', 'intervalsWapper',
-      'previousPageButton', 'totalPageCount', 'nextPageButton', 'selectedTicks', 'selectedInterval', 'loadingData',
+      'previousPageButton', 'totalPageCount', 'nextPageButton', 'selectedTicks', 'selectedInterval',
       'exRowTemplate', 'currentPage', 'selectedNum', 'exchangeTableWrapper', 'tickWapper', 'viewOptionControl',
       'chartWrapper', 'labels', 'chartsView', 'selectedViewOption', 'hideOption', 'sourceWrapper', 'chartSelector',
       'pageSizeWrapper', 'chartSource', 'currencyPairHideOption', 'messageView', 'hideIntervalOption', 'viewOption'
@@ -128,11 +128,7 @@ export default class extends Controller {
 
   fetchExchange (display) {
     const _this = this
-
-    let elementsToToggle = [this.exchangeTableWrapperTarget, this.chartWrapperTarget]
-    showLoading(this.loadingDataTarget, elementsToToggle)
-
-    var url
+    let url
     if (display === 'table') {
       url = `/exchangedata?page=${_this.nextPage}&selected-exchange=${_this.selectedExchange}&records-per-page=${_this.numberOfRows}&selected-currency-pair=${_this.selectedCurrencyPair}&selected-interval=${_this.selectedInterval}&view-option=${_this.selectedViewOption}`
     } else {
@@ -146,7 +142,6 @@ export default class extends Controller {
         let result = response.data
         console.log(result) // todo: debug - remove
         if (display === 'table') {
-          hideLoading(_this.loadingDataTarget, [_this.exchangeTableWrapperTarget])
           if (result.error) {
             let messageHTML = ''
             messageHTML += `<div class="alert alert-primary">
@@ -185,11 +180,9 @@ export default class extends Controller {
             _this.displayExchange(result.exData)
           }
         } else {
-          hideLoading(_this.loadingDataTarget, [_this.chartWrapperTarget])
           _this.plotGraph(result)
         }
       }).catch(function (e) {
-        hideLoading(_this.loadingDataTarget, elementsToToggle)
         console.log(e)
       })
   }

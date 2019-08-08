@@ -17,7 +17,6 @@ import (
 	"github.com/raedahgroup/dcrextdata/postgres"
 	"github.com/raedahgroup/dcrextdata/pow"
 	"github.com/raedahgroup/dcrextdata/vsp"
-	"github.com/raedahgroup/dcrextdata/web"
 )
 
 // logWriter implements an io.Writer that outputs to both standard output and
@@ -45,7 +44,6 @@ var (
 	vspLog     = backendLog.Logger("VSPC")
 	powLog     = backendLog.Logger("POWL")
 	mempoolLog = backendLog.Logger("MEMP")
-	webLog = backendLog.Logger("WEBL")
 )
 
 // subsystemLoggers maps each subsystem identifier to its associated logger.
@@ -56,7 +54,6 @@ var subsystemLoggers = map[string]slog.Logger{
 	"VSPC": vspLog,
 	"POWL": powLog,
 	"MEMP": mempoolLog,
-	"WEBL": webLog,
 }
 
 func init() {
@@ -65,7 +62,6 @@ func init() {
 	postgres.UseLogger(pqLog)
 	vsp.UseLogger(vspLog)
 	mempool.UseLogger(mempoolLog)
-	web.UseLogger(webLog)
 }
 
 // initLogRotator initializes the logging rotater to write logs to logFile and

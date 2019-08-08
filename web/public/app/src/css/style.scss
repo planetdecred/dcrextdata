@@ -781,36 +781,4 @@ table.collapsible tbody.clickable:hover {
   color: #fff !important;
 }
 
-.loading {
-  padding-top: 30vh !important;
-
-  .loading-icon {
-    border: 2px solid #3498db; /* Blue */
-    border-top: 2px solid #f3f3f3; /* Light grey */
-    border-radius: 50%;
-    display: inline-block;
-    width: 40px;
-    height: 40px;
-    animation: spin 0.4s linear infinite;
-  }
-
-  .loading-text {
-    display: block;
-    font-size: 16px;
-  }
-}
-
 /* end table */
-
-@media screen and (min-width: 768px) {
-  .side-vsp-panel {
-    .form-check-inline {
-      display: block;
-    }
-  }
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}

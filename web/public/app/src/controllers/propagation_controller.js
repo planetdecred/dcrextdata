@@ -1,16 +1,17 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { hide, show, setActiveOptionBtn, legendFormatter, showLoading, hideLoading, displayPillBtnOption, setActiveRecordSetBtn } from '../utils'
+import { hide, legendFormatter, setActiveOptionBtn, show } from '../utils'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
 
 export default class extends Controller {
   static get targets () {
     return [
-      'nextPageButton', 'previousPageButton', 'recordSetSelector', 'bothRecordSetOption', 'selectedRecordSet', 'selectedNum', 'numPageWrapper', 'paginationButtonsWrapper',
+      'nextPageButton', 'previousPageButton',
+      'bothRecordSetOption', 'selectedRecordSet', 'selectedNum', 'numPageWrapper', 'paginationButtonsWrapper',
       'tablesWrapper', 'table', 'blocksTbody', 'votesTbody', 'chartWrapper', 'chartsView', 'labels',
       'blocksTable', 'blocksTableBody', 'blocksRowTemplate', 'votesTable', 'votesTableBody', 'votesRowTemplate',
-      'totalPageCount', 'currentPage', 'viewOptionControl', 'chartSelector', 'viewOption', 'loadingData'
+      'totalPageCount', 'currentPage', 'viewOptionControl', 'chartSelector', 'viewOption'
     ]
   }
 
@@ -19,14 +20,6 @@ export default class extends Controller {
     if (this.currentPage < 1) {
       this.currentPage = 1
     }
-
-    this.selectedRecordSetTargets.forEach(li => {
-      if (this.selectedViewOption === 'table' && li.dataset.option === 'both') {
-        li.classList.add('active')
-      } else {
-        li.classList.remove('active')
-      }
-    })
 
     this.selectedViewOption = this.viewOptionControlTarget.getAttribute('data-initial-value')
     if (this.selectedViewOption === 'chart') {
@@ -43,19 +36,18 @@ export default class extends Controller {
     show(this.selectedRecordSetTarget.options[0])
     this.selectedRecordSet = this.selectedRecordSetTarget.value
     hide(this.chartWrapperTarget)
+    show(this.bothRecordSetOptionTarget)
     show(this.paginationButtonsWrapperTarget)
     show(this.numPageWrapperTarget)
     hide(this.chartWrapperTarget)
     show(this.tablesWrapperTarget)
-    setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
-    setActiveRecordSetBtn(this.selectedRecordSet, this.selectedRecordSetTargets)
-    displayPillBtnOption(this.selectedViewOption, this.selectedRecordSetTargets)
-    this.fetchTableData(this.currentPage)
+    this.fetchData(this.currentPage)
   }
 
   setChart () {
     this.selectedViewOption = 'chart'
-    this.selectedRecordSet = 'blocks'
+    setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
+    hide(this.selectedRecordSetTarget.options[0])
     hide(this.numPageWrapperTarget)
     hide(this.paginationButtonsWrapperTarget)
     hide(this.tablesWrapperTarget)
@@ -65,66 +57,36 @@ export default class extends Controller {
       this.selectedRecordSet = this.selectedRecordSetTarget.value = 'blocks'
     }
 
-    setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
-    setActiveRecordSetBtn(this.selectedRecordSet, this.selectedRecordSetTargets)
-    displayPillBtnOption(this.selectedViewOption, this.selectedRecordSetTargets)
     this.fetchChartDataAndPlot()
   }
 
-  setBothRecordSet () {
-    this.selectedRecordSet = 'both'
-    setActiveOptionBtn(this.selectedRecordSet, this.selectedRecordSetTargets)
+  selectedRecordSetChanged () {
     this.currentPage = 1
     this.selectedNumTarget.value = this.selectedNumTarget.options[0].text
+    this.selectedRecordSet = this.selectedRecordSetTarget.value
     if (this.selectedViewOption === 'table') {
-      this.fetchTableData(1)
-    } else {
-      this.fetchChartDataAndPlot()
-    }
-  }
-
-  setBlocksRecordSet () {
-    this.selectedRecordSet = 'blocks'
-    setActiveOptionBtn(this.selectedRecordSet, this.selectedRecordSetTargets)
-    this.currentPage = 1
-    this.selectedNumTarget.value = this.selectedNumTarget.options[0].text
-    if (this.selectedViewOption === 'table') {
-      this.fetchTableData(1)
-    } else {
-      this.fetchChartDataAndPlot()
-    }
-  }
-
-  setVotesRecordSet () {
-    this.selectedRecordSet = 'votes'
-    setActiveOptionBtn(this.selectedRecordSet, this.selectedRecordSetTargets)
-    this.currentPage = 1
-    this.selectedNumTarget.value = this.selectedNumTarget.options[0].text
-    if (this.selectedViewOption === 'table') {
-      this.fetchTableData(1)
+      this.fetchData(1)
     } else {
       this.fetchChartDataAndPlot()
     }
   }
 
   loadPreviousPage () {
-    this.fetchTableData(this.currentPage - 1)
+    this.fetchData(this.currentPage - 1)
   }
 
   loadNextPage () {
-    this.fetchTableData(this.currentPage + 1)
+    this.fetchData(this.currentPage + 1)
   }
 
   numberOfRowsChanged () {
+    this.selectedRecordSet = this.selectedRecordSetTarget.value
     this.selectedNum = this.selectedNumTarget.value
-    this.fetchTableData(1)
+    this.fetchData(1)
   }
 
-  fetchTableData (page) {
+  fetchData (page) {
     const _this = this
-
-    let elementsToToggle = [this.tablesWrapperTarget]
-    showLoading(this.loadingDataTarget, elementsToToggle)
 
     var numberOfRows = this.selectedNumTarget.value
     let url = '/getpropagationdata'
@@ -139,8 +101,7 @@ export default class extends Controller {
         url = 'getpropagationdata'
         break
     }
-    axios.get(`/${url}?page=${page}&recordsPerPage=${numberOfRows}&viewOption=${_this.selectedViewOption}`).then(function (response) {
-      hideLoading(_this.loadingDataTarget, elementsToToggle)
+    axios.get(`/${url}?page=${page}&records-per-page=${numberOfRows}&view-option=${_this.selectedViewOption}`).then(function (response) {
       let result = response.data
       _this.totalPageCountTarget.textContent = result.totalPages
       _this.currentPageTarget.textContent = result.currentPage
@@ -162,8 +123,7 @@ export default class extends Controller {
 
       _this.displayData(result)
     }).catch(function (e) {
-      hideLoading(_this.loadingDataTarget, elementsToToggle)
-      console.log(e) // todo: handle error
+      // console.log(e) // todo: handle error
     })
   }
 
@@ -288,17 +248,12 @@ export default class extends Controller {
   }
 
   fetchChartDataAndPlot () {
-    let elementsToToggle = [this.chartWrapperTarget]
-    showLoading(this.loadingDataTarget, elementsToToggle)
-
     const _this = this
     axios.get('/propagationchartdata?record-set=' + this.selectedRecordSet).then(function (response) {
-      hideLoading(_this.loadingDataTarget, elementsToToggle)
       _this.plotGraph(response.data)
       const url = '/propagation?record-set=' + _this.selectedRecordSet + `&view-option=${_this.selectedViewOption}`
       window.history.pushState(window.history.state, _this.addr, url)
     }).catch(function (e) {
-      hideLoading(_this.loadingDataTarget, elementsToToggle)
       console.log(e) // todo: handle error
     })
   }

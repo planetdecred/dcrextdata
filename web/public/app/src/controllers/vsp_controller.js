@@ -1,6 +1,6 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { hide, show, legendFormatter, setActiveOptionBtn, showLoading, hideLoading } from '../utils'
+import { hide, show, legendFormatter, setActiveOptionBtn } from '../utils'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
 
@@ -12,7 +12,7 @@ export default class extends Controller {
       'vspRowTemplate', 'currentPage', 'selectedNum', 'vspTableWrapper',
       'graphTypeWrapper', 'dataType', 'pageSizeWrapper', 'viewOptionControl',
       'vspSelectorWrapper', 'chartSourceWrapper', 'allChartSource', 'chartSource',
-      'chartWrapper', 'labels', 'chartsView', 'viewOption', 'loadingData'
+      'chartWrapper', 'labels', 'chartsView', 'viewOption'
     ]
   }
 
@@ -113,10 +113,6 @@ export default class extends Controller {
   fetchData (display) {
     const selectedFilter = this.selectedFilterTarget.value
     var numberOfRows
-
-    let elementsToToggle = [this.vspTableWrapperTarget]
-    showLoading(this.loadingDataTarget, elementsToToggle)
-
     if (display === 'chart') {
       this.fetchDataAndPlotGraph()
       return
@@ -127,7 +123,6 @@ export default class extends Controller {
     const _this = this
     axios.get(`/vsps?page=${this.nextPage}&filter=${selectedFilter}&records-per-page=${numberOfRows}&view-option=${_this.selectedViewOption}`)
       .then(function (response) {
-        hideLoading(_this.loadingDataTarget, elementsToToggle)
         let result = response.data
 
         if (display === 'table') {
@@ -152,7 +147,6 @@ export default class extends Controller {
           _this.plotGraph(result.vspData)
         }
       }).catch(function (e) {
-        hideLoading(_this.loadingDataTarget, elementsToToggle)
         console.log(e)
       })
   }
@@ -213,18 +207,9 @@ export default class extends Controller {
       return
     }
 
-    let elementsToToggle = [this.chartWrapperTarget]
-    showLoading(this.loadingDataTarget, elementsToToggle)
-    
     axios.get(`/vspchartdata?${queryString}`).then(function (response) {
-      hideLoading(_this.loadingDataTarget, elementsToToggle)
-      if (result.error) {
-        _this.drawInitialGraph()
-        return
-      }
       _this.plotGraph(response.data)
     }).catch(function (e) {
-      hideLoading(_this.loadingDataTarget, elementsToToggle)
       _this.drawInitialGraph()
     })
   }

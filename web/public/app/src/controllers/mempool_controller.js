@@ -1,6 +1,6 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { legendFormatter, barChartPlotter, hide, show, setActiveOptionBtn, showLoading, hideLoading } from '../utils'
+import { legendFormatter, barChartPlotter, hide, show, setActiveOptionBtn } from '../utils'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
 
@@ -11,7 +11,7 @@ export default class extends Controller {
       'totalPageCount', 'currentPage', 'btnWrapper', 'tableWrapper', 'chartsView',
       'chartWrapper', 'viewOption', 'labels', 'viewOptionControl',
       'chartDataTypeSelector', 'chartDataType', 'chartOptions', 'labels', 'selectedMempoolOpt',
-      'selectedNumberOfRows', 'numPageWrapper', 'loadingData'
+      'selectedNumberOfRows', 'numPageWrapper'
     ]
   }
 
@@ -106,16 +106,11 @@ export default class extends Controller {
     } else {
       url = `/mempoolcharts?chart-data-type=${this.dataType}&view-option=${this.selectedViewOption}`
     }
-    let elementsToToggle = [this.tableWrapperTarget, this.chartWrapperTarget]
-    showLoading(this.loadingDataTarget, elementsToToggle)
 
     const _this = this
     axios.get(url).then(function (response) {
-      hideLoading(_this.loadingDataTarget, elementsToToggle)
       let result = response.data
-
       if (display === 'table') {
-        hide(_this.chartWrapperTarget)
         _this.totalPageCountTarget.textContent = result.totalPages
         _this.currentPageTarget.textContent = result.currentPage
         let url = `/mempool?page=${result.currentPage}&records-per-page=${result.selectedNumberOfRows}&view-option=${_this.selectedViewOption}`
@@ -123,7 +118,6 @@ export default class extends Controller {
 
         _this.currentPage = result.currentPage
         if (_this.currentPage <= 1) {
-          _this.currentPage = result.currentPage
           hide(_this.previousPageButtonTarget)
         } else {
           show(_this.previousPageButtonTarget)
@@ -139,11 +133,9 @@ export default class extends Controller {
       } else {
         let url = `/mempool?chart-data-type=${_this.dataType}&view-option=${_this.selectedViewOption}`
         window.history.pushState(window.history.state, _this.addr, url)
-
         _this.plotGraph(result)
       }
     }).catch(function (e) {
-      hideLoading(_this.loadingDataTarget, elementsToToggle)
       console.log(e) // todo: handle error
     })
   }
@@ -218,7 +210,6 @@ export default class extends Controller {
         dateWindow: [minDate, maxDate],
         legendFormatter: legendFormatter,
         plotter: barChartPlotter,
-        digitsAfterDecimal: 8,
         labelsDiv: _this.labelsTarget,
         ylabel: title,
         xlabel: 'Date',
