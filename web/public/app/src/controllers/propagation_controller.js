@@ -34,14 +34,12 @@ export default class extends Controller {
     } else {
       this.setTable()
     }
-    this.selectedRecordSet = this.selectedRecordSetTarget.value = this.selectedRecordSetTarget.getAttribute('data-initial-value')
   }
 
   setTable () {
     this.selectedViewOption = 'table'
+    this.selectedRecordSet = 'both'
     setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
-    show(this.selectedRecordSetTarget.options[0])
-    this.selectedRecordSet = this.selectedRecordSetTarget.value
     hide(this.chartWrapperTarget)
     show(this.paginationButtonsWrapperTarget)
     show(this.numPageWrapperTarget)
@@ -63,10 +61,6 @@ export default class extends Controller {
     setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
     setActiveRecordSetBtn(this.selectedRecordSet, this.selectedRecordSetTargets)
     displayPillBtnOption(this.selectedViewOption, this.selectedRecordSetTargets)
-
-    if (this.selectedRecordSet === 'both') {
-      this.selectedRecordSet = this.selectedRecordSetTarget.value = 'blocks'
-    }
 
     this.fetchChartDataAndPlot()
   }
@@ -276,7 +270,7 @@ export default class extends Controller {
                         ${votesHtml}
                         </tbody>
                           <tr>
-                              <td colspan="7" height="50" style="border: none !important;"></td>
+                              <td colspan="7" height="15" style="border: none !important;"></td>
                           </tr>`
     })
 

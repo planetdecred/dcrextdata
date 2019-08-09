@@ -808,49 +808,6 @@ func (s *Server) getPropagationData(res http.ResponseWriter, req *http.Request) 
 	}
 }
 
-// /propagationchartdata
-func (s *Server) propagationChartData(res http.ResponseWriter, req *http.Request) {
-	requestedRecordSet := req.FormValue("record-set")
-
-	var data []mempool.PropagationChartData
-	var err error
-
-	if requestedRecordSet == "votes" {
-		data, err = s.db.PropagationVoteChartData(req.Context())
-	} else {
-		data, err = s.db.PropagationBlockChartData(req.Context())
-	}
-
-	if err != nil {
-		s.renderErrorJSON(err.Error(), res)
-		return
-	}
-
-	var avgTimeForHeight = map[int64]float64{}
-	var heightArr []int64
-	for _, record := range data {
-		if existingTime, found := avgTimeForHeight[record.BlockHeight]; found {
-			avgTimeForHeight[record.BlockHeight] = (record.TimeDifference + existingTime) / 2
-		} else {
-			avgTimeForHeight[record.BlockHeight] = record.TimeDifference
-			heightArr = append(heightArr, record.BlockHeight)
-		}
-	}
-
-	var yLabel = "Delay (s)"
-	if requestedRecordSet == "votes" {
-		yLabel = "Time Difference (s)"
-	}
-
-	var csv = fmt.Sprintf("Height,%s\n", yLabel)
-	for _, height := range heightArr {
-		timeDifference := fmt.Sprintf("%04.2f", avgTimeForHeight[height])
-		csv += fmt.Sprintf("%d, %s\n", height, timeDifference)
-	}
-
-	s.renderJSON(csv, res)
-}
-
 func (s *Server) fetchPropagationData(req *http.Request) (map[string]interface{}, error) {
 	req.ParseForm()
 	page := req.FormValue("page")
@@ -859,7 +816,7 @@ func (s *Server) fetchPropagationData(req *http.Request) (map[string]interface{}
 	recordSet := req.FormValue("record-set")
 
 	if viewOption == "" {
-		viewOption = defaultViewOption
+		viewOption = "table"
 	}
 
 	if recordSet == "" {
@@ -903,7 +860,7 @@ func (s *Server) fetchPropagationData(req *http.Request) (map[string]interface{}
 		"totalPages":           0,
 	}
 
-	if viewOption == "chart" {
+	if viewOption == defaultViewOption {
 		return data, nil
 	}
 
@@ -926,6 +883,49 @@ func (s *Server) fetchPropagationData(req *http.Request) (map[string]interface{}
 	}
 
 	return data, nil
+}
+
+// /propagationchartdata
+func (s *Server) propagationChartData(res http.ResponseWriter, req *http.Request) {
+	requestedRecordSet := req.FormValue("record-set")
+
+	var data []mempool.PropagationChartData
+	var err error
+
+	if requestedRecordSet == "votes" {
+		data, err = s.db.PropagationVoteChartData(req.Context())
+	} else {
+		data, err = s.db.PropagationBlockChartData(req.Context())
+	}
+
+	if err != nil {
+		s.renderErrorJSON(err.Error(), res)
+		return
+	}
+
+	var avgTimeForHeight = map[int64]float64{}
+	var heightArr []int64
+	for _, record := range data {
+		if existingTime, found := avgTimeForHeight[record.BlockHeight]; found {
+			avgTimeForHeight[record.BlockHeight] = (record.TimeDifference + existingTime) / 2
+		} else {
+			avgTimeForHeight[record.BlockHeight] = record.TimeDifference
+			heightArr = append(heightArr, record.BlockHeight)
+		}
+	}
+
+	var yLabel = "Delay (s)"
+	if requestedRecordSet == "votes" {
+		yLabel = "Time Difference (s)"
+	}
+
+	var csv = fmt.Sprintf("Height,%s\n", yLabel)
+	for _, height := range heightArr {
+		timeDifference := fmt.Sprintf("%04.2f", avgTimeForHeight[height])
+		csv += fmt.Sprintf("%d, %s\n", height, timeDifference)
+	}
+
+	s.renderJSON(csv, res)
 }
 
 // /getblocks
