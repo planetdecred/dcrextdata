@@ -271,7 +271,7 @@ func (pg *PgDb) AllExchangeTicksInterval(ctx context.Context) ([]ticks.TickDtoIn
 func (pg *PgDb) ExchangeTicksChartData(ctx context.Context, selectedTick string, currencyPair string, selectedInterval int, source string) ([]ticks.TickChartData, error) {
 	exchange, err := models.Exchanges(models.ExchangeWhere.Name.EQ(source)).One(ctx, pg.db)
 	if err != nil {
-		return nil, fmt.Errorf("the selected exchange, %s does not exist, %s", source, err.Error())
+		return nil, fmt.Errorf("The selected exchange, %s does not exist, %s", source, err.Error())
 	}
 
 	queryMods := []qm.QueryMod{
@@ -287,7 +287,7 @@ func (pg *PgDb) ExchangeTicksChartData(ctx context.Context, selectedTick string,
 	exchangeFilterResult, err := models.ExchangeTicks(queryMods...).All(ctx, pg.db)
 	if err != nil {
 		fmt.Println(err)
-		return nil, fmt.Errorf("error in fetching exchange tick, %s", err.Error())
+		return nil, fmt.Errorf("Error in fetching exchange tick, %s", err.Error())
 	}
 
 	var Filter float64

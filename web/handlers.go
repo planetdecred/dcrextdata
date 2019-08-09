@@ -137,12 +137,12 @@ func (s *Server) fetchExchangeData(req *http.Request) (map[string]interface{}, e
 
 	allExchangeSlice, err := s.db.AllExchange(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("cannot fetch exchanges, %s", err.Error())
+		return nil, fmt.Errorf("Cannot fetch exchanges, %s", err.Error())
 	}
 
 	currencyPairs, err := s.db.AllExchangeTicksCurrencyPair(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("cannot fetch currency pair, %s", err.Error())
+		return nil, fmt.Errorf("Cannot fetch currency pair, %s", err.Error())
 	}
 
 	if selectedExchange == "" && viewOption == "table" {
@@ -174,7 +174,7 @@ func (s *Server) fetchExchangeData(req *http.Request) (map[string]interface{}, e
 
 	allExchangeTicksSlice, totalCount, err := s.db.FetchExchangeTicks(ctx, selectedCurrencyPair, selectedExchange, selectedInterval, offset, pageSize)
 	if err != nil {
-		return nil, fmt.Errorf("error in fetching exchange ticks, %s", err.Error())
+		return nil, fmt.Errorf("Error in fetching exchange ticks, %s", err.Error())
 	}
 
 	if len(allExchangeTicksSlice) == 0 {
