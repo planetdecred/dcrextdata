@@ -20,6 +20,7 @@ export default class extends Controller {
     if (this.currentPage < 1) {
       this.currentPage = 1
     }
+
     this.setDataType(this.dataTypeTarget.getAttribute('data-initial-value'))
 
     // if no pool is selected, select the first on
@@ -104,8 +105,7 @@ export default class extends Controller {
       .then(function (response) {
         hideLoading(_this.loadingDataTarget, elementsToToggle)
         let result = response.data
-        const url = `pow?page=${result.currentPage}&filter=${selectedFilter}&records-per-page=${result.selectedNum}&view-option=${_this.selectedViewOption}`
-        window.history.pushState(window.history.state, _this.addr, url)
+        window.history.pushState(window.history.state, _this.addr, `pow?page=${result.currentPage}&filter=${selectedFilter}&records-per-page=${result.selectedNum}&view-option=${_this.selectedViewOption}`)
 
         _this.currentPage = result.currentPage
         if (_this.currentPage <= 1) {
@@ -180,9 +180,8 @@ export default class extends Controller {
     showLoading(this.loadingDataTarget, elementsToToggle)
 
     const _this = this
-    const queryString = `pools=${selectedPools.join('|')}&data-type=${this.dataType}`
-    window.history.pushState(window.history.state, _this.addr, `/pow?${queryString}&view-option=${_this.selectedViewOption}`)
-
+    const queryString = `pools=${selectedPools.join('|')}&data-type=${this.dataType}&view-option=${_this.selectedViewOption}`
+    window.history.pushState(window.history.state, _this.addr, `/pow?${queryString}`)
     axios.get(`/powchart?${queryString}`).then(function (response) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       let result = response.data

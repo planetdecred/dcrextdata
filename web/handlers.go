@@ -478,6 +478,7 @@ func (s *Server) fetchPoWData(req *http.Request) (map[string]interface{}, error)
 	viewOption := req.FormValue("view-option")
 	pools := strings.Split(req.FormValue("pools"), "|")
 
+	fmt.Println(viewOption)
 	if viewOption == "" {
 		viewOption = defaultViewOption
 	}

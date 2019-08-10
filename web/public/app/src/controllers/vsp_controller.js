@@ -65,7 +65,6 @@ export default class extends Controller {
     show(this.numPageWrapperTarget)
     show(this.pageSizeWrapperTarget)
     show(this.vspSelectorWrapperTarget)
-    this.vspTicksTableTarget.innerHTML = ''
     this.nextPage = this.currentPage
     this.fetchData('table')
   }
