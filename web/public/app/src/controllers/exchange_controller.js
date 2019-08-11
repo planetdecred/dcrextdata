@@ -154,7 +154,6 @@ export default class extends Controller {
     axios.get(url)
       .then(function (response) {
         let result = response.data
-        console.log(result) // todo: debug - remove
         if (display === 'table') {
           hideLoading(_this.loadingDataTarget, [_this.exchangeTableWrapperTarget])
           if (result.message) {

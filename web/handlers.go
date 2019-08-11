@@ -478,7 +478,6 @@ func (s *Server) fetchPoWData(req *http.Request) (map[string]interface{}, error)
 	viewOption := req.FormValue("view-option")
 	pools := strings.Split(req.FormValue("pools"), "|")
 
-	fmt.Println(viewOption)
 	if viewOption == "" {
 		viewOption = defaultViewOption
 	}
@@ -529,7 +528,7 @@ func (s *Server) fetchPoWData(req *http.Request) (map[string]interface{}, error)
 		"totalPages":         pageToLoad,
 	}
 
-	if viewOption == "chart" {
+	if viewOption == defaultViewOption {
 		return data, nil
 	}
 
@@ -738,7 +737,7 @@ func (s *Server) fetchMempoolData(req *http.Request) (map[string]interface{}, er
 		"totalPages":           0,
 	}
 
-	if viewOption == "chart" {
+	if viewOption == defaultViewOption {
 		return data, nil
 	}
 

@@ -21,7 +21,7 @@ export default class extends Controller {
       this.currentPage = 1
     }
 
-    this.setDataType(this.dataTypeTarget.getAttribute('data-initial-value'))
+    this.dataType = this.dataTypeTarget.getAttribute('data-initial-value')
 
     // if no pool is selected, select the first on
     let noPoolSelected = true
@@ -105,7 +105,8 @@ export default class extends Controller {
       .then(function (response) {
         hideLoading(_this.loadingDataTarget, elementsToToggle)
         let result = response.data
-        window.history.pushState(window.history.state, _this.addr, `pow?page=${result.currentPage}&filter=${selectedFilter}&records-per-page=${result.selectedNum}&view-option=${_this.selectedViewOption}`)
+        const pageUrl = `/pow?page=${result.currentPage}&filter=${selectedFilter}&records-per-page=${result.selectedNum}&view-option=${_this.selectedViewOption}`
+        window.history.pushState(window.history.state, _this.addr, pageUrl)
 
         _this.currentPage = result.currentPage
         if (_this.currentPage <= 1) {
@@ -151,8 +152,7 @@ export default class extends Controller {
     this.setDataType(event.currentTarget.getAttribute('data-option'))
   }
 
-  setDataType (dataType) {
-    this.dataType = dataType
+  setDataType () {
     setActiveOptionBtn(this.dataType, this.dataTypeTargets)
 
     this.btcIndex = this.poolTargets.findIndex(el => el.value === 'btc')
@@ -180,8 +180,9 @@ export default class extends Controller {
     showLoading(this.loadingDataTarget, elementsToToggle)
 
     const _this = this
-    const queryString = `pools=${selectedPools.join('|')}&data-type=${this.dataType}&view-option=${_this.selectedViewOption}`
+    const queryString = `data-type=${this.dataType}&pools=${selectedPools.join('|')}&view-option=${_this.selectedViewOption}`
     window.history.pushState(window.history.state, _this.addr, `/pow?${queryString}`)
+
     axios.get(`/powchart?${queryString}`).then(function (response) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       let result = response.data
