@@ -74,7 +74,7 @@
                 <div class="{{ if .chartView }}d-none{{ end }}" data-target="vsp.vspTableWrapper">
                     <table class="table mx-auto">
                         <thead>
-                            <tr>
+                            <tr style="white-space: nowrap;">
                                 <th>VSP</th>
                                 <th>Immature</th>
                                 <th>Live</th>
@@ -90,7 +90,7 @@
                         </thead>
                         <tbody data-target="vsp.vspTicksTable">
                             {{range $index, $vspticks := .vspData}}
-                            <tr>
+                            <tr style="white-space: nowrap;">
                                 <td>{{$vspticks.VSP}}</td>
                                 <td>{{$vspticks.Immature}}</td>
                                 <td>{{$vspticks.Live}}</td>
@@ -108,7 +108,7 @@
                     </table>
 
                     <template data-target="vsp.vspRowTemplate">
-                        <tr>
+                            <tr style="white-space: nowrap;">
                             <td></td>
                             <td></td>
                             <td></td>
