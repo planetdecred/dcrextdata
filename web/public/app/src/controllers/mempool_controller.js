@@ -20,8 +20,9 @@ export default class extends Controller {
     if (this.currentPage < 1) {
       this.currentPage = 1
     }
+
     this.dataType = this.chartDataTypeTarget.getAttribute('data-initial-value')
-    setActiveOptionBtn(this.dataType, this.chartDataTypeTargets)
+
     this.selectedViewOption = this.viewOptionControlTarget.getAttribute('data-initial-value')
     if (this.selectedViewOption === 'chart') {
       this.setChart()
@@ -48,6 +49,7 @@ export default class extends Controller {
     hide(this.tableWrapperTarget)
     this.chartFilter = this.selectedMempoolOptTarget.value = this.selectedMempoolOptTarget.options[0].value
     setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
+    setActiveOptionBtn(this.dataType, this.chartDataTypeTargets)
     show(this.chartDataTypeSelectorTarget)
     hide(this.numPageWrapperTarget)
     show(this.chartWrapperTarget)
@@ -82,22 +84,24 @@ export default class extends Controller {
 
   fetchData (display) {
     let url
+
+    let elementsToToggle = [this.tableWrapperTarget, this.chartWrapperTarget]
+    showLoading(this.loadingDataTarget, elementsToToggle)
+
     if (display === 'table') {
       const numberOfRows = this.selectedNumberOfRowsTarget.value
       url = `/getmempool?page=${this.nextPage}&records-per-page=${numberOfRows}&view-option=${this.selectedViewOption}`
     } else {
       url = `/mempoolcharts?chart-data-type=${this.dataType}&view-option=${this.selectedViewOption}`
     }
-    let elementsToToggle = [this.tableWrapperTarget, this.chartWrapperTarget]
-    showLoading(this.loadingDataTarget, elementsToToggle)
 
     const _this = this
     axios.get(url).then(function (response) {
-      hideLoading(_this.loadingDataTarget, elementsToToggle)
       let result = response.data
 
       if (display === 'table') {
-        hide(_this.chartWrapperTarget)
+        // hide(_this.chartWrapperTarget)
+        hideLoading(_this.loadingDataTarget, [_this.tableWrapperTarget])
         _this.totalPageCountTarget.textContent = result.totalPages
         _this.currentPageTarget.textContent = result.currentPage
         let url = `/mempool?page=${result.currentPage}&records-per-page=${result.selectedNumberOfRows}&view-option=${_this.selectedViewOption}`
@@ -119,6 +123,7 @@ export default class extends Controller {
 
         _this.displayMempool(result.mempoolData)
       } else {
+        hideLoading(_this.loadingDataTarget, [_this.chartWrapperTarget])
         let url = `/mempool?chart-data-type=${_this.dataType}&view-option=${_this.selectedViewOption}`
         window.history.pushState(window.history.state, _this.addr, url)
         _this.plotGraph(result)

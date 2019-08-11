@@ -148,11 +148,8 @@ export default class extends Controller {
     })
   }
 
-  dataTypeChanged (event) {
-    this.setDataType(event.currentTarget.getAttribute('data-option'))
-  }
-
-  setDataType () {
+  setDataType (event) {
+    this.dataType = event.currentTarget.getAttribute('data-option')
     setActiveOptionBtn(this.dataType, this.dataTypeTargets)
 
     this.btcIndex = this.poolTargets.findIndex(el => el.value === 'btc')
