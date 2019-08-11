@@ -84,7 +84,6 @@ export default class extends Controller {
 
   fetchData (display) {
     let url
-
     let elementsToToggle = [this.tableWrapperTarget, this.chartWrapperTarget]
     showLoading(this.loadingDataTarget, elementsToToggle)
 
@@ -100,7 +99,6 @@ export default class extends Controller {
       let result = response.data
 
       if (display === 'table') {
-        // hide(_this.chartWrapperTarget)
         hideLoading(_this.loadingDataTarget, [_this.tableWrapperTarget])
         _this.totalPageCountTarget.textContent = result.totalPages
         _this.currentPageTarget.textContent = result.currentPage
