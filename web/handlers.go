@@ -518,11 +518,6 @@ func (s *Server) fetchPoWData(req *http.Request) (map[string]interface{}, error)
 
 	ctx := req.Context()
 
-	powSource, err := s.db.FetchPowSourceData(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	data := map[string]interface{}{
 		"chartView":          true,
 		"selectedViewOption": viewOption,
@@ -531,11 +526,21 @@ func (s *Server) fetchPoWData(req *http.Request) (map[string]interface{}, error)
 		"selectedPools":      pools,
 		"pageSizeSelector":   pageSizeSelector,
 		"selectedNum":        pageSize,
-		"powSource":          powSource,
 		"currentPage":        pageToLoad,
 		"previousPage":       pageToLoad - 1,
 		"totalPages":         pageToLoad,
 	}
+
+	powSource, err := s.db.FetchPowSourceData(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(powSource) == 0 {
+		return nil, fmt.Errorf("No PoW source data. Try running dcrextdata then try again.")
+	}
+
+	data["powSource"] = powSource
 
 	if viewOption == defaultViewOption {
 		return data, nil

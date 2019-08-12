@@ -153,7 +153,6 @@ export default class extends Controller {
 
     axios.get(url)
       .then(function (response) {
-        console.log(response)
         let result = response.data
         if (display === 'table') {
           hideLoading(_this.loadingDataTarget, [_this.exchangeTableWrapperTarget])
@@ -205,7 +204,7 @@ export default class extends Controller {
           }
         }
       }).catch(function (e) {
-        _this.drawInitialGraph()
+        console.log(e)
       })
   }
 

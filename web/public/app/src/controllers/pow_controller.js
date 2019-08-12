@@ -9,7 +9,7 @@ export default class extends Controller {
     return [
       'powFilterWrapper', 'selectedFilter', 'powTable', 'numPageWrapper',
       'previousPageButton', 'totalPageCount', 'nextPageButton', 'viewOptionControl',
-      'powRowTemplate', 'currentPage', 'selectedNum', 'powTableWrapper',
+      'powRowTemplate', 'currentPage', 'selectedNum', 'powTableWrapper', 'messageView',
       'chartSourceWrapper', 'pool', 'chartWrapper', 'chartDataTypeSelector', 'dataType', 'labels',
       'chartsView', 'viewOption', 'pageSizeWrapper', 'poolDiv', 'loadingData'
     ]
@@ -95,38 +95,55 @@ export default class extends Controller {
 
   fetchData () {
     const selectedFilter = this.selectedFilterTarget.value
-    var numberOfRows = this.selectedNumTarget.value
+    const numberOfRows = this.selectedNumTarget.value
 
     let elementsToToggle = [this.powTableWrapperTarget]
     showLoading(this.loadingDataTarget, elementsToToggle)
 
     const _this = this
-    axios.get(`/filteredpow?page=${this.nextPage}&filter=${selectedFilter}&records-per-page=${numberOfRows}&view-option=${_this.selectedViewOption}`)
+    axios.get(`/filteredpow?page=${_this.nextPage}&filter=${selectedFilter}&records-per-page=${numberOfRows}&view-option=${_this.selectedViewOption}`)
       .then(function (response) {
         hideLoading(_this.loadingDataTarget, elementsToToggle)
         let result = response.data
-        const pageUrl = `/pow?page=${result.currentPage}&filter=${selectedFilter}&records-per-page=${result.selectedNum}&view-option=${_this.selectedViewOption}`
-        window.history.pushState(window.history.state, _this.addr, pageUrl)
+        if (result.message) {
+          let messageHTML = ''
+          messageHTML += `<div class="alert alert-primary align-text-center">
+                           <strong>${result.message}</strong>
+                      </div>`
 
-        _this.currentPage = result.currentPage
-        if (_this.currentPage <= 1) {
-          hide(_this.previousPageButtonTarget)
+          _this.messageViewTarget.innerHTML = messageHTML
+          show(_this.messageViewTarget)
+          hide(_this.powTableWrapperTarget)
+          hide(_this.pageSizeWrapperTarget)
+          _this.totalPageCountTarget.textContent = 0
+          _this.currentPageTarget.textContent = 0
+          window.history.pushState(window.history.state, _this.addr, `/pow?page=${_this.nextPage}&filter=${selectedFilter}&records-per-page=${numberOfRows}&view-option=${_this.selectedViewOption}`)
         } else {
-          show(_this.previousPageButtonTarget)
+          show(_this.powFilterWrapperTarget)
+          show(_this.pageSizeWrapperTarget)
+          hide(_this.messageViewTarget)
+          const pageUrl = `/pow?page=${result.currentPage}&filter=${selectedFilter}&records-per-page=${result.selectedNum}&view-option=${_this.selectedViewOption}`
+          window.history.pushState(window.history.state, _this.addr, pageUrl)
+
+          _this.currentPage = result.currentPage
+          if (_this.currentPage <= 1) {
+            hide(_this.previousPageButtonTarget)
+          } else {
+            show(_this.previousPageButtonTarget)
+          }
+
+          if (_this.currentPage >= result.totalPages) {
+            hide(_this.nextPageButtonTarget)
+          } else {
+            show(_this.nextPageButtonTarget)
+          }
+
+          _this.totalPageCountTarget.textContent = result.totalPages
+          _this.currentPageTarget.textContent = result.currentPage
+
+          _this.displayPoW(result.powData)
         }
-
-        if (_this.currentPage >= result.totalPages) {
-          hide(_this.nextPageButtonTarget)
-        } else {
-          show(_this.nextPageButtonTarget)
-        }
-
-        _this.totalPageCountTarget.textContent = result.totalPages
-        _this.currentPageTarget.textContent = result.currentPage
-
-        _this.displayPoW(result.powData)
       }).catch(function (e) {
-        hideLoading(_this.loadingDataTarget, elementsToToggle)
         console.log(e)
       })
   }
