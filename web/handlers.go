@@ -149,7 +149,8 @@ func (s *Server) fetchExchangeData(req *http.Request) (map[string]interface{}, e
 
 	if selectedExchange == "" && viewOption == "table" {
 		selectedExchange = "All"
-	} else if (selectedExchange == "" || selectedExchange == "All") && len(allExchangeSlice) > 0 {
+	} 
+	if viewOption == defaultViewOption && (selectedExchange == "" || selectedExchange == "All") && len(allExchangeSlice) > 0 {
 		selectedExchange = allExchangeSlice[0].Name
 	}
 

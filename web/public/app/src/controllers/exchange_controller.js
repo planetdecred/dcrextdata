@@ -153,7 +153,7 @@ export default class extends Controller {
 
     axios.get(url)
       .then(function (response) {
-        console.log(response.data)
+        console.log(response)
         let result = response.data
         if (display === 'table') {
           hideLoading(_this.loadingDataTarget, [_this.exchangeTableWrapperTarget])
@@ -196,15 +196,16 @@ export default class extends Controller {
             _this.displayExchange(result)
           }
         } else {
-          hideLoading(_this.loadingDataTarget, [_this.chartWrapperTarget])
-          if (result.chartData) {
-            _this.plotGraph(result.chartData)
-          } else {
+          if (result.error) {
+            hideLoading(_this.loadingDataTarget, [_this.chartWrapperTarget])
             _this.drawInitialGraph()
+          } else {
+            hideLoading(_this.loadingDataTarget, [_this.chartWrapperTarget])
+            _this.plotGraph(result.chartData)
           }
         }
       }).catch(function (e) {
-        console.log(e)
+        _this.drawInitialGraph()
       })
   }
 
@@ -246,7 +247,7 @@ export default class extends Controller {
       data = []
     })
 
-    _this.labels = ['Date', _this.selectedFilter]
+    _this.labels = ['Date', _this.selectedExchange]
     let colors = ['#007bff']
 
     var extra = {
@@ -271,7 +272,7 @@ export default class extends Controller {
       labelsDiv: this.labelsTarget,
       ylabel: 'Price',
       xlabel: 'Date',
-      labels: this.labels,
+      labels: ['Date', this.selectedExchange],
       labelsUTC: true,
       labelsKMB: true,
       axes: {
