@@ -1,6 +1,6 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { hide, show, legendFormatter, setActiveOptionBtn, showLoading, hideLoading } from '../utils'
+import { hide, show, legendFormatter, setActiveOptionBtn, showLoading, hideLoading, options } from '../utils'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
 
@@ -8,7 +8,7 @@ export default class extends Controller {
   static get targets () {
     return [
       'selectedFilter', 'vspTicksTable', 'numPageWrapper',
-      'previousPageButton', 'totalPageCount', 'nextPageButton',
+      'previousPageButton', 'totalPageCount', 'nextPageButton', 'messageView',
       'vspRowTemplate', 'currentPage', 'selectedNum', 'vspTableWrapper',
       'graphTypeWrapper', 'dataType', 'pageSizeWrapper', 'viewOptionControl',
       'vspSelectorWrapper', 'chartSourceWrapper', 'allChartSource', 'chartSource',
@@ -66,7 +66,7 @@ export default class extends Controller {
     show(this.pageSizeWrapperTarget)
     show(this.vspSelectorWrapperTarget)
     this.nextPage = this.currentPage
-    this.fetchData('table')
+    this.fetchData()
   }
 
   setChart () {
@@ -85,7 +85,7 @@ export default class extends Controller {
   selectedFilterChanged () {
     if (this.selectedViewOption === 'table') {
       this.nextPage = 1
-      this.fetchData(this.selectedViewOption)
+      this.fetchData()
     } else {
       if (this.selectedFilterTarget.selectedIndex === 0) {
         this.selectedFilterTarget.selectedIndex = 1
@@ -96,40 +96,46 @@ export default class extends Controller {
 
   loadPreviousPage () {
     this.nextPage = this.currentPage - 1
-    this.fetchData(this.selectedViewOption)
+    this.fetchData()
   }
 
   loadNextPage () {
     this.nextPage = this.currentPage + 1
-    this.fetchData(this.selectedViewOption)
+    this.fetchData()
   }
 
   numberOfRowsChanged () {
     this.nextPage = 1
-    this.fetchData(this.selectedViewOption)
+    this.fetchData()
   }
 
-  fetchData (display) {
+  fetchData () {
     const selectedFilter = this.selectedFilterTarget.value
-    var numberOfRows
+    const numberOfRows = this.selectedNumTarget.value
 
     let elementsToToggle = [this.vspTableWrapperTarget]
     showLoading(this.loadingDataTarget, elementsToToggle)
-
-    if (display === 'chart') {
-      this.fetchDataAndPlotGraph()
-      return
-    } else {
-      numberOfRows = this.selectedNumTarget.value
-    }
 
     const _this = this
     axios.get(`/vsps?page=${this.nextPage}&filter=${selectedFilter}&records-per-page=${numberOfRows}&view-option=${_this.selectedViewOption}`)
       .then(function (response) {
         hideLoading(_this.loadingDataTarget, elementsToToggle)
         let result = response.data
+        if (result.message) {
+          let messageHTML = ''
+          messageHTML += `<div class="alert alert-primary align-text-center">
+                         <strong>${result.message}</strong>
+                    </div>`
 
-        if (display === 'table') {
+          _this.messageViewTarget.innerHTML = messageHTML
+          show(_this.messageViewTarget)
+          hide(_this.vspTableWrapperTarget)
+          hide(_this.pageSizeWrapperTarget)
+          window.history.pushState(window.history.state, _this.addr, `/vsp?page=${_this.nextPage}&filter=${selectedFilter}&records-per-page=${numberOfRows}&view-option=${_this.selectedViewOption}`)
+        } else {
+          hide(_this.messageViewTarget)
+          show(_this.vspTableWrapperTarget)
+          show(_this.pageSizeWrapperTarget)
           window.history.pushState(window.history.state, _this.addr, `/vsp?page=${result.currentPage}&filter=${selectedFilter}&records-per-page=${result.selectedNum}&view-option=${_this.selectedViewOption}`)
           _this.currentPage = result.currentPage
           if (_this.currentPage <= 1) {
@@ -147,11 +153,8 @@ export default class extends Controller {
           _this.currentPageTarget.textContent = result.currentPage
 
           _this.displayVSPs(result.vspData)
-        } else {
-          _this.plotGraph(result.vspData)
         }
       }).catch(function (e) {
-        hideLoading(_this.loadingDataTarget, elementsToToggle)
         console.log(e)
       })
   }
@@ -261,17 +264,13 @@ export default class extends Controller {
   }
 
   drawInitialGraph () {
-    var options = {
-      legend: 'always',
-      includeZero: true,
+    var extra = {
       legendFormatter: legendFormatter,
       labelsDiv: this.labelsTarget,
       ylabel: this.yLabel,
       xlabel: 'Date',
       labelsUTC: true,
       labelsKMB: true,
-      connectSeparatedPoints: true,
-      showRangeSelector: true,
       axes: {
         x: {
           drawGrid: false
@@ -282,7 +281,7 @@ export default class extends Controller {
     this.chartsView = new Dygraph(
       this.chartsViewTarget,
       [[0, 0]],
-      options
+      { ...options, ...extra }
     )
   }
 }

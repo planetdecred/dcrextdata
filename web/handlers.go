@@ -21,6 +21,7 @@ const (
 	maxPageSize                 = 250
 	recordsPerPage              = 20
 	defaultInterval             = 1440 // All
+	noDataMessage = "does not have data for selected query options."
 )
 
 var (
@@ -80,6 +81,7 @@ func (s *Server) getFilteredExchangeTicks(res http.ResponseWriter, req *http.Req
 	defer s.renderJSON(data, res)
 
 	if err != nil {
+		fmt.Println(err)
 		s.renderErrorJSON(err.Error(), res)
 		return
 	}
@@ -147,7 +149,7 @@ func (s *Server) fetchExchangeData(req *http.Request) (map[string]interface{}, e
 
 	if selectedExchange == "" && viewOption == "table" {
 		selectedExchange = "All"
-	} else if (selectedExchange == "" || selectedExchange == "All") && len(allExchangeSlice) > 0{
+	} else if (selectedExchange == "" || selectedExchange == "All") && len(allExchangeSlice) > 0 {
 		selectedExchange = allExchangeSlice[0].Name
 	}
 
@@ -178,7 +180,8 @@ func (s *Server) fetchExchangeData(req *http.Request) (map[string]interface{}, e
 	}
 
 	if len(allExchangeTicksSlice) == 0 {
-		return nil, fmt.Errorf("%s does not have %s data", strings.Title(selectedExchange), exchangeTickIntervals[selectedInterval])
+		data["message"] = fmt.Sprintf("%s %s", strings.Title(selectedExchange), noDataMessage)
+		return data, nil
 	}
 
 	data["exData"] = allExchangeTicksSlice
@@ -320,6 +323,11 @@ func (s *Server) fetchVSPData(req *http.Request) (map[string]interface{}, error)
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if len(allVSPSlice) == 0 {
+		data["message"] = fmt.Sprintf("%s %s", strings.Title(selectedVsp), noDataMessage)
+		return data, nil
 	}
 
 	data["vspData"] = allVSPSlice
@@ -546,6 +554,11 @@ func (s *Server) fetchPoWData(req *http.Request) (map[string]interface{}, error)
 		}
 	}
 
+	if len(allPowDataSlice) == 0 {
+		data["message"] = fmt.Sprintf("%s %s", strings.Title(selectedPow), noDataMessage)
+		return data, nil
+	}
+
 	data["powData"] = allPowDataSlice
 	data["totalPages"] = int(math.Ceil(float64(totalCount) / float64(recordsPerPage)))
 
@@ -752,6 +765,11 @@ func (s *Server) fetchMempoolData(req *http.Request) (map[string]interface{}, er
 		return nil, err
 	}
 
+	if len(mempoolSlice) == 0 {
+		data["message"] = fmt.Sprintf("Mempool %s", noDataMessage)
+		return data, nil
+	}
+
 	data["mempoolData"] = mempoolSlice
 	data["totalPages"] = int(math.Ceil(float64(totalCount) / float64(pageSize)))
 
@@ -872,6 +890,11 @@ func (s *Server) fetchPropagationData(req *http.Request) (map[string]interface{}
 	totalCount, err := s.db.BlockCount(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(blockSlice) == 0 {
+		data["message"] = fmt.Sprintf("%s %s", recordSet, noDataMessage)
+		return data, nil
 	}
 
 	data["records"] = blockSlice

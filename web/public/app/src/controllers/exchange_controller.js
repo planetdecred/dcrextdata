@@ -153,13 +153,14 @@ export default class extends Controller {
 
     axios.get(url)
       .then(function (response) {
+        console.log(response.data)
         let result = response.data
         if (display === 'table') {
           hideLoading(_this.loadingDataTarget, [_this.exchangeTableWrapperTarget])
           if (result.message) {
             let messageHTML = ''
-            messageHTML += `<div class="alert alert-primary">
-                           <strong>${result.error}</strong>
+            messageHTML += `<div class="alert alert-primary align-text-center">
+                           <strong>${result.message}</strong>
                       </div>`
 
             _this.messageViewTarget.innerHTML = messageHTML
@@ -168,6 +169,7 @@ export default class extends Controller {
             hide(_this.pageSizeWrapperTarget)
             _this.totalPageCountTarget.textContent = 0
             _this.currentPageTarget.textContent = 0
+            window.history.pushState(window.history.state, appName, `/exchanges?page=${_this.nextPage}&selected-exchange=${_this.selectedExchange}&records-per-page=${_this.numberOfRows}&selected-currency-pair=${_this.selectedCurrencyPair}&selected-interval=${_this.selectedInterval}&view-option=${_this.selectedViewOption}`)
           } else {
             window.history.pushState(window.history.state, appName, `/exchanges?page=${result.currentPage}&selected-exchange=${_this.selectedExchange}&records-per-page=${result.selectedNum}&selected-currency-pair=${result.selectedCurrencyPair}&selected-interval=${result.selectedInterval}&view-option=${result.selectedViewOption}`)
             hide(_this.messageViewTarget)
@@ -191,23 +193,28 @@ export default class extends Controller {
             _this.selectedCurrencyPairTarget.value = result.selectedCurrencyPair
             _this.totalPageCountTarget.textContent = result.totalPages
             _this.currentPageTarget.textContent = result.currentPage
-            _this.displayExchange(result.exData)
+            _this.displayExchange(result)
           }
         } else {
           hideLoading(_this.loadingDataTarget, [_this.chartWrapperTarget])
-          _this.plotGraph(result)
+          if (result.chartData) {
+            _this.plotGraph(result.chartData)
+          } else {
+            _this.drawInitialGraph()
+          }
         }
       }).catch(function (e) {
-        hideLoading(_this.loadingDataTarget, elementsToToggle)
         console.log(e)
       })
   }
 
   displayExchange (exs) {
+    hide(this.messageViewTarget)
+    show(this.exchangeTableWrapperTarget)
     const _this = this
     this.exchangeTableTarget.innerHTML = ''
 
-    exs.forEach(ex => {
+    exs.exData.forEach(ex => {
       const exRow = document.importNode(_this.exRowTemplateTarget.content, true)
       const fields = exRow.querySelectorAll('td')
 
@@ -227,49 +234,57 @@ export default class extends Controller {
 
   // exchange chart
   plotGraph (exs) {
-    console.log(exs)
-    if (exs.chartData) {
-      hide(this.messageViewTarget)
-      show(this.chartsViewTarget)
+    var data = []
+    var dataSet = []
 
-      var data = []
-      var dataSet = []
+    const _this = this
+    exs.forEach(ex => {
+      data.push(new Date(ex.time))
+      data.push(ex.filter)
 
-      const _this = this
-      exs.chartData.forEach(ex => {
-        data.push(new Date(ex.time))
-        data.push(ex.filter)
+      dataSet.push(data)
+      data = []
+    })
 
-        dataSet.push(data)
-        data = []
-      })
+    _this.labels = ['Date', _this.selectedFilter]
+    let colors = ['#007bff']
 
-      let labels = ['Date', _this.selectedFilter]
-      let colors = ['#007bff']
-
-      var extra = {
-        legendFormatter: legendFormatter,
-        labelsDiv: this.labelsTarget,
-        ylabel: 'Price',
-        xlabel: 'Date',
-        labels: labels,
-        colors: colors,
-        digitsAfterDecimal: 8
-      }
-
-      _this.chartsView = new Dygraph(
-        _this.chartsViewTarget,
-        dataSet, { ...options, ...extra }
-      )
-    } else {
-      let messageHTML = ''
-      messageHTML += `<div class="alert alert-primary">
-                           <strong>${exs.error}</strong>
-                      </div>`
-
-      this.messageViewTarget.innerHTML = messageHTML
-      show(this.messageViewTarget)
-      hide(this.chartsViewTarget)
+    var extra = {
+      legendFormatter: legendFormatter,
+      labelsDiv: this.labelsTarget,
+      ylabel: 'Price',
+      xlabel: 'Date',
+      labels: _this.labels,
+      colors: colors,
+      digitsAfterDecimal: 8
     }
+
+    _this.chartsView = new Dygraph(
+      _this.chartsViewTarget,
+      dataSet, { ...options, ...extra }
+    )
+  }
+
+  drawInitialGraph () {
+    var extra = {
+      legendFormatter: legendFormatter,
+      labelsDiv: this.labelsTarget,
+      ylabel: 'Price',
+      xlabel: 'Date',
+      labels: this.labels,
+      labelsUTC: true,
+      labelsKMB: true,
+      axes: {
+        x: {
+          drawGrid: false
+        }
+      }
+    }
+
+    this.chartsView = new Dygraph(
+      this.chartsViewTarget,
+      [[0, 0]],
+      { ...options, ...extra }
+    )
   }
 }

@@ -435,12 +435,14 @@ table.collapsible .labels tr td {
 .chart-control {
   width: max-content;
   border-radius: 3px;
+  white-space: nowrap;
 }
 
 .chart-control .nav-item {
   background: #fff;
   width: max-content;
   border-radius: 3px;
+  white-space: nowrap;
 }
 
 .mempool-control {

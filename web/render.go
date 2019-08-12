@@ -31,6 +31,7 @@ func (routes *Server) renderErrorJSON(errorMessage string, res http.ResponseWrit
 	data := map[string]interface{}{
 		"error": errorMessage,
 	}
+
 	routes.renderJSON(data, res)
 }
 
