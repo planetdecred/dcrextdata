@@ -48,6 +48,7 @@ export default class extends Controller {
     hide(this.chartWrapperTarget)
     hide(this.chartSourceWrapperTarget)
     show(this.powFilterWrapperTarget)
+    hide(this.messageViewTarget)
     show(this.powTableWrapperTarget)
     show(this.numPageWrapperTarget)
     show(this.pageSizeWrapperTarget)
@@ -62,6 +63,7 @@ export default class extends Controller {
     hide(this.numPageWrapperTarget)
     hide(this.powFilterWrapperTarget)
     hide(this.powTableWrapperTarget)
+    hide(this.messageViewTarget)
     show(this.chartSourceWrapperTarget)
     show(this.chartWrapperTarget)
     hide(this.pageSizeWrapperTarget)
@@ -107,19 +109,19 @@ export default class extends Controller {
         let result = response.data
         if (result.message) {
           let messageHTML = ''
-          messageHTML += `<div class="alert alert-primary align-text-center">
+          messageHTML += `<div class="alert alert-primary">
                            <strong>${result.message}</strong>
                       </div>`
 
           _this.messageViewTarget.innerHTML = messageHTML
           show(_this.messageViewTarget)
-          hide(_this.powTableWrapperTarget)
+          hide(_this.powTableTarget)
           hide(_this.pageSizeWrapperTarget)
           _this.totalPageCountTarget.textContent = 0
           _this.currentPageTarget.textContent = 0
           window.history.pushState(window.history.state, _this.addr, `/pow?page=${_this.nextPage}&filter=${selectedFilter}&records-per-page=${numberOfRows}&view-option=${_this.selectedViewOption}`)
         } else {
-          show(_this.powFilterWrapperTarget)
+          show(_this.powTableTarget)
           show(_this.pageSizeWrapperTarget)
           hide(_this.messageViewTarget)
           const pageUrl = `/pow?page=${result.currentPage}&filter=${selectedFilter}&records-per-page=${result.selectedNum}&view-option=${_this.selectedViewOption}`
@@ -169,13 +171,13 @@ export default class extends Controller {
     this.dataType = event.currentTarget.getAttribute('data-option')
     setActiveOptionBtn(this.dataType, this.dataTypeTargets)
 
-    this.btcIndex = this.poolTargets.findIndex(el => el.value === 'btc')
+    // this.btcIndex = this.poolTargets.findIndex(el => el.value === 'btc')
     this.f2poolIndex = this.poolTargets.findIndex(el => el.value === 'f2pool')
     if (this.dataType === 'workers') {
-      hide(this.poolDivTargets[this.btcIndex])
+      // hide(this.poolDivTargets[this.btcIndex])
       hide(this.poolDivTargets[this.f2poolIndex])
     } else {
-      show(this.poolDivTargets[this.btcIndex])
+      // show(this.poolDivTargets[this.btcIndex])
       show(this.poolDivTargets[this.f2poolIndex])
     }
 

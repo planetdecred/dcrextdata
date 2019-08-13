@@ -35,6 +35,7 @@ export const isHidden = (el) => {
 }
 
 export function legendFormatter (data) {
+  console.log(data)
   let html = ''
   if (data.x == null) {
     let dashLabels = data.series.reduce((nodes, series) => {

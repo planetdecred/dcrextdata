@@ -62,6 +62,7 @@ export default class extends Controller {
     hide(this.graphTypeWrapperTarget)
     hide(this.chartSourceWrapperTarget)
     show(this.vspTableWrapperTarget)
+    hide(this.messageViewTarget)
     show(this.numPageWrapperTarget)
     show(this.pageSizeWrapperTarget)
     show(this.vspSelectorWrapperTarget)
@@ -73,6 +74,7 @@ export default class extends Controller {
     this.selectedViewOption = 'chart'
     hide(this.numPageWrapperTarget)
     hide(this.vspTableWrapperTarget)
+    hide(this.messageViewTarget)
     hide(this.vspSelectorWrapperTarget)
     show(this.graphTypeWrapperTarget)
     show(this.chartWrapperTarget)
@@ -123,18 +125,18 @@ export default class extends Controller {
         let result = response.data
         if (result.message) {
           let messageHTML = ''
-          messageHTML += `<div class="alert alert-primary align-text-center">
+          messageHTML += `<div class="alert alert-primary">
                          <strong>${result.message}</strong>
                     </div>`
 
           _this.messageViewTarget.innerHTML = messageHTML
           show(_this.messageViewTarget)
-          hide(_this.vspTableWrapperTarget)
+          hide(_this.vspTicksTableTarget)
           hide(_this.pageSizeWrapperTarget)
           window.history.pushState(window.history.state, _this.addr, `/vsp?page=${_this.nextPage}&filter=${selectedFilter}&records-per-page=${numberOfRows}&view-option=${_this.selectedViewOption}`)
         } else {
           hide(_this.messageViewTarget)
-          show(_this.vspTableWrapperTarget)
+          show(_this.vspTicksTableTarget)
           show(_this.pageSizeWrapperTarget)
           window.history.pushState(window.history.state, _this.addr, `/vsp?page=${result.currentPage}&filter=${selectedFilter}&records-per-page=${result.selectedNum}&view-option=${_this.selectedViewOption}`)
           _this.currentPage = result.currentPage

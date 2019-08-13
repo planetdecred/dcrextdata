@@ -21,7 +21,7 @@ const (
 	maxPageSize                 = 250
 	recordsPerPage              = 20
 	defaultInterval             = 1440 // All
-	noDataMessage = "does not have data for selected query options."
+	noDataMessage = "does not have data for selected query option(s)."
 )
 
 var (
@@ -137,28 +137,9 @@ func (s *Server) fetchExchangeData(req *http.Request) (map[string]interface{}, e
 
 	offset := (pageToLoad - 1) * pageSize
 
-	allExchangeSlice, err := s.db.AllExchange(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("Cannot fetch exchanges, %s", err.Error())
-	}
-
-	currencyPairs, err := s.db.AllExchangeTicksCurrencyPair(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("Cannot fetch currency pair, %s", err.Error())
-	}
-
-	if selectedExchange == "" && viewOption == "table" {
-		selectedExchange = "All"
-	} 
-	if viewOption == defaultViewOption && (selectedExchange == "" || selectedExchange == "All") && len(allExchangeSlice) > 0 {
-		selectedExchange = allExchangeSlice[0].Name
-	}
-
 	data := map[string]interface{}{
 		"chartView":            true,
 		"selectedViewOption":   viewOption,
-		"currencyPairs":        currencyPairs,
-		"allExData":            allExchangeSlice,
 		"intervals":            exchangeTickIntervals,
 		"pageSizeSelector":     pageSizeSelector,
 		"selectedCurrencyPair": selectedCurrencyPair,
@@ -169,6 +150,36 @@ func (s *Server) fetchExchangeData(req *http.Request) (map[string]interface{}, e
 		"currentPage":          pageToLoad,
 		"previousPage":         pageToLoad - 1,
 		"totalPages":           0,
+	}
+
+	allExchangeSlice, err := s.db.AllExchange(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("Cannot fetch exchanges, %s", err.Error())
+	}
+
+	if len(allExchangeSlice) == 0 {
+		return nil, fmt.Errorf("No exchange source data. Try running dcrextdata then try again.")
+	}
+	data["allExData"] = allExchangeSlice
+
+	currencyPairs, err := s.db.AllExchangeTicksCurrencyPair(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("Cannot fetch currency pair, %s", err.Error())
+	}
+
+	if len(currencyPairs) == 0 {
+		return nil, fmt.Errorf("No currency pairs found. Try running dcrextdata then try again.")
+	}
+	data["currencyPairs"] = currencyPairs
+
+	if selectedExchange == "" && viewOption == "table" {
+		selectedExchange = "All"
+	} else if selectedExchange == "" && viewOption == "chart"{
+		if len(allExchangeSlice) > 0 {
+			selectedExchange = allExchangeSlice[0].Name
+		}else{
+			return nil, fmt.Errorf("No exchange source data. Try running dcrextdata then try again.")
+		}
 	}
 
 	if viewOption == "chart" {
@@ -288,15 +299,9 @@ func (s *Server) fetchVSPData(req *http.Request) (map[string]interface{}, error)
 
 	ctx := req.Context()
 
-	allVspData, err := s.db.FetchVSPs(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	data := map[string]interface{}{
 		"chartView":          true,
 		"selectedViewOption": viewOption,
-		"allVspData":         allVspData,
 		"selectedFilter":     selectedVsp,
 		"pageSizeSelector":   pageSizeSelector,
 		"selectedNum":        pageSize,
@@ -307,6 +312,16 @@ func (s *Server) fetchVSPData(req *http.Request) (map[string]interface{}, error)
 		"dataType":           dataType,
 		"selectedVsps":       selectedVsps,
 	}
+
+	allVspData, err := s.db.FetchVSPs(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(allVspData) == 0 {
+		return nil, fmt.Errorf("No VSP source data. Try running dcrextdata then try again.")
+	}
+	data["allVspData"] = allVspData
 
 	if viewOption == "chart" {
 		return data, nil
@@ -987,6 +1002,10 @@ func (s *Server) fetchBlockData(req *http.Request) (map[string]interface{}, erro
 	numberOfRows := req.FormValue("records-per-page")
 	viewOption := req.FormValue("view-option")
 
+	if viewOption == "" {
+		viewOption = defaultViewOption
+	}
+
 	var pageSize int
 	numRows, err := strconv.Atoi(numberOfRows)
 	if err != nil || numRows <= 0 {
@@ -1006,7 +1025,6 @@ func (s *Server) fetchBlockData(req *http.Request) (map[string]interface{}, erro
 
 	ctx := req.Context()
 
-	if viewOption == "" || viewOption == "chart" {
 		data := map[string]interface{}{
 			"chartView":            true,
 			"selectedViewOption":   defaultViewOption,
@@ -1015,16 +1033,24 @@ func (s *Server) fetchBlockData(req *http.Request) (map[string]interface{}, erro
 			"pageSizeSelector":     pageSizeSelector,
 			"selectedFilter":       "blocks",
 			"blocks":               true,
+		"url":                  "/blockdata",
 			"selectedNum":          pageSize,
-			"previousPage":         pageToLoad,
+		"previousPage":         pageToLoad - 1,
 			"totalPages":           pageToLoad,
 		}
+
+	if viewOption == defaultViewOption {
 		return data, nil
 	}
 
-	voteSlice, err := s.db.BlocksWithoutVotes(ctx, offset, pageSize)
+	blocksSlice, err := s.db.BlocksWithoutVotes(ctx, offset, pageSize)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(blocksSlice) == 0 {
+		data["message"] = fmt.Sprintf("Blocks %s", noDataMessage)
+		return data, nil
 	}
 
 	totalCount, err := s.db.BlockCount(ctx)
@@ -1032,20 +1058,10 @@ func (s *Server) fetchBlockData(req *http.Request) (map[string]interface{}, erro
 		return nil, err
 	}
 
-	data := map[string]interface{}{
-		"records":              voteSlice,
-		"currentPage":          pageToLoad,
-		"propagationRecordSet": propagationRecordSet,
-		"pageSizeSelector":     pageSizeSelector,
-		"selectedFilter":       "blocks",
-		"blocks":               true,
-		"selectedNum":          pageSize,
-		"url":                  "/blockdata",
-		"previousPage":         pageToLoad - 1,
-		"totalPages":           int(math.Ceil(float64(totalCount) / float64(pageSize))),
-	}
+		data["records"] =              blocksSlice
+		data["totalPages"] =           int(math.Ceil(float64(totalCount) / float64(pageSize)))
 
-	totalTxLoaded := offset + len(voteSlice)
+	totalTxLoaded := offset + len(blocksSlice)
 	if int64(totalTxLoaded) < totalCount {
 		data["nextPage"] = pageToLoad + 1
 	}
@@ -1083,6 +1099,10 @@ func (s *Server) fetchVoteData(req *http.Request) (map[string]interface{}, error
 	numberOfRows := req.FormValue("records-per-page")
 	viewOption := req.FormValue("view-option")
 
+	if viewOption == "" {
+		viewOption = defaultViewOption
+	}
+
 	var pageSize int
 	numRows, err := strconv.Atoi(numberOfRows)
 	if err != nil || numRows <= 0 {
@@ -1102,35 +1122,9 @@ func (s *Server) fetchVoteData(req *http.Request) (map[string]interface{}, error
 
 	ctx := req.Context()
 
-	if viewOption == "" || viewOption == "chart" {
-		data := map[string]interface{}{
-			"chartView":            true,
-			"selectedViewOption":   defaultViewOption,
-			"currentPage":          pageToLoad,
-			"propagationRecordSet": propagationRecordSet,
-			"pageSizeSelector":     pageSizeSelector,
-			"selectedFilter":       "votes",
-			"votes":                true,
-			"selectedNum":          pageSize,
-			"url":                  "/votesdata",
-			"previousPage":         pageToLoad,
-			"totalPages":           pageToLoad,
-		}
-		return data, nil
-	}
-
-	voteSlice, err := s.db.Votes(ctx, offset, pageSize)
-	if err != nil {
-		return nil, err
-	}
-
-	totalCount, err := s.db.VotesCount(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	data := map[string]interface{}{
-		"voteRecords":          voteSlice,
+		"chartView":            true,
+		"selectedViewOption":   defaultViewOption,
 		"currentPage":          pageToLoad,
 		"propagationRecordSet": propagationRecordSet,
 		"pageSizeSelector":     pageSizeSelector,
@@ -1139,8 +1133,30 @@ func (s *Server) fetchVoteData(req *http.Request) (map[string]interface{}, error
 		"selectedNum":          pageSize,
 		"url":                  "/votesdata",
 		"previousPage":         pageToLoad - 1,
-		"totalPages":           int(math.Ceil(float64(totalCount) / float64(pageSize))),
+		"totalPages":           pageToLoad,
 	}
+
+	if viewOption == defaultViewOption {
+		return data, nil
+	}
+
+	voteSlice, err := s.db.Votes(ctx, offset, pageSize)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(voteSlice) == 0 {
+		data["message"] = fmt.Sprintf("Votes %s", noDataMessage)
+		return data, nil
+	}
+
+	totalCount, err := s.db.VotesCount(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	data["voteRecords"] =         voteSlice
+	data["totalPages"] =           int(math.Ceil(float64(totalCount) / float64(pageSize)))
 
 	totalTxLoaded := offset + len(voteSlice)
 	if int64(totalTxLoaded) < totalCount {

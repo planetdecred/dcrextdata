@@ -68,6 +68,7 @@ export default class extends Controller {
     hide(this.pageSizeWrapperTarget)
     show(this.tickWapperTarget)
     hide(this.hideOptionTarget)
+    hide(this.messageViewTarget)
     hide(intervals[0])
     hide(this.currencyPairHideOptionTarget)
     hide(this.numPageWrapperTarget)
@@ -158,21 +159,22 @@ export default class extends Controller {
           hideLoading(_this.loadingDataTarget, [_this.exchangeTableWrapperTarget])
           if (result.message) {
             let messageHTML = ''
-            messageHTML += `<div class="alert alert-primary align-text-center">
+            messageHTML += `<div class="alert alert-primary">
                            <strong>${result.message}</strong>
                       </div>`
 
             _this.messageViewTarget.innerHTML = messageHTML
             show(_this.messageViewTarget)
-            hide(_this.exchangeTableWrapperTarget)
+            hide(_this.exchangeTableTarget)
             hide(_this.pageSizeWrapperTarget)
             _this.totalPageCountTarget.textContent = 0
             _this.currentPageTarget.textContent = 0
+            _this.selectedFilterTarget.value = _this.selectedFilterTarget.getAttribute('data-initial-value')
             window.history.pushState(window.history.state, appName, `/exchanges?page=${_this.nextPage}&selected-exchange=${_this.selectedExchange}&records-per-page=${_this.numberOfRows}&selected-currency-pair=${_this.selectedCurrencyPair}&selected-interval=${_this.selectedInterval}&view-option=${_this.selectedViewOption}`)
           } else {
             window.history.pushState(window.history.state, appName, `/exchanges?page=${result.currentPage}&selected-exchange=${_this.selectedExchange}&records-per-page=${result.selectedNum}&selected-currency-pair=${result.selectedCurrencyPair}&selected-interval=${result.selectedInterval}&view-option=${result.selectedViewOption}`)
             hide(_this.messageViewTarget)
-            show(_this.exchangeTableWrapperTarget)
+            show(_this.exchangeTableTarget)
             _this.currentPage = result.currentPage
             if (_this.currentPage <= 1) {
               hide(_this.previousPageButtonTarget)
