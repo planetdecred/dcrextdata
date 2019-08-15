@@ -166,7 +166,6 @@ export default class extends Controller {
             _this.messageViewTarget.innerHTML = messageHTML
             show(_this.messageViewTarget)
             hide(_this.exchangeTableTarget)
-            hide(_this.pageSizeWrapperTarget)
             _this.totalPageCountTarget.textContent = 0
             _this.currentPageTarget.textContent = 0
             _this.selectedFilterTarget.value = _this.selectedFilterTarget.getAttribute('data-initial-value')

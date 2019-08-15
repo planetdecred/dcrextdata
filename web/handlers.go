@@ -776,6 +776,7 @@ func (s *Server) fetchMempoolData(req *http.Request) (map[string]interface{}, er
 	}
 
 	ctx := req.Context()
+
 	mempoolSlice, err := s.db.Mempools(ctx, offset, pageSize)
 	if err != nil {
 		return nil, err
@@ -812,6 +813,11 @@ func (s *Server) getMempoolChartData(res http.ResponseWriter, req *http.Request)
 		s.renderErrorJSON(err.Error(), res)
 		return
 	}
+
+	if len(mempoolDataSlice) == 0 {
+		s.renderErrorJSON("mempool chart data is empty", res)
+		return
+	} 
 
 	data := map[string]interface{}{
 		"mempoolchartData": mempoolDataSlice,

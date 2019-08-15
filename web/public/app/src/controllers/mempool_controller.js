@@ -1,6 +1,6 @@
 import { Controller } from 'stimulus'
 import axios from 'axios'
-import { legendFormatter, barChartPlotter, hide, show, setActiveOptionBtn, showLoading, hideLoading } from '../utils'
+import { legendFormatter, barChartPlotter, hide, show, setActiveOptionBtn, options, showLoading, hideLoading } from '../utils'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
 
@@ -9,7 +9,7 @@ export default class extends Controller {
     return [
       'nextPageButton', 'previousPageButton', 'tableBody', 'rowTemplate',
       'totalPageCount', 'currentPage', 'btnWrapper', 'tableWrapper', 'chartsView',
-      'chartWrapper', 'viewOption', 'labels', 'viewOptionControl',
+      'chartWrapper', 'viewOption', 'labels', 'viewOptionControl', 'messageView',
       'chartDataTypeSelector', 'chartDataType', 'chartOptions', 'labels', 'selectedMempoolOpt',
       'selectedNumberOfRows', 'numPageWrapper', 'loadingData'
     ]
@@ -35,6 +35,7 @@ export default class extends Controller {
     this.selectedViewOption = 'table'
     setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
     hide(this.chartWrapperTarget)
+    hide(this.messageViewTarget)
     hide(this.chartDataTypeSelectorTarget)
     show(this.tableWrapperTarget)
     show(this.numPageWrapperTarget)
@@ -47,6 +48,7 @@ export default class extends Controller {
     this.selectedViewOption = 'chart'
     hide(this.btnWrapperTarget)
     hide(this.tableWrapperTarget)
+    hide(this.messageViewTarget)
     this.chartFilter = this.selectedMempoolOptTarget.value = this.selectedMempoolOptTarget.options[0].value
     setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
     setActiveOptionBtn(this.dataType, this.chartDataTypeTargets)
@@ -88,8 +90,8 @@ export default class extends Controller {
     showLoading(this.loadingDataTarget, elementsToToggle)
 
     if (display === 'table') {
-      const numberOfRows = this.selectedNumberOfRowsTarget.value
-      url = `/getmempool?page=${this.nextPage}&records-per-page=${numberOfRows}&view-option=${this.selectedViewOption}`
+      this.selectedNumberOfRowsberOfRows = this.selectedNumberOfRowsTarget.value
+      url = `/getmempool?page=${this.nextPage}&records-per-page=${this.selectedNumberOfRowsberOfRows}&view-option=${this.selectedViewOption}`
     } else {
       url = `/mempoolcharts?chart-data-type=${this.dataType}&view-option=${this.selectedViewOption}`
     }
@@ -97,9 +99,22 @@ export default class extends Controller {
     const _this = this
     axios.get(url).then(function (response) {
       let result = response.data
-
-      if (display === 'table') {
+      console.log(result)
+      if (display === 'table' && result.message) {
         hideLoading(_this.loadingDataTarget, [_this.tableWrapperTarget])
+        let messageHTML = ''
+        messageHTML += `<div class="alert alert-primary">
+                       <strong>${result.message}</strong>
+                  </div>`
+
+        _this.messageViewTarget.innerHTML = messageHTML
+        show(_this.messageViewTarget)
+        hide(_this.tableBodyTarget)
+        window.history.pushState(window.history.state, _this.addr, `/mempool?page=${_this.nextPage}&records-per-page=${_this.selectedNumberOfRowsberOfRows}&view-option=${_this.selectedViewOption}`)
+      } else if (display === 'table' && result.mempoolData) {
+        hideLoading(_this.loadingDataTarget, [_this.tableWrapperTarget])
+        hide(_this.messageViewTarget)
+        show(_this.tableBodyTarget)
         _this.totalPageCountTarget.textContent = result.totalPages
         _this.currentPageTarget.textContent = result.currentPage
         let url = `/mempool?page=${result.currentPage}&records-per-page=${result.selectedNumberOfRows}&view-option=${_this.selectedViewOption}`
@@ -127,7 +142,6 @@ export default class extends Controller {
         _this.plotGraph(result)
       }
     }).catch(function (e) {
-      hideLoading(_this.loadingDataTarget, elementsToToggle)
       console.log(e) // todo: handle error
     })
   }
@@ -152,73 +166,98 @@ export default class extends Controller {
   // exchange chart
   plotGraph (exs) {
     const _this = this
-    let title
-
-    let chartData = exs.mempoolchartData
-    let csv = ''
-    switch (this.dataType) {
-      case 'size':
-        title = 'Size'
-        csv = 'Date,Size\n'
-        break
-      case 'total_fee':
-        title = 'Total Fee'
-        csv = 'Date,Total Fee\n'
-        break
-      default:
-        title = '# of Transactions'
-        csv = 'Date,# of Transactions\n'
-        break
-    }
-    let minDate, maxDate
-
-    chartData.forEach(mp => {
-      let date = new Date(mp.time)
-      if (minDate === undefined || new Date(mp.time) < minDate) {
-        minDate = new Date(mp.time)
+    console.log(exs)
+    if (exs.error) {
+      this.drawInitialGraph()
+    } else {
+      let chartData = exs.mempoolchartData
+      let csv = ''
+      switch (this.dataType) {
+        case 'size':
+          this.title = 'Size'
+          csv = 'Date,Size\n'
+          break
+        case 'total_fee':
+          this.title = 'Total Fee'
+          csv = 'Date,Total Fee\n'
+          break
+        default:
+          this.title = '# of Transactions'
+          csv = 'Date,# of Transactions\n'
+          break
       }
+      let minDate, maxDate
 
-      if (maxDate === undefined || new Date(mp.time) > maxDate) {
-        maxDate = new Date(mp.time)
-      }
+      chartData.forEach(mp => {
+        let date = new Date(mp.time)
+        if (minDate === undefined || new Date(mp.time) < minDate) {
+          minDate = new Date(mp.time)
+        }
 
-      let record
-      if (_this.dataType === 'size') {
-        record = mp.size
-      } else if (_this.dataType === 'total_fee') {
-        record = mp.total_fee
-      } else {
-        record = mp.number_of_transactions
-      }
-      csv += `${date},${record}\n`
-    })
+        if (maxDate === undefined || new Date(mp.time) > maxDate) {
+          maxDate = new Date(mp.time)
+        }
 
-    _this.chartsView = new Dygraph(
-      _this.chartsViewTarget,
-      csv,
-      {
-        legend: 'always',
-        includeZero: true,
-        dateWindow: [minDate, maxDate],
-        legendFormatter: legendFormatter,
-        plotter: barChartPlotter,
-        digitsAfterDecimal: 8,
-        labelsDiv: _this.labelsTarget,
-        ylabel: title,
-        xlabel: 'Date',
-        labelsUTC: true,
-        labelsKMB: true,
-        maxNumberWidth: 10,
-        showRangeSelector: true,
-        axes: {
-          x: {
-            drawGrid: false
-          },
-          y: {
-            axisLabelWidth: 90
+        let record
+        if (_this.dataType === 'size') {
+          record = mp.size
+        } else if (_this.dataType === 'total_fee') {
+          record = mp.total_fee
+        } else {
+          record = mp.number_of_transactions
+        }
+        csv += `${date},${record}\n`
+      })
+
+      _this.chartsView = new Dygraph(
+        _this.chartsViewTarget,
+        csv,
+        {
+          legend: 'always',
+          includeZero: true,
+          dateWindow: [minDate, maxDate],
+          legendFormatter: legendFormatter,
+          plotter: barChartPlotter,
+          digitsAfterDecimal: 8,
+          labelsDiv: _this.labelsTarget,
+          ylabel: _this.title,
+          xlabel: 'Date',
+          labelsUTC: true,
+          labelsKMB: true,
+          maxNumberWidth: 10,
+          showRangeSelector: true,
+          axes: {
+            x: {
+              drawGrid: false
+            },
+            y: {
+              axisLabelWidth: 90
+            }
           }
         }
+      )
+    }
+  }
+
+  drawInitialGraph () {
+    var extra = {
+      legendFormatter: legendFormatter,
+      labelsDiv: this.labelsTarget,
+      ylabel: this.title,
+      xlabel: 'Date',
+      labelsUTC: true,
+      labelsKMB: true,
+      axes: {
+        x: {
+          drawGrid: false
+        }
       }
+    }
+
+    this.chartsView = new Dygraph(
+      this.chartsViewTarget,
+      [[0, 0]],
+      { ...options, ...extra }
     )
   }
 }

@@ -182,7 +182,6 @@ export default class extends Controller {
     if (data.records) {
       hide(this.messageViewTarget)
       show(this.blocksTableBodyTarget)
-      show(this.paginationButtonsWrapperTarget)
 
       data.records.forEach(block => {
         const exRow = document.importNode(_this.blocksRowTemplateTarget.content, true)
@@ -204,7 +203,6 @@ export default class extends Controller {
       this.messageViewTarget.innerHTML = messageHTML
       show(this.messageViewTarget)
       hide(this.blocksTableBodyTarget)
-      hide(this.paginationButtonsWrapperTarget)
     }
 
     hide(this.tableTarget)
