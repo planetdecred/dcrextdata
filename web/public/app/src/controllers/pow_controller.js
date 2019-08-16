@@ -116,11 +116,13 @@ export default class extends Controller {
           _this.messageViewTarget.innerHTML = messageHTML
           show(_this.messageViewTarget)
           hide(_this.powTableTarget)
+          hide(_this.pageSizeWrapperTarget)
           _this.totalPageCountTarget.textContent = 0
           _this.currentPageTarget.textContent = 0
           window.history.pushState(window.history.state, _this.addr, `/pow?page=${_this.nextPage}&filter=${selectedFilter}&records-per-page=${numberOfRows}&view-option=${_this.selectedViewOption}`)
         } else {
           show(_this.powTableTarget)
+          show(_this.pageSizeWrapperTarget)
           hide(_this.messageViewTarget)
           const pageUrl = `/pow?page=${result.currentPage}&filter=${selectedFilter}&records-per-page=${result.selectedNum}&view-option=${_this.selectedViewOption}`
           window.history.pushState(window.history.state, _this.addr, pageUrl)

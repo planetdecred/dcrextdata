@@ -110,11 +110,13 @@ export default class extends Controller {
         _this.messageViewTarget.innerHTML = messageHTML
         show(_this.messageViewTarget)
         hide(_this.tableBodyTarget)
+        hide(_this.btnWrapperTarget)
         window.history.pushState(window.history.state, _this.addr, `/mempool?page=${_this.nextPage}&records-per-page=${_this.selectedNumberOfRowsberOfRows}&view-option=${_this.selectedViewOption}`)
       } else if (display === 'table' && result.mempoolData) {
         hideLoading(_this.loadingDataTarget, [_this.tableWrapperTarget])
         hide(_this.messageViewTarget)
         show(_this.tableBodyTarget)
+        show(_this.btnWrapperTarget)
         _this.totalPageCountTarget.textContent = result.totalPages
         _this.currentPageTarget.textContent = result.currentPage
         let url = `/mempool?page=${result.currentPage}&records-per-page=${result.selectedNumberOfRows}&view-option=${_this.selectedViewOption}`
@@ -142,6 +144,7 @@ export default class extends Controller {
         _this.plotGraph(result)
       }
     }).catch(function (e) {
+      // hideLoading(_this.loadingDataTarget, elementsToToggle)
       console.log(e) // todo: handle error
     })
   }

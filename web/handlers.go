@@ -21,7 +21,7 @@ const (
 	maxPageSize                 = 250
 	recordsPerPage              = 20
 	defaultInterval             = 1440 // All
-	noDataMessage = "does not have data for selected query option(s)."
+	noDataMessage = "does not have data for the selected query option(s)."
 )
 
 var (
@@ -146,7 +146,6 @@ func (s *Server) fetchExchangeData(req *http.Request) (map[string]interface{}, e
 		"selectedNum":          pageSize,
 		"selectedInterval":     selectedInterval,
 		"selectedTick":         selectedTick,
-		"selectedExchange":     selectedExchange,
 		"currentPage":          pageToLoad,
 		"previousPage":         pageToLoad - 1,
 		"totalPages":           0,
@@ -181,6 +180,7 @@ func (s *Server) fetchExchangeData(req *http.Request) (map[string]interface{}, e
 			return nil, fmt.Errorf("No exchange source data. Try running dcrextdata then try again.")
 		}
 	}
+	data["selectedExchange"] = selectedExchange
 
 	if viewOption == "chart" {
 		return data, nil

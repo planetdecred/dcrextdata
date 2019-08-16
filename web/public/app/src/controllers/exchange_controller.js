@@ -30,6 +30,9 @@ export default class extends Controller {
     this.selectedInterval = this.selectedIntervalTarget.value = this.selectedIntervalTarget.getAttribute('data-initial-value')
     this.selectedExchange = this.selectedFilterTarget.value = this.selectedFilterTarget.getAttribute('data-initial-value')
     this.selectedTick = this.selectedTicksTarget.value = this.selectedTicksTarget.getAttribute('data-initial-value')
+    console.log(this.selectedExchange)
+    console.log(this.selectedCurrencyPair)
+    console.log(this.selectedInterval)
 
     this.selectedViewOption = this.viewOptionControlTarget.getAttribute('data-initial-value')
     if (this.selectedViewOption === 'chart') {
@@ -166,6 +169,7 @@ export default class extends Controller {
             _this.messageViewTarget.innerHTML = messageHTML
             show(_this.messageViewTarget)
             hide(_this.exchangeTableTarget)
+            hide(_this.pageSizeWrapperTarget)
             _this.totalPageCountTarget.textContent = 0
             _this.currentPageTarget.textContent = 0
             _this.selectedFilterTarget.value = _this.selectedFilterTarget.getAttribute('data-initial-value')
