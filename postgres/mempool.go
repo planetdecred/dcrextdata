@@ -290,7 +290,9 @@ func (pg *PgDb) PropagationVoteChartData(ctx context.Context) ([]mempool.Propaga
 	for _, vote := range voteSlice {
 		blockReceiveTimeDiff := vote.ReceiveTime.Time.Sub(vote.BlockReceiveTime.Time).Seconds()
 		chartData = append(chartData, mempool.PropagationChartData{
-			BlockHeight: vote.VotingOn.Int64, TimeDifference: blockReceiveTimeDiff,
+			BlockHeight: vote.VotingOn.Int64, 
+			TimeDifference: blockReceiveTimeDiff,
+			Date: vote.BlockReceiveTime.Time.UTC(),
 		})
 	}
 
@@ -305,9 +307,12 @@ func (pg *PgDb) PropagationBlockChartData(ctx context.Context) ([]mempool.Propag
 
 	var chartData []mempool.PropagationChartData
 	for _, vote := range blockSlice {
+
 		blockReceiveTimeDiff := vote.ReceiveTime.Time.Sub(vote.InternalTimestamp.Time).Seconds()
 		chartData = append(chartData, mempool.PropagationChartData{
-			BlockHeight: int64(vote.Height), TimeDifference: blockReceiveTimeDiff,
+			BlockHeight: int64(vote.Height), 
+			TimeDifference: blockReceiveTimeDiff,
+			Date: vote.ReceiveTime.Time.UTC(),
 		})
 	}
 

@@ -660,6 +660,7 @@ func (s *Server) getPowChartData(res http.ResponseWriter, req *http.Request) {
 		if !hasAtleastOneRecord {
 			continue
 		}
+			fmt.Println(points)
 
 		powChartData.CSV += fmt.Sprintf("%s\n", strings.Join(points, ","))
 	}
@@ -888,6 +889,7 @@ func (s *Server) fetchPropagationData(req *http.Request) (map[string]interface{}
 // /propagationchartdata
 func (s *Server) propagationChartData(res http.ResponseWriter, req *http.Request) {
 	requestedRecordSet := req.FormValue("record-set")
+	requestedAxis := req.FormValue("selected-axis")
 
 	var data []mempool.PropagationChartData
 	var err error
@@ -909,8 +911,16 @@ func (s *Server) propagationChartData(res http.ResponseWriter, req *http.Request
 		if existingTime, found := avgTimeForHeight[record.BlockHeight]; found {
 			avgTimeForHeight[record.BlockHeight] = (record.TimeDifference + existingTime) / 2
 		} else {
-			avgTimeForHeight[record.BlockHeight] = record.TimeDifference
-			heightArr = append(heightArr, record.BlockHeight)
+			if requestedAxis == "height" {
+				avgTimeForHeight[record.BlockHeight] = record.TimeDifference
+				heightArr = append(heightArr, record.BlockHeight)
+			}else{
+				propagationTimedata := map[string]interface{}{
+					"timeData": data,
+				}
+				s.renderJSON(propagationTimedata, res)
+				return
+			}
 		}
 	}
 
@@ -924,7 +934,7 @@ func (s *Server) propagationChartData(res http.ResponseWriter, req *http.Request
 		timeDifference := fmt.Sprintf("%04.2f", avgTimeForHeight[height])
 		csv += fmt.Sprintf("%d, %s\n", height, timeDifference)
 	}
-
+	
 	s.renderJSON(csv, res)
 }
 

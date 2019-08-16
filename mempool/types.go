@@ -78,6 +78,7 @@ type VoteDto struct {
 type PropagationChartData struct {
 	BlockHeight    int64   `json:"block_height"`
 	TimeDifference float64 `json:"time_difference"`
+	Date time.Time `json:"date"`
 }
 
 type DataStore interface {

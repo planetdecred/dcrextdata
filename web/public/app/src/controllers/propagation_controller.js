@@ -8,7 +8,7 @@ export default class extends Controller {
   static get targets () {
     return [
       'nextPageButton', 'previousPageButton', 'recordSetSelector', 'bothRecordSetOption', 'selectedRecordSet', 'selectedNum', 'numPageWrapper', 'paginationButtonsWrapper',
-      'tablesWrapper', 'table', 'blocksTbody', 'votesTbody', 'chartWrapper', 'chartsView', 'labels',
+      'tablesWrapper', 'table', 'blocksTbody', 'votesTbody', 'chartWrapper', 'chartsView', 'labels', 'axisOption',
       'blocksTable', 'blocksTableBody', 'blocksRowTemplate', 'votesTable', 'votesTableBody', 'votesRowTemplate',
       'totalPageCount', 'currentPage', 'viewOptionControl', 'chartSelector', 'viewOption', 'loadingData'
     ]
@@ -110,6 +110,14 @@ export default class extends Controller {
   numberOfRowsChanged () {
     this.selectedNum = this.selectedNumTarget.value
     this.fetchTableData(1)
+  }
+
+  setAxis (e) {
+    var target = e.srcElement || e.target
+    this.selectedAxis = target ? target.dataset.option : e
+    console.log(this.selectedAxis)
+    setActiveOptionBtn(this.selectedAxis, this.axisOptionTargets)
+    this.fetchChartDataAndPlot()
   }
 
   fetchTableData (page) {
@@ -284,7 +292,7 @@ export default class extends Controller {
     showLoading(this.loadingDataTarget, elementsToToggle)
 
     const _this = this
-    axios.get('/propagationchartdata?record-set=' + this.selectedRecordSet).then(function (response) {
+    axios.get(`/propagationchartdata?record-set=${this.selectedRecordSet}&selected-axis=${this.selectedAxis}`).then(function (response) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       _this.plotGraph(response.data)
       const url = '/propagation?record-set=' + _this.selectedRecordSet + `&view-option=${_this.selectedViewOption}`
@@ -297,7 +305,7 @@ export default class extends Controller {
 
   plotGraph (csv) {
     const _this = this
-
+    console.log(csv)
     let yLabel = this.selectedRecordSet === 'votes' ? 'Time Difference (s)' : 'Delay (s)'
     let options = {
       legend: 'always',
@@ -305,13 +313,33 @@ export default class extends Controller {
       legendFormatter: legendFormatter,
       labelsDiv: _this.labelsTarget,
       ylabel: yLabel,
-      xlabel: 'Height',
       labelsKMB: true,
       drawPoints: true,
       strokeWidth: 0.0,
       showRangeSelector: true
     }
 
-    _this.chartsView = new Dygraph(_this.chartsViewTarget, csv, options)
+    if (csv.timeData) {
+      let labels = ['Height', yLabel]
+      let data = []
+      let dataSet = []
+
+      var extra = {
+        labels: labels
+      }
+
+      const _this = this
+      csv.timeData.forEach(d => {
+        data.push(new Date(d.date))
+        data.push(d.time_difference)
+
+        dataSet.push(data)
+        data = []
+
+        _this.chartsView = new Dygraph(_this.chartsViewTarget, dataSet, { ...options, ...extra })
+      })
+    } else {
+      _this.chartsView = new Dygraph(_this.chartsViewTarget, csv, options)
+    }
   }
 }

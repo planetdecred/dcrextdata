@@ -197,6 +197,7 @@ export default class extends Controller {
 
   // vsp chart
   plotGraph (dataSet) {
+    console.log(dataSet)
     const _this = this
     let dataTypeLabel = 'Pool Hashrate (Th/s)'
     if (_this.dataType === 'workers') {
