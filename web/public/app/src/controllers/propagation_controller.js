@@ -115,7 +115,6 @@ export default class extends Controller {
   setAxis (e) {
     var target = e.srcElement || e.target
     this.selectedAxis = target ? target.dataset.option : e
-    console.log(this.selectedAxis)
     setActiveOptionBtn(this.selectedAxis, this.axisOptionTargets)
     this.fetchChartDataAndPlot()
   }
@@ -305,7 +304,6 @@ export default class extends Controller {
 
   plotGraph (csv) {
     const _this = this
-    console.log(csv)
     let yLabel = this.selectedRecordSet === 'votes' ? 'Time Difference (s)' : 'Delay (s)'
     let options = {
       legend: 'always',

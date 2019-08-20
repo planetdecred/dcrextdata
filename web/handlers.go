@@ -660,7 +660,6 @@ func (s *Server) getPowChartData(res http.ResponseWriter, req *http.Request) {
 		if !hasAtleastOneRecord {
 			continue
 		}
-		fmt.Println(points)
 
 		powChartData.CSV += fmt.Sprintf("%s\n", strings.Join(points, ","))
 	}
