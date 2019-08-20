@@ -320,7 +320,7 @@ export default class extends Controller {
     }
 
     if (csv.timeData) {
-      let labels = ['Height', yLabel]
+      let labels = ['Date', yLabel]
       let data = []
       let dataSet = []
 
@@ -328,16 +328,16 @@ export default class extends Controller {
         labels: labels
       }
 
-      const _this = this
-      csv.timeData.forEach(d => {
+      let chartData = csv.timeData
+      chartData.forEach(d => {
         data.push(new Date(d.date))
         data.push(d.time_difference)
 
         dataSet.push(data)
         data = []
-
-        _this.chartsView = new Dygraph(_this.chartsViewTarget, dataSet, { ...options, ...extra })
       })
+
+      _this.chartsView = new Dygraph(_this.chartsViewTarget, dataSet, { ...options, ...extra })
     } else {
       _this.chartsView = new Dygraph(_this.chartsViewTarget, csv, options)
     }

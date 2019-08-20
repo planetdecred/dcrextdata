@@ -895,9 +895,9 @@ func (s *Server) propagationChartData(res http.ResponseWriter, req *http.Request
 	var err error
 
 	if requestedRecordSet == "votes" {
-		data, err = s.db.PropagationVoteChartData(req.Context())
+		data, err = s.db.PropagationVoteChartData(req.Context(), requestedAxis)
 	} else {
-		data, err = s.db.PropagationBlockChartData(req.Context())
+		data, err = s.db.PropagationBlockChartData(req.Context(), requestedAxis)
 	}
 
 	if err != nil {

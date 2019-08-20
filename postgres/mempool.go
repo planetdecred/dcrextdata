@@ -280,8 +280,15 @@ func (pg *PgDb) VotesCount(ctx context.Context) (int64, error) {
 	return models.Votes().Count(ctx, pg.db)
 }
 
-func (pg *PgDb) PropagationVoteChartData(ctx context.Context) ([]mempool.PropagationChartData, error) {
-	voteSlice, err := models.Votes(qm.OrderBy(models.VoteColumns.VotingOn)).All(ctx, pg.db)
+func (pg *PgDb) PropagationVoteChartData(ctx context.Context, requestedAxis string) ([]mempool.PropagationChartData, error) {
+	var query qm.QueryMod
+	if requestedAxis == "height" {
+		query = qm.OrderBy(models.VoteColumns.VotingOn)
+	}else{
+		query = qm.OrderBy(models.VoteColumns.ReceiveTime)
+	}
+
+	voteSlice, err := models.Votes(query).All(ctx, pg.db)
 	if err != nil {
 		return nil, err
 	}
@@ -292,15 +299,22 @@ func (pg *PgDb) PropagationVoteChartData(ctx context.Context) ([]mempool.Propaga
 		chartData = append(chartData, mempool.PropagationChartData{
 			BlockHeight: vote.VotingOn.Int64, 
 			TimeDifference: blockReceiveTimeDiff,
-			Date: vote.BlockReceiveTime.Time.UTC(),
+			Date: vote.ReceiveTime.Time.UTC(),
 		})
 	}
 
 	return chartData, nil
 }
 
-func (pg *PgDb) PropagationBlockChartData(ctx context.Context) ([]mempool.PropagationChartData, error) {
-	blockSlice, err := models.Blocks(qm.OrderBy(models.BlockColumns.Height)).All(ctx, pg.db)
+func (pg *PgDb) PropagationBlockChartData(ctx context.Context, requestedAxis string) ([]mempool.PropagationChartData, error) {
+	var query qm.QueryMod
+	if requestedAxis == "height" {
+		query = qm.OrderBy(models.BlockColumns.Height)
+	}else{
+		query = qm.OrderBy(models.BlockColumns.ReceiveTime)
+	}
+
+	blockSlice, err := models.Blocks(query).All(ctx, pg.db)
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +326,7 @@ func (pg *PgDb) PropagationBlockChartData(ctx context.Context) ([]mempool.Propag
 		chartData = append(chartData, mempool.PropagationChartData{
 			BlockHeight: int64(vote.Height), 
 			TimeDifference: blockReceiveTimeDiff,
-			Date: vote.ReceiveTime.Time.UTC(),
+			Date: vote.InternalTimestamp.Time.UTC(),
 		})
 	}
 
