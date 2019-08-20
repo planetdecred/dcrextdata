@@ -147,7 +147,7 @@ func (s *Server) fetchExchangeData(req *http.Request) (map[string]interface{}, e
 
 	if selectedExchange == "" && viewOption == "table" {
 		selectedExchange = "All"
-	} else if (selectedExchange == "" || selectedExchange == "All") && len(allExchangeSlice) > 0{
+	} else if (selectedExchange == "" || selectedExchange == "All") && len(allExchangeSlice) > 0 {
 		selectedExchange = allExchangeSlice[0].Name
 	}
 
@@ -660,7 +660,7 @@ func (s *Server) getPowChartData(res http.ResponseWriter, req *http.Request) {
 		if !hasAtleastOneRecord {
 			continue
 		}
-			fmt.Println(points)
+		fmt.Println(points)
 
 		powChartData.CSV += fmt.Sprintf("%s\n", strings.Join(points, ","))
 	}
@@ -914,7 +914,7 @@ func (s *Server) propagationChartData(res http.ResponseWriter, req *http.Request
 			if requestedAxis == "height" {
 				avgTimeForHeight[record.BlockHeight] = record.TimeDifference
 				heightArr = append(heightArr, record.BlockHeight)
-			}else{
+			} else {
 				propagationTimedata := map[string]interface{}{
 					"timeData": data,
 				}
@@ -934,7 +934,7 @@ func (s *Server) propagationChartData(res http.ResponseWriter, req *http.Request
 		timeDifference := fmt.Sprintf("%04.2f", avgTimeForHeight[height])
 		csv += fmt.Sprintf("%d, %s\n", height, timeDifference)
 	}
-	
+
 	s.renderJSON(csv, res)
 }
 

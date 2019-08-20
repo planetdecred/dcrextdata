@@ -284,7 +284,7 @@ func (pg *PgDb) PropagationVoteChartData(ctx context.Context, requestedAxis stri
 	var query qm.QueryMod
 	if requestedAxis == "height" {
 		query = qm.OrderBy(models.VoteColumns.VotingOn)
-	}else{
+	} else {
 		query = qm.OrderBy(models.VoteColumns.ReceiveTime)
 	}
 
@@ -297,9 +297,9 @@ func (pg *PgDb) PropagationVoteChartData(ctx context.Context, requestedAxis stri
 	for _, vote := range voteSlice {
 		blockReceiveTimeDiff := vote.ReceiveTime.Time.Sub(vote.BlockReceiveTime.Time).Seconds()
 		chartData = append(chartData, mempool.PropagationChartData{
-			BlockHeight: vote.VotingOn.Int64, 
+			BlockHeight:    vote.VotingOn.Int64,
 			TimeDifference: blockReceiveTimeDiff,
-			Date: vote.ReceiveTime.Time.UTC(),
+			Date:           vote.ReceiveTime.Time.UTC(),
 		})
 	}
 
@@ -310,7 +310,7 @@ func (pg *PgDb) PropagationBlockChartData(ctx context.Context, requestedAxis str
 	var query qm.QueryMod
 	if requestedAxis == "height" {
 		query = qm.OrderBy(models.BlockColumns.Height)
-	}else{
+	} else {
 		query = qm.OrderBy(models.BlockColumns.ReceiveTime)
 	}
 
@@ -324,9 +324,9 @@ func (pg *PgDb) PropagationBlockChartData(ctx context.Context, requestedAxis str
 
 		blockReceiveTimeDiff := vote.ReceiveTime.Time.Sub(vote.InternalTimestamp.Time).Seconds()
 		chartData = append(chartData, mempool.PropagationChartData{
-			BlockHeight: int64(vote.Height), 
+			BlockHeight:    int64(vote.Height),
 			TimeDifference: blockReceiveTimeDiff,
-			Date: vote.InternalTimestamp.Time.UTC(),
+			Date:           vote.InternalTimestamp.Time.UTC(),
 		})
 	}
 

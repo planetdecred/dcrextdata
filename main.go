@@ -335,4 +335,3 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 
 	return nil
 }
-
