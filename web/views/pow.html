@@ -38,110 +38,110 @@
                                 <ul class="nav nav-pills">
                                     <li class="nav-item">
                                         <a class="nav-link {{ if eq .pow.selectedDataType "pool_hashrate" }}active{{ end }}" href="javascript:void(0);"
-                                           data-target="pow.dataType"
-                                           data-option="pool_hashrate" data-initial-value="{{ .pow.selectedDataType }}"
+                                        data-target="pow.dataType"
+                                        data-option="pool_hashrate" data-initial-value="{{ .pow.selectedDataType }}"
                                         data-action="click->pow#setDataType">Hashrate</a>
                                     </li>
                                     <li class="nav-item">
                                         <a class="nav-link {{ if eq .pow.selectedDataType "workers" }}active{{ end }}" href="javascript:void(0);"
-                                           data-target="pow.dataType"
-                                           data-option="workers" data-initial-value="{{ .pow.selectedDataType }}"
+                                        data-target="pow.dataType"
+                                        data-option="workers" data-initial-value="{{ .pow.selectedDataType }}"
                                         data-action="click->pow#setDataType">Workers</a>
                                     </li>
                                 </ul>
                             </div>
 
-                           <div class="control-div pt-2" data-target="pow.chartSourceWrapper">
-                               {{ $selectedPools := .pow.selectedPools }}
-                                {{ range $index, $filter := .pow.powSource}}
-                                <div class="form-check form-check-inline" data-target="pow.poolDiv">
-                                    <input data-target="pow.pool" data-action="click->pow#poolCheckChanged"
-                                           class="form-check-input" type="checkbox" id="inlineCheckbox-{{$filter.Source}}"
-                                           value="{{$filter.Source}}" {{ if strListContains $selectedPools $filter.Source }} checked {{ end }}>
-                                    <label class="form-check-label" for="inlineCheckbox-{{$filter.Source}}">{{$filter.Source}}</label>
-                                </div>
-                                {{ end}}
+                            <div class="control-div pt-2" data-target="pow.chartSourceWrapper">
+                             {{ $selectedPools := .pow.selectedPools }}
+                             {{ range $index, $filter := .pow.powSource}}
+                             <div class="form-check form-check-inline" data-target="pow.poolDiv">
+                                <input data-target="pow.pool" data-action="click->pow#poolCheckChanged"
+                                class="form-check-input" type="checkbox" id="inlineCheckbox-{{$filter.Source}}"
+                                value="{{$filter.Source}}" {{ if strListContains $selectedPools $filter.Source }} checked {{ end }}>
+                                <label class="form-check-label" for="inlineCheckbox-{{$filter.Source}}">{{$filter.Source}}</label>
                             </div>
+                            {{ end}}
+                        </div>
 
-                            <div data-target="pow.numPageWrapper" class="control-div p-0 ml-1 {{ if .pow.chartView }}d-none{{ end }}">
-                                <div class=" mb-2 float-md-right">
+                        <div data-target="pow.numPageWrapper" class="control-div p-0 ml-1 {{ if .pow.chartView }}d-none{{ end }}">
+                            <div class=" mb-2 float-md-right">
 
-                                    <div class="control-label">Page Size:</div>
-                                    <select data-target="pow.selectedNum" data-action="change->pow#numberOfRowsChanged" class="form-control mr-5" style="width: 70px;">
-                                        {{$selectedNum := .pow.selectedNum}}
-                                        {{ range $index, $filter := .pow.pageSizeSelector}}
-                                        <option value="{{$index}}" {{ if eq $index $selectedNum}} selected {{ end }}>{{$filter}}</option>
-                                        {{ end }}
-                                    </select>
-                                </div>
-                            </div>
-                            <div data-target="pow.pageSizeWrapper" class="d-flex {{ if .pow.chartView }}d-none{{ end }}">
-                                <a href="javascript:void(0)" data-target="pow.previousPageButton" data-action="click->pow#loadPreviousPage" class="mr-2 {{ if lt .pow.previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
-
-                                <p class="text-muted" style="white-space: nowrap;"> Page <span data-target="pow.currentPage" class="text-muted" data-current-page="{{ .pow.currentPage }}"> {{ .pow.currentPage }}</span> of <span data-target="pow.totalPageCount" class="text-muted">{{ .pow.totalPages }}</span>
-                                </p>
-
-                                <a href="javascript:void(0)"  data-target="pow.nextPageButton"  data-action="click->pow#loadNextPage" class="ml-2 {{ if not .pow.nextPage }}d-none{{ end }}"> Next&gt;</a>
+                                <div class="control-label">Page Size:</div>
+                                <select data-target="pow.selectedNum" data-action="change->pow#numberOfRowsChanged" class="form-control mr-5" style="width: 70px;">
+                                    {{$selectedNum := .pow.selectedNum}}
+                                    {{ range $index, $filter := .pow.pageSizeSelector}}
+                                    <option value="{{$index}}" {{ if eq $index $selectedNum}} selected {{ end }}>{{$filter}}</option>
+                                    {{ end }}
+                                </select>
                             </div>
                         </div>
-                    </div>
-                </div>
+                        <div data-target="pow.pageSizeWrapper" class="d-flex {{ if .pow.chartView }}d-none{{ end }}">
+                            <a href="javascript:void(0)" data-target="pow.previousPageButton" data-action="click->pow#loadPreviousPage" class="mr-2 {{ if lt .pow.previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
 
-                <div class="row {{ if .pow.chartView }}d-none{{ end }}" data-target="pow.powTableWrapper">
-                    <div class="col-md-12">
-                        <div class="">
-                            <table class="table mx-auto">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 110px;">Pool</th>
-                                        <th style="text-align: right; width: 150px;">Pool Hashrate (Th/s)</th>
-                                        <th style="text-align: right;width: 150px;">Workers</th>
-                                        <th style="width: 50px;"></th>
-                                        <th>Time (UTC)</th>
-                                    </tr>
-                                </thead>
-                                <tbody data-target="pow.powTable">
-                                    {{range $index, $powdata := .powData}}
-                                    <tr>
-                                        <td>{{$powdata.Source}}</td>
-                                        <td style="text-align: right;">{{$powdata.PoolHashrateTh}}</td>
-                                        <td style="text-align: right;">{{$powdata.Workers}}</td>
-                                        <td></td>
-                                        <td>{{$powdata.Time}}</td>
-                                    </tr>
-                                    {{end}}
-                                </tbody>
-                            </table>
+                            <p class="text-muted" style="white-space: nowrap;"> Page <span data-target="pow.currentPage" class="text-muted" data-current-page="{{ .pow.currentPage }}"> {{ .pow.currentPage }}</span> of <span data-target="pow.totalPageCount" class="text-muted">{{ .pow.totalPages }}</span>
+                            </p>
 
-                            <template data-target="pow.powRowTemplate">
-                                <tr>
-                                    <td></td>
-                                    <td style="text-align: right;"></td>
-                                    <td style="text-align: right;"></td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
-                            </template>
+                            <a href="javascript:void(0)"  data-target="pow.nextPageButton"  data-action="click->pow#loadNextPage" class="ml-2 {{ if not .pow.nextPage }}d-none{{ end }}"> Next&gt;</a>
                         </div>
                     </div>
-                </div>
-
-                <div data-target="pow.chartWrapper" class="chart-wrapper pl-2 pr-2 mb-5">
-                    <div id="chart" data-target="pow.chartsView" style="width:100%; height:73vh; margin:0 auto;">
-                    </div>
-                    <div class="d-flex justify-content-center legend-wrapper">
-                        <div class="legend d-flex" data-target="pow.labels"></div>
-                    </div>
-                </div>
-                <div data-target="pow.messageView" class="d-hide">
-                </div>
-                <div class="p-5 text-center d-hide loading" data-target="pow.loadingData">
-                  <div class="loading-icon"></div>
-                  <div class="loading-text">loading data... </div>
                 </div>
             </div>
-        </div>
-    </div>
-    {{ template "footer" }}
+
+            <div class="row {{ if .pow.chartView }}d-none{{ end }}" data-target="pow.powTableWrapper">
+                <div class="col-md-12">
+                    <div class="">
+                        <table class="table mx-auto">
+                            <thead>
+                                <tr>
+                                    <th style="width: 110px;">Pool</th>
+                                    <th style="text-align: right; width: 150px;">Pool Hashrate (Th/s)</th>
+                                    <th style="text-align: right;width: 150px;">Workers</th>
+                                    <th style="width: 50px;"></th>
+                                    <th>Time (UTC)</th>
+                                </tr>
+                            </thead>
+                            <tbody data-target="pow.powTable">
+                                {{range $index, $powdata := .powData}}
+                                <tr>
+                                    <td>{{$powdata.Source}}</td>
+                                    <td style="text-align: right;">{{$powdata.PoolHashrateTh}}</td>
+                                    <td style="text-align: right;">{{$powdata.Workers}}</td>
+                                    <td></td>
+                                    <td>{{$powdata.Time}}</td>
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+
+                        <template data-target="pow.powRowTemplate">
+                            <tr>
+                                <td></td>
+                                <td style="text-align: right;"></td>
+                                <td style="text-align: right;"></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <div data-target="pow.chartWrapper" class="chart-wrapper pl-2 pr-2 mb-5">
+                <div id="chart" data-target="pow.chartsView" style="width:100%; height:73vh; margin:0 auto;">
+                </div>
+                <div class="d-flex justify-content-center legend-wrapper">
+                    <div class="legend d-flex" data-target="pow.labels"></div>
+                </div>
+            </div>
+            <div data-target="pow.messageView" class="d-hide">
+            </div>
+            <div class="p-5 text-center d-hide loading" data-target="pow.loadingData">
+              <div class="loading-icon"></div>
+              <div class="loading-text">loading data... </div>
+          </div>
+      </div>
+  </div>
+</div>
+{{ template "footer" }}
 </body>
 </html>

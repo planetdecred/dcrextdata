@@ -45,7 +45,7 @@ var (
 	vspLog     = backendLog.Logger("VSPC")
 	powLog     = backendLog.Logger("POWL")
 	mempoolLog = backendLog.Logger("MEMP")
-	webLog = backendLog.Logger("WEBL")
+	webLog     = backendLog.Logger("WEBL")
 )
 
 // subsystemLoggers maps each subsystem identifier to its associated logger.

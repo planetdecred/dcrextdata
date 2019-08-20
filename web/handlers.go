@@ -21,7 +21,7 @@ const (
 	maxPageSize                 = 250
 	recordsPerPage              = 20
 	defaultInterval             = 1440 // All
-	noDataMessage = "does not have data for the selected query option(s)."
+	noDataMessage               = "does not have data for the selected query option(s)."
 )
 
 var (
@@ -173,10 +173,10 @@ func (s *Server) fetchExchangeData(req *http.Request) (map[string]interface{}, e
 
 	if selectedExchange == "" && viewOption == "table" {
 		selectedExchange = "All"
-	} else if selectedExchange == "" && viewOption == "chart"{
+	} else if selectedExchange == "" && viewOption == "chart" {
 		if len(allExchangeSlice) > 0 {
 			selectedExchange = allExchangeSlice[0].Name
-		}else{
+		} else {
 			return nil, fmt.Errorf("No exchange source data. Try running dcrextdata then try again.")
 		}
 	}
@@ -817,7 +817,7 @@ func (s *Server) getMempoolChartData(res http.ResponseWriter, req *http.Request)
 	if len(mempoolDataSlice) == 0 {
 		s.renderErrorJSON("mempool chart data is empty", res)
 		return
-	} 
+	}
 
 	data := map[string]interface{}{
 		"mempoolchartData": mempoolDataSlice,
@@ -1031,19 +1031,19 @@ func (s *Server) fetchBlockData(req *http.Request) (map[string]interface{}, erro
 
 	ctx := req.Context()
 
-		data := map[string]interface{}{
-			"chartView":            true,
-			"selectedViewOption":   defaultViewOption,
-			"currentPage":          pageToLoad,
-			"propagationRecordSet": propagationRecordSet,
-			"pageSizeSelector":     pageSizeSelector,
-			"selectedFilter":       "blocks",
-			"blocks":               true,
+	data := map[string]interface{}{
+		"chartView":            true,
+		"selectedViewOption":   defaultViewOption,
+		"currentPage":          pageToLoad,
+		"propagationRecordSet": propagationRecordSet,
+		"pageSizeSelector":     pageSizeSelector,
+		"selectedFilter":       "blocks",
+		"blocks":               true,
 		"url":                  "/blockdata",
-			"selectedNum":          pageSize,
+		"selectedNum":          pageSize,
 		"previousPage":         pageToLoad - 1,
-			"totalPages":           pageToLoad,
-		}
+		"totalPages":           pageToLoad,
+	}
 
 	if viewOption == defaultViewOption {
 		return data, nil
@@ -1064,8 +1064,8 @@ func (s *Server) fetchBlockData(req *http.Request) (map[string]interface{}, erro
 		return nil, err
 	}
 
-		data["records"] =              blocksSlice
-		data["totalPages"] =           int(math.Ceil(float64(totalCount) / float64(pageSize)))
+	data["records"] = blocksSlice
+	data["totalPages"] = int(math.Ceil(float64(totalCount) / float64(pageSize)))
 
 	totalTxLoaded := offset + len(blocksSlice)
 	if int64(totalTxLoaded) < totalCount {
@@ -1161,8 +1161,8 @@ func (s *Server) fetchVoteData(req *http.Request) (map[string]interface{}, error
 		return nil, err
 	}
 
-	data["voteRecords"] =         voteSlice
-	data["totalPages"] =           int(math.Ceil(float64(totalCount) / float64(pageSize)))
+	data["voteRecords"] = voteSlice
+	data["totalPages"] = int(math.Ceil(float64(totalCount) / float64(pageSize)))
 
 	totalTxLoaded := offset + len(voteSlice)
 	if int64(totalTxLoaded) < totalCount {
