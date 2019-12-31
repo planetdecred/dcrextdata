@@ -5,22 +5,38 @@
 <body>
     <div class="body">
         {{ template "header" }}
-        <div class="content">
-            <div class="container-fluid">
-                <div class="row justify-content-center">
-                    <div>
-                        <ul style="margin-left: -24px">
-                            <li>Mempool: {{ humanizeInt .mempoolCount}}</li>
-                            <li>Blocks: {{ humanizeInt .blocksCount}}</li>
-                            <li>Votes: {{ humanizeInt .votesCount}}</li>
-                            <li>PoW: {{ humanizeInt .powCount}}</li>
-                            <li>VSP Ticks: {{ humanizeInt .vspCount}}</li>
-                            <li>Exchange Ticks: {{ humanizeInt .exchangeTick}}</li>
-                        </ul>
+        <main>
+            <div class="container">
+                <div class="cards">
+                    <div class="info-card">
+                        <p>Mempool</p>
+                        <h2>{{ humanizeInt .mempoolCount}}</h2>
+                    </div>
+                    <div class="info-card">
+                        <p>Blocks</p>
+                        <h2>{{ humanizeInt .blocksCount}}</h2>
+                    </div>
+                    <div class="info-card">
+                        <p>Votes</p>
+                        <h2>{{ humanizeInt .votesCount}}</h2>
+                    </div>
+                </div>
+                <div class="cards">
+                    <div class="info-card">
+                        <p>PoW</p>
+                        <h2>{{ humanizeInt .powCount}}</h2>
+                    </div>
+                    <div class="info-card">
+                        <p>VSP Ticks</p>
+                        <h2>{{ humanizeInt .vspCount}}</h2>
+                    </div>
+                    <div class="info-card">
+                        <p>Exchange Ticks</p>
+                        <h2>{{ humanizeInt .exchangeTick}}</h2>
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
     {{ template "footer" }}
 </body>

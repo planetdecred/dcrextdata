@@ -1,6 +1,13 @@
+@import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap');
+
 body {
   background-color: #f5f5f5;
   font-size: 13px;
+}
+
+a {
+  color: #007bff;
+  text-decoration: none;
 }
 
 a:hover {
@@ -8,15 +15,140 @@ a:hover {
   text-decoration: none;
 }
 
-.header-top .inner {
-  padding: 15px 0;
-  color: #333;
-}
-
 .page-title a {
   color: #696969;
   font-size: 2rem;
   font-weight: 600;
+}
+
+* {
+  padding: 0;
+  margin: 0;
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+header {
+  // position: fixed;
+  background-color: #fff;
+  width: 100%;
+  height: 50px;
+  box-shadow: 0 4px 20px rgba(226, 226, 226, 0.5);
+
+  #menu {
+    .menu-bar {
+      position: absolute;
+      margin-left: 160px;
+      margin-top: 10px;
+      cursor: pointer;
+
+      img {
+        width: 30px;
+      }
+    }
+
+    .menu-dropdown {
+      position: absolute;
+      top: 50px;
+      left: 100px;
+      width: 165px;
+      background-color: #fff;
+      padding-left: 35px;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(226, 226, 226, 0.5);
+
+      li {
+        color: #aaa;
+        margin-bottom: 20px;
+        transition: 0.3s all;
+
+        a {
+          color: #aaa;
+          transition: 0.3s all;
+
+          &:hover {
+            color: #007bff;
+          }
+        }
+
+        &:hover {
+          color: #007bff;
+        }
+
+        &.active {
+          color: #007bff;
+
+          a {
+            color: #007bff;
+          }
+        }
+
+        &:first-child {
+          margin-top: 20px;
+        }
+      }
+    }
+  }
+
+  .logo {
+    width: 40px;
+    margin-top: 5px;
+  }
+}
+
+main {
+  background-color: #f2f2f2;
+
+  .container {
+    width: 100%;
+    padding: 80px;
+  }
+}
+
+.cards {
+  display: flex;
+  margin-bottom: 50px;
+
+  .info-card {
+    width: 30%;
+    background-color: #fff;
+    padding: 10px;
+    padding-top: 80px;
+    padding-bottom: 80px;
+    margin-right: 3.3%;
+    text-align: center;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(226, 226, 226, 0.5);
+
+    &:nth-child(3) {
+      margin-right: 0 !important;
+    }
+
+    p {
+      color: #007bff;
+    }
+  }
+}
+
+footer {
+  width: 100%;
+  padding: 10px;
+  background-color: #fff;
+  position: absolute;
+  bottom: 0;
+}
+
+.footer {
+  display: flex;
+
+  .footer-text {
+    width: 33.3%;
+    text-align: center;
+  }
+}
+
+.header-top .inner {
+  padding: 15px 0;
+  color: #333;
 }
 
 .alert {

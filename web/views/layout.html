@@ -21,62 +21,54 @@
 {{ end }}
 
 {{ define "header" }}
-<div class="header" data-controller="layout">
-    <div class="header-top">
-        <div class="inner">
-            <div class="container-fluid">
-                <div class="text-center page-title">
-                    <a href="/"> dcrextdata </a>
-                </div>
-            </div>
+<header data-controller="layout">
+    <div id="menu">
+        <div class="menu-bar">
+            <img src="/static/images/menu.png" />
+        </div>
+        <div class="menu-dropdown d-hide">
+            <ul>
+                <li id="nav-mempool">
+                    <a href="/mempool">Mempool</a>
+                </li>
+                <li id="nav-propagation">
+                    <a href="/propagation">Propagation</a id="nav-mempool">
+                </li>
+                <li id="nav-pow">
+                    <a href="/po-w">PoW</a id="nav-mempool">
+                </li>
+                <li id="nav-vsp">
+                    <a href="/vsp">VSPs</a id="nav-mempool">
+                </li>
+                <li id="nav-exchanges">
+                    <a href="/exchanges">Exchanges</a id="nav-mempool">
+                </li>
+                <li id="nav-community">
+                    <a href="/community">Community</a id="nav-mempool">
+                </li>
+            </ul>
         </div>
     </div>
-    <nav class="navbar navbar-expand-sm navbar-light bg-light">
-        <div class="container-fluid">
-            <button data-action="click->layout#toggleNavbar" class="navbar-toggler" type="button" data-toggles="collapse" data-target="#nav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="nav" data-target="layout.navbar">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" id="nav-mempool" href="/mempool">
-                            <span class="text">Mempool</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="nav-propagation" href="/propagation">
-                            <span class="text">Propagation</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="nav-pow" href="/pow">
-                            <span class="text">PoW</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="nav-vsp" href="/vsp">
-                            <span class="text">VSPs</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="nav-exchanges" href="/exchanges">
-                            <span class="text">Exchanges</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="nav-community" href="/community">
-                            <span class="text">Community</span>
-                        </a>
-                    </li>
-
-                </ul>
-            </div>
-        </div>
-    </nav>
-</div>
+    <center>
+        <img src="/static/images/logo.png" class="logo" />
+    </center>
+</header>
 {{ end }}
 
 {{ define "footer" }}
+<footer>
+    <div class="footer">
+        <div class="footer-text">
+            <p>3h45mins since last block</p>
+        </div>
+        <div class="footer-text">
+            <p>dcrdata v5.2.1-pre+dev © 2019 The Decred developers (ISC)</p>
+        </div>
+        <div class="footer-text">
+            <p>Connected</p>
+        </div>
+    </div>
+</footer>
 <script>
     $(function () {
         var pathname = window.location.pathname;
@@ -86,6 +78,11 @@
             currentNavItem = "#nav-" + paths[1];
         }
         $(currentNavItem).addClass("active");
+    });
+    $(function () {
+        $(".menu-bar").click(function() {
+            $(".menu-dropdown").toggleClass("d-hide");
+        });
     });
 </script>
 {{ end }}
