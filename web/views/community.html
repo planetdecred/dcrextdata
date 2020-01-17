@@ -8,8 +8,8 @@
     <div class="content">
         <div class="container-fluid">
             <div class="control-wrapper">
-                <div class="d-flex flex-row">
-                    <div class="chart-control ml-auto mr-3" data-target="commstat.viewOptionControl"
+                <div class="d-flex flex-row bottom-ctl">
+                    <div class="chart-control ml-auto mr-3 my-2" data-target="commstat.viewOptionControl"
                          data-initial-value="{{ .viewOption }}">
                         <ul class="nav nav-pills">
                             <li class="nav-item">
@@ -106,47 +106,51 @@
                                 </select>
                             </div>
                         </div>
-
-                        <div data-target="commstat.numPageWrapper"
-                             class="control-div p-0 ml-1 {{ if eq .viewOption "chart" }}d-none{{ end }}">
-                            <div class=" mb-2 float-md-right">
-
-                                <div class="control-label">Page Size:</div>
-                                <select data-target="commstat.selectedNum"
-                                        data-action="change->commstat#numberOfRowsChanged" class="form-control mr-5"
-                                        style="width: 70px;">
-                                    {{$selectedNum := .selectedNum}}
-                                    {{ range $index, $filter := .pageSizeSelector}}
-                                        <option value="{{$index}}" {{ if eq $index $selectedNum}} selected {{ end }}>{{$filter}}</option>
-                                    {{ end }}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div data-target="commstat.pageSizeWrapper"
-                             class="d-flex {{ if eq .viewOption "chart" }}d-none{{ end }}">
-                            <a href="javascript:void(0)" data-target="commstat.previousPageButton"
-                               data-action="click->commstat#loadPreviousPage"
-                               class="mr-2 {{ if lt .previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
-
-                            <p class="text-muted" style="white-space: nowrap;">
-                                Page <span data-target="commstat.currentPage" class="text-muted"
-                                           data-current-page="{{ .currentPage }}"> {{ .currentPage }}</span>
-                                of <span data-target="commstat.totalPageCount"
-                                         class="text-muted">{{ .totalPages }}</span>
-                            </p>
-                            <a href="javascript:void(0)" data-target="commstat.nextPageButton"
-                               data-action="click->commstat#loadNextPage"
-                               class="ml-2 {{ if not .nextPage }}d-none{{ end }}"> Next&gt;</a>
-                        </div>
                     </div>
 
                 </div>
             </div>
 
-            <div class="row {{ if eq .viewOption "chart" }}d-none{{ end }}" data-target="commstat.tableWrapper">
+            <div class="inner-content row {{ if eq .viewOption "chart" }}d-none{{ end }}" data-target="commstat.tableWrapper">
                 <div class="col-md-12">
                     <div class="">
+                        <div class="table-details">
+                            <h3>Community</h3>
+                            <div class="paginate">
+                                <div data-target="commstat.numPageWrapper"
+                                    class="control-div p-0 ml-1 {{ if eq .viewOption "chart" }}d-none{{ end }}">
+                                    <div class=" mb-2 float-md-right">
+
+                                        <div class="control-label">Page Size:</div>
+                                        <select data-target="commstat.selectedNum"
+                                                data-action="change->commstat#numberOfRowsChanged" class="form-control"
+                                                style="width: 70px;">
+                                            {{$selectedNum := .selectedNum}}
+                                            {{ range $index, $filter := .pageSizeSelector}}
+                                                <option value="{{$index}}" {{ if eq $index $selectedNum}} selected {{ end }}>{{$filter}}</option>
+                                            {{ end }}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div data-target="commstat.pageSizeWrapper"
+                                    class="page-size d-flex {{ if eq .viewOption "chart" }}d-none{{ end }}">
+                                    <a href="javascript:void(0)" data-target="commstat.previousPageButton"
+                                    data-action="click->commstat#loadPreviousPage"
+                                    class="mr-2 {{ if lt .previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
+
+                                    <p class="text-muted" style="white-space: nowrap;">
+                                        Page <span data-target="commstat.currentPage" class="text-muted"
+                                                data-current-page="{{ .currentPage }}"> {{ .currentPage }}</span>
+                                        of <span data-target="commstat.totalPageCount"
+                                                class="text-muted">{{ .totalPages }}</span>
+                                    </p>
+                                    <a href="javascript:void(0)" data-target="commstat.nextPageButton"
+                                    data-action="click->commstat#loadNextPage"
+                                    class="ml-2 {{ if not .nextPage }}d-none{{ end }}"> Next&gt;</a>
+                                </div>
+                            </div>
+                        </div>
                         <table class="table mx-auto">
                             <thead>
                             <tr>
@@ -172,7 +176,7 @@
                 </div>
             </div>
 
-            <div data-target="commstat.chartWrapper" class="chart-wrapper pl-2 pr-2 mb-5">
+            <div data-target="commstat.chartWrapper" class="inner-content chart-wrapper pl-2 pr-2 mb-5">
                 <div id="chart" data-target="commstat.chartsView" style="width:100%; height:73vh; margin:0 auto;">
                 </div>
                 <div class="d-flex justify-content-center legend-wrapper">

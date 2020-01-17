@@ -8,8 +8,8 @@
         <div class="content">
             <div class="container-fluid">
                 <div class="control-wrapper">
-                    <div class="d-flex flex-row mb-3">
-                        <div class="chart-control ml-auto mr-3" data-target="vsp.viewOptionControl" data-initial-value="{{ .selectedViewOption }}">
+                    <div class="d-flex flex-row bottom-ctl">
+                        <div class="chart-control ml-auto mr-3 my-2" data-target="vsp.viewOptionControl" data-initial-value="{{ .selectedViewOption }}">
                             <ul class="nav nav-pills">
                                 <li class="nav-item">
                                     <a class="nav-link active" href="javascript:void(0);" data-target="vsp.viewOption"
@@ -21,7 +21,7 @@
                                 </li>
                             </ul>
                         </div>
-                        <div class="mr-auto d-flex ">
+                        <div class="mr-auto d-flex my-2">
                             <div class="control-div p-0 {{ if .chartView }}d-none{{ end }}" data-target="vsp.vspSelectorWrapper">
                                 <div class="control-label">VSP:</div>
                                 <select data-target="vsp.selectedFilter" data-action="change->vsp#selectedFilterChanged"
@@ -99,7 +99,16 @@
                                     </ul>
                                 </div>
                             </div>
+                        </div>
 
+                    </div>
+
+                </div>
+
+                <div class="inner-content {{ if .chartView }}d-none{{ end }}" data-target="vsp.vspTableWrapper">
+                    <div class="table-details">
+                        <h3>VSPs</h3>
+                        <div class="paginate">
                             <div data-target="vsp.numPageWrapper" class="control-div p-0 ml-1 {{ if .chartView }}d-none{{ end }}">
                                 <div class=" mb-2 float-md-right">
                                     <div class="control-label">Page Size:</div>
@@ -112,7 +121,7 @@
                                 </div>
                             </div>
 
-                            <div data-target="vsp.pageSizeWrapper" class="d-flex {{ if .chartView }}d-none{{ end }}">
+                            <div data-target="vsp.pageSizeWrapper" class="page-size d-flex {{ if .chartView }}d-none{{ end }}">
                                 <a href="javascript:void(0)" data-target="vsp.previousPageButton" data-action="click->vsp#loadPreviousPage" class="mr-2 {{ if lt .previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
 
                                 <p class="text-muted" style="white-space: nowrap;"> Page <span data-target="vsp.currentPage" class="text-muted" data-current-page="{{ .currentPage }}"> {{ .currentPage }}</span> of <span data-target="vsp.totalPageCount" class="text-muted">{{ .totalPages }}</span>
@@ -121,12 +130,7 @@
                                 <a href="javascript:void(0)"  data-target="vsp.nextPageButton"  data-action="click->vsp#loadNextPage" class="ml-2 {{ if not .nextPage }}d-none{{ end }}"> Next&gt;</a>
                             </div>
                         </div>
-
                     </div>
-
-                </div>
-
-                <div class="{{ if .chartView }}d-none{{ end }}" data-target="vsp.vspTableWrapper">
                     <table class="table mx-auto">
                         <thead>
                             <tr style="white-space: nowrap;">
@@ -178,7 +182,7 @@
                         </tr>
                     </template>
                 </div>
-                <div data-target="vsp.chartWrapper" class="chart-wrapper pl-2 pr-2 mb-5">
+                <div data-target="vsp.chartWrapper" class="inner-content chart-wrapper pl-2 pr-2 mb-5">
                     <div class="row">
                         <div class="col-xs-10 col-xs-offset-1 col-md-2 col-md-offset-0 side-vsp-panel">
                             <div class="p-0 d-none" data-target="vsp.chartSourceWrapper">

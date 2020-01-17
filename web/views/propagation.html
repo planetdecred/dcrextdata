@@ -10,9 +10,9 @@
 
             <div class="control-wrapper">
 
-                <div class="d-flex flex-row justify-content-center">
+                <div class="d-flex flex-row justify-content-center bottom-ctl">
 
-                    <div class="chart-control ml-auto mr-3" data-target="propagation.viewOptionControl"
+                    <div class="chart-control ml-auto mr-3 my-2" data-target="propagation.viewOptionControl"
                          data-initial-value="{{ .propagation.selectedViewOption }}">
                         <ul class="nav nav-pills">
                             <li class="nav-item">
@@ -36,7 +36,7 @@
                         </ul>
                     </div>
 
-                    <div class="d-flex chart-control-wrapper mr-auto p-0"
+                    <div class="d-flex chart-control-wrapper mr-auto p-0 my-2"
                          data-target="propagation.recordSetSelector">
                         <div class="chart-control propagation-control mx-auto">
                             <ul class="nav nav-pills {{ if eq .propagation.selectedViewOption "table"}} d-none {{ end }}"
@@ -97,45 +97,48 @@
                                 </li>
                             </ul>
                         </div>
-
-
-                    <div class="ml-3 mr-auto control-div p-0 {{ if .propagation.chartView }}d-none{{ end }}"
-                            data-target="propagation.numPageWrapper">
-                        <div class="control-label">Page Size:</div>
-                        <select data-target="propagation.selectedNum"
-                                data-action="change->propagation#numberOfRowsChanged" class="form-control"
-                                style="width: 70px;">
-                            {{$selectedNum := .propagation.selectedNum}}
-                            {{ range $index, $filter := .propagation.pageSizeSelector}}
-                                <option value="{{$index}}" {{ if eq $index $selectedNum}} selected {{ end }}>{{$filter}}</option>
-                            {{ end }}
-                        </select>
-                    </div>
-
-                    <div class="d-flex ml-3 mr-auto {{ if .propagation.chartView }}d-none{{ end }}"
-                         data-target="propagation.paginationButtonsWrapper">
-                        <a href="javascript:void(0)" data-target="propagation.previousPageButton"
-                           data-action="click->propagation#loadPreviousPage"
-                           class="mr-2 {{ if lt .propagation.previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
-
-                        <p class="text-muted" style="white-space: nowrap;"> Page <span
-                                    data-target="propagation.currentPage"
-                                    data-current-page="{{ .propagation.currentPage }}"
-                                    class="text-muted"> {{ .propagation.currentPage }}</span> of <span
-                                    data-target="propagation.totalPageCount"
-                                    class="text-muted">{{ .propagation.totalPages }}</span>
-                        </p>
-
-                        <a href="javascript:void(0)" data-target="propagation.nextPageButton"
-                           data-action="click->propagation#loadNextPage"
-                           class="ml-2 {{ if not .propagation.nextPage }}d-none{{ end }}"> Next&gt;</a>
-                    </div>
                     </div>
                 </div>
             </div>
 
 
-            <div class="{{ if not .propagation.nextPage }}d-none{{ end }}" data-target="propagation.tablesWrapper">
+            <div class="inner-content {{ if not .propagation.nextPage }}d-none{{ end }}" data-target="propagation.tablesWrapper">
+                <div class="table-details">
+                    <h3>Propagation</h3>
+                    <div class="paginate">
+                        <div class="ml-3 mr-auto control-div p-0 {{ if .propagation.chartView }}d-none{{ end }}"
+                            data-target="propagation.numPageWrapper">
+                            <div class="control-label">Page Size:</div>
+                            <select data-target="propagation.selectedNum"
+                                    data-action="change->propagation#numberOfRowsChanged" class="form-control"
+                                    style="width: 70px;">
+                                {{$selectedNum := .propagation.selectedNum}}
+                                {{ range $index, $filter := .propagation.pageSizeSelector}}
+                                    <option value="{{$index}}" {{ if eq $index $selectedNum}} selected {{ end }}>{{$filter}}</option>
+                                {{ end }}
+                            </select>
+                        </div>
+
+                        <div class="page-size d-flex ml-3 mr-auto {{ if .propagation.chartView }}d-none{{ end }}"
+                            data-target="propagation.paginationButtonsWrapper">
+                            <a href="javascript:void(0)" data-target="propagation.previousPageButton"
+                            data-action="click->propagation#loadPreviousPage"
+                            class="mr-2 {{ if lt .propagation.previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
+
+                            <p class="text-muted" style="white-space: nowrap;"> Page <span
+                                        data-target="propagation.currentPage"
+                                        data-current-page="{{ .propagation.currentPage }}"
+                                        class="text-muted"> {{ .propagation.currentPage }}</span> of <span
+                                        data-target="propagation.totalPageCount"
+                                        class="text-muted">{{ .propagation.totalPages }}</span>
+                            </p>
+
+                            <a href="javascript:void(0)" data-target="propagation.nextPageButton"
+                            data-action="click->propagation#loadNextPage"
+                            class="ml-2 {{ if not .propagation.nextPage }}d-none{{ end }}"> Next&gt;</a>
+                        </div>
+                    </div>
+                </div>
                 {{/*combine view*/}}
                 <table class="table collapsible mx-auto {{ if not .propagation.both }}d-none{{ end }}"
                        data-target="propagation.table">
@@ -247,7 +250,7 @@
                 </template>
             </div>
 
-            <div data-target="propagation.chartWrapper" class="chart-wrapper pl-2 pr-2 mb-5" style="width:100%;">
+            <div data-target="propagation.chartWrapper" class="inner-content chart-wrapper pl-2 pr-2 mb-5" style="width:100%;">
                 <div id="chart" data-target="propagation.chartsView"
                      style="width:100%; height:73vh; margin:0 auto;"></div>
                 <div class="d-flex justify-content-center legend-wrapper">

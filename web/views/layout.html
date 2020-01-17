@@ -10,6 +10,7 @@
     <title>dcrextdata</title>
 
     <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+    <link rel="shortcut icon" href="/static/images/logo.png" type="image/x-icon">
 
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/bootstrap.bundle.min.js"></script>
@@ -24,51 +25,37 @@
 <header data-controller="layout">
     <div id="menu">
         <div class="menu-bar">
-            <img src="/static/images/menu.png" />
-        </div>
-        <div class="menu-dropdown d-hide">
-            <ul>
-                <li id="nav-mempool">
-                    <a href="/mempool">Mempool</a>
-                </li>
-                <li id="nav-propagation">
-                    <a href="/propagation">Propagation</a id="nav-mempool">
-                </li>
-                <li id="nav-pow">
-                    <a href="/po-w">PoW</a id="nav-mempool">
-                </li>
-                <li id="nav-vsp">
-                    <a href="/vsp">VSPs</a id="nav-mempool">
-                </li>
-                <li id="nav-exchanges">
-                    <a href="/exchanges">Exchanges</a id="nav-mempool">
-                </li>
-                <li id="nav-community">
-                    <a href="/community">Community</a id="nav-mempool">
-                </li>
-            </ul>
+            <a href="/">
+                <img src="/static/images/logo.png" class="logo" />
+            </a>
         </div>
     </div>
-    <center>
-        <img src="/static/images/logo.png" class="logo" />
-    </center>
+    <nav id="header-nav">
+        <ul>
+            <li id="nav-mempool">
+                <a href="/mempool">Mempool</a>
+            </li>
+            <li id="nav-propagation">
+                <a href="/propagation">Propagation</a id="nav-mempool">
+            </li>
+            <li id="nav-pow">
+                <a href="/pow">PoW</a id="nav-mempool">
+            </li>
+            <li id="nav-vsp">
+                <a href="/vsp">VSPs</a id="nav-mempool">
+            </li>
+            <li id="nav-exchanges">
+                <a href="/exchanges">Exchanges</a id="nav-mempool">
+            </li>
+            <li id="nav-community">
+                <a href="/community">Community</a id="nav-mempool">
+            </li>
+        </ul>
+    </nav>
 </header>
 {{ end }}
 
 {{ define "footer" }}
-<footer>
-    <div class="footer">
-        <div class="footer-text">
-            <p>3h45mins since last block</p>
-        </div>
-        <div class="footer-text">
-            <p>dcrdata v5.2.1-pre+dev © 2019 The Decred developers (ISC)</p>
-        </div>
-        <div class="footer-text">
-            <p>Connected</p>
-        </div>
-    </div>
-</footer>
 <script>
     $(function () {
         var pathname = window.location.pathname;

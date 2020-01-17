@@ -127,28 +127,31 @@
                                 </div>
                             </div>
 
-                    <div data-target="exchange.numPageWrapper" class="control-div p-0 ml-2 {{ if .chartView }}d-none{{ end }}">
-                        <div class="control-label">Page Size:</div>
-                        <select data-target="exchange.selectedNum" data-action="change->exchange#numberOfRowsChanged" class="form-control" style="width: 70px;">
-                            {{$selectedNum := .selectedNum}}
-                            {{ range $index, $filter := .pageSizeSelector}}
-                            <option value="{{$index}}" {{ if eq $index $selectedNum}} selected {{ end }}>{{$filter}}</option>
-                            {{ end }}
-                        </select>
-                    </div>
-
-                    <div data-target="exchange.pageSizeWrapper" class="d-flex {{ if .chartView }}d-none{{ end }}">
-                        <a href="javascript:void(0)" data-target="exchange.previousPageButton" data-action="click->exchange#loadPreviousPage" class="mr-2 {{ if lt .previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
-
-                        <p class="text-muted" style="white-space: nowrap;"> Page <span data-target="exchange.currentPage" class="text-muted" data-current-page="{{ .currentPage }}"> {{ .currentPage }}</span> of <span data-target="exchange.totalPageCount" class="text-muted">{{ .totalPages }}</span>
-                        </p>
-
-                        <a href="javascript:void(0)"  data-target="exchange.nextPageButton"  data-action="click->exchange#loadNextPage" class="ml-2 {{ if not .nextPage }}d-none{{ end }}"> Next&gt;</a>
-                    </div>
-
                 </div>
             </div>
-            <div class="{{ if .chartView }}d-none{{ end }}" data-target="exchange.exchangeTableWrapper">
+            <div class="inner-content {{ if .chartView }}d-none{{ end }}" data-target="exchange.exchangeTableWrapper">
+                <div class="table-details">
+                    <h3>Exchanges</h3>
+                    <div class="paginate">
+                        <div data-target="exchange.numPageWrapper" class="control-div p-0 ml-2 {{ if .chartView }}d-none{{ end }}">
+                            <div class="control-label">Page Size:</div>
+                            <select data-target="exchange.selectedNum" data-action="change->exchange#numberOfRowsChanged" class="form-control" style="width: 70px;">
+                                {{$selectedNum := .selectedNum}}
+                                {{ range $index, $filter := .pageSizeSelector}}
+                                <option value="{{$index}}" {{ if eq $index $selectedNum}} selected {{ end }}>{{$filter}}</option>
+                                {{ end }}
+                            </select>
+                        </div>
+                        <div data-target="exchange.pageSizeWrapper" class="page-size d-flex {{ if .chartView }}d-none{{ end }}">
+                            <a href="javascript:void(0)" data-target="exchange.previousPageButton" data-action="click->exchange#loadPreviousPage" class="mr-2 {{ if lt .previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
+
+                            <p class="text-muted" style="white-space: nowrap;"> Page <span data-target="exchange.currentPage" class="text-muted" data-current-page="{{ .currentPage }}"> {{ .currentPage }}</span> of <span data-target="exchange.totalPageCount" class="text-muted">{{ .totalPages }}</span>
+                            </p>
+
+                            <a href="javascript:void(0)"  data-target="exchange.nextPageButton"  data-action="click->exchange#loadNextPage" class="ml-2 {{ if not .nextPage }}d-none{{ end }}"> Next&gt;</a>
+                        </div>
+                    </div>
+                </div>
                 <table class="table mx-auto">
                     <thead>
                         <tr style="white-space: nowrap;">
@@ -194,7 +197,7 @@
                     </tr>
                 </template>
             </div>
-            <div data-target="exchange.chartWrapper" class="chart-wrapper pl-2 pr-2 mb-5">
+            <div data-target="exchange.chartWrapper" class="inner-content chart-wrapper pl-2 pr-2 mb-5">
                 <div id="chart" data-target="exchange.chartsView" style="width:100%; height:73vh; margin:0 auto;">
                 </div>
                 <div class="d-flex justify-content-center legend-wrapper">
