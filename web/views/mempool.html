@@ -109,83 +109,81 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div>
-                    <div class="inner-content d-hide" data-target="mempool.tableWrapper">
-                        <div class="table-details">
-                            <h3>Mempool</h3>
-                            <div class="pagination">
-                                <div data-target="mempool.numPageWrapper"
-                                    class="control-div p-0 {{ if .mempool.chartView }}d-none{{ end }}">
-                                    <div class="control-label">Page Size:</div>
-                                    <select data-target="mempool.selectedNumberOfRows"
-                                            data-action="change->mempool#numberOfRowsChanged" class="form-control"
-                                            style="width: 70px;">
-                                        {{$selectedNumberOfRows := .mempool.selectedNumberOfRows}}
-                                        {{ range $index, $filter := .mempool.pageSizeSelector}}
-                                            <option value="{{$index}}" {{ if eq $index $selectedNumberOfRows}} selected {{ end }}>{{$filter}}</option>
-                                        {{ end }}
-                                    </select>
-                                </div>
-                                <div data-target="mempool.btnWrapper" class="page-size d-flex {{ if .mempool.chartView }}d-none{{ end }}">
-                                    <a href="javascript:void(0)" data-target="mempool.previousPageButton"
-                                    data-action="click->mempool#loadPreviousPage"
-                                    class="mr-2 {{ if lt .mempool.previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
-
-                                    <p class="text-muted" style="white-space: nowrap;"> Page <span
-                                                data-target="mempool.currentPage" class="text-muted"
-                                                data-current-page="{{ .mempool.currentPage }}"> {{ .mempool.currentPage }}</span>
-                                        of <span data-target="mempool.totalPageCount"
-                                                class="text-muted">{{ .mempool.totalPages }}</span>
-                                    </p>
-                                    <a href="javascript:void(0)" data-target="mempool.nextPageButton"
-                                    data-action="click->mempool#loadNextPage"
-                                    class="ml-2 {{ if not .mempool.nextPage }}d-none{{ end }}"> Next&gt;</a>
-                                </div>
-                            </div>
+            <div class="inner-content d-hide" data-target="mempool.tableWrapper">
+                <div class="table-details">
+                    <h3>Mempool</h3>
+                    <div class="pagination">
+                        <div data-target="mempool.numPageWrapper"
+                            class="control-div p-0 {{ if .mempool.chartView }}d-none{{ end }}">
+                            <div class="control-label">Page Size:</div>
+                            <select data-target="mempool.selectedNumberOfRows"
+                                    data-action="change->mempool#numberOfRowsChanged" class="form-control"
+                                    style="width: 70px;">
+                                {{$selectedNumberOfRows := .mempool.selectedNumberOfRows}}
+                                {{ range $index, $filter := .mempool.pageSizeSelector}}
+                                    <option value="{{$index}}" {{ if eq $index $selectedNumberOfRows}} selected {{ end }}>{{$filter}}</option>
+                                {{ end }}
+                            </select>
                         </div>
-                        <table class="table mx-auto">
-                            <thead>
-                            <tr>
-                                <th>Date (UTC)</th>
-                                <th># of Txs</th>
-                                <th>Size (B)</th>
-                                <th>Total Fees</th>
-                            </tr>
-                            </thead>
-                            <tbody data-target="mempool.tableBody">
-                            {{range $index, $mempool := .mempool.mempoolData}}
-                                <tr>
-                                    <td>{{$mempool.Time}}</td>
-                                    <td>{{$mempool.NumberOfTransactions}}</td>
-                                    <td>{{$mempool.Size}}</td>
-                                    <td>{{normalizeBalance $mempool.TotalFee}}</td>
-                                </tr>
-                            {{end}}
-                            </tbody>
-                        </table>
+                        <div data-target="mempool.btnWrapper" class="page-size d-flex {{ if .mempool.chartView }}d-none{{ end }}">
+                            <a href="javascript:void(0)" data-target="mempool.previousPageButton"
+                            data-action="click->mempool#loadPreviousPage"
+                            class="mr-2 {{ if lt .mempool.previousPage 1 }}d-none{{ end }}">&lt;Previous </a>
 
-                        <template data-target="mempool.rowTemplate">
-                            <tr>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                        </template>
-                    </div>
-                    <div data-target="mempool.chartWrapper" class="inner-content chart-wrapper pl-2 pr-2 mb-5">
-                        <div id="chart" data-target="mempool.chartsView"
-                             style="width:100%; height:73vh; margin:0 auto;"></div>
-                        <div class="d-flex justify-content-center legend-wrapper">
-                            <div class="legend d-flex" data-target="mempool.labels"></div>
+                            <p class="text-muted" style="white-space: nowrap;"> Page <span
+                                        data-target="mempool.currentPage" class="text-muted"
+                                        data-current-page="{{ .mempool.currentPage }}"> {{ .mempool.currentPage }}</span>
+                                of <span data-target="mempool.totalPageCount"
+                                        class="text-muted">{{ .mempool.totalPages }}</span>
+                            </p>
+                            <a href="javascript:void(0)" data-target="mempool.nextPageButton"
+                            data-action="click->mempool#loadNextPage"
+                            class="ml-2 {{ if not .mempool.nextPage }}d-none{{ end }}"> Next&gt;</a>
                         </div>
-                    </div>
-                    <div class="p-5 text-center d-hide loading" data-target="mempool.loadingData">
-                        <div class="loading-icon"></div>
-                        <div class="loading-text">loading data...</div>
                     </div>
                 </div>
+                <table class="table mx-auto">
+                    <thead>
+                    <tr>
+                        <th>Date (UTC)</th>
+                        <th># of Txs</th>
+                        <th>Size (B)</th>
+                        <th>Total Fees</th>
+                    </tr>
+                    </thead>
+                    <tbody data-target="mempool.tableBody">
+                    {{range $index, $mempool := .mempool.mempoolData}}
+                        <tr>
+                            <td>{{$mempool.Time}}</td>
+                            <td>{{$mempool.NumberOfTransactions}}</td>
+                            <td>{{$mempool.Size}}</td>
+                            <td>{{normalizeBalance $mempool.TotalFee}}</td>
+                        </tr>
+                    {{end}}
+                    </tbody>
+                </table>
+
+                <template data-target="mempool.rowTemplate">
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </template>
+            </div>
+            <div data-target="mempool.chartWrapper" class="inner-content chart-wrapper pl-2 pr-2 mb-5">
+                <div id="chart" data-target="mempool.chartsView"
+                        style="width:100%; height:73vh; margin:0 auto;"></div>
+                <div class="d-flex justify-content-center legend-wrapper">
+                    <div class="legend d-flex" data-target="mempool.labels"></div>
+                </div>
+            </div>
+            <div class="p-5 text-center d-hide loading" data-target="mempool.loadingData">
+                <div class="loading-icon"></div>
+                <div class="loading-text">loading data...</div>
             </div>
             <div data-target="mempool.messageView" class="d-hide mx-auto">
             </div>
