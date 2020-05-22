@@ -113,7 +113,7 @@ func creep(netParams *chaincfg.Params) {
 					amgr.notifyFailedAttempt(addr.IP)
 					return
 				}
-				latency := time.Since(t).Milliseconds()
+				latency := time.Since(t).Seconds() * 1000
 				p.AssociateConnection(conn)
 
 				// Wait for the verack message or timeout in case of
@@ -129,7 +129,7 @@ func creep(netParams *chaincfg.Params) {
 						LastAttempt:     time.Now().UTC(),
 						LastSuccess:     time.Now().UTC(),
 						LastSeen:        time.Now().UTC(),
-						Latency:         latency,
+						Latency:         int64(latency),
 						ConnectionTime:  p.TimeConnected().Unix(),
 						ProtocolVersion: p.ProtocolVersion(),
 						UserAgent:       p.UserAgent(),
