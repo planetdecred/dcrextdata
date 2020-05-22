@@ -84,7 +84,9 @@ export default class extends Controller {
     trimUrl(['view-option', 'chart-type'])
     // reset this table properties as they are removed from the url
     this.currentPage = 1
-    this.selectedNumberOfRowsberOfRows = this.selectedNumberOfRowsTarget.value = 20
+    if (this.hasselectedNumberOfRowsTarget) {
+      this.selectedNumberOfRowsberOfRows = this.selectedNumberOfRowsTarget.value = 20
+    }
   }
 
   setBothRecordSet () {
