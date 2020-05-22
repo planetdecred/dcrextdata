@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+{{ template "html-head" }}
+
+<body>
+    <div class="body">
+        {{ template "header" }}
+        <main id="status-page">
+            <div class="main-container status-table">
+                <table>
+                    <tbody>
+                        <tr>
+                            <td style="border-top: 0;">Mempool Ticks recorded</td>
+                            <td style="border-top: 0;">{{ humanizeInt .mempoolCount}}</td>
+                        </tr>
+                        <tr>
+                            <td>Blocks recorded</td>
+                            <td>{{ humanizeInt .blocksCount}}</td>
+                        </tr>
+                        <tr>
+                            <td>Votes recorded</td>
+                            <td>{{ humanizeInt .votesCount}}</td>
+                        </tr>
+                        <tr>
+                            <td>PoW Ticks recorded</td>
+                            <td>{{ humanizeInt .powCount}}</td>
+                        </tr>
+                        <tr>
+                            <td>VSP Ticks recorded</td>
+                            <td>{{ humanizeInt .vspCount}}</td>
+                        </tr>
+                        <tr>
+                            <td>Exchange Ticks recorded</td>
+                            <td>{{ humanizeInt .exchangeTick}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+    {{template "footer"}}
+</body>
+</html>

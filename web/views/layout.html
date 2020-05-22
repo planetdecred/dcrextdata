@@ -14,7 +14,7 @@
 
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/bootstrap.bundle.min.js"></script>
-    <script src="/static/js/vendors~app.bundle.js"></script>
+    <script src="/static/js/vendors~app.bundle.js?v={{ .timestamp }}"></script>
     <script src="/static/js/app.bundle.js?v={{ .timestamp }}"></script>
 
     <script src="/static/js/turbolinks.min.js"></script>
@@ -38,25 +38,28 @@
     <nav id="header-nav" class="mobile-show">
         <ul>
             <li id="nav-nodes">
-                <a href="/nodes">Nodes</a id="nav-mempool">
+                <a href="/nodes">Nodes</a>
             </li>
             <li id="nav-mempool">
                 <a href="/mempool">Mempool</a>
             </li>
             <li id="nav-propagation">
-                <a href="/propagation">Propagation</a id="nav-mempool">
+                <a href="/propagation">Propagation</a>
             </li>
             <li id="nav-pow">
-                <a href="/pow">PoW</a id="nav-mempool">
+                <a href="/pow">PoW</a>
             </li>
             <li id="nav-vsp">
-                <a href="/vsp">VSPs</a id="nav-mempool">
+                <a href="/vsp">VSPs</a>
             </li>
             <li id="nav-exchanges">
-                <a href="/exchanges">Exchanges</a id="nav-mempool">
+                <a href="/exchanges">Exchanges</a>
             </li>
             <li id="nav-community">
-                <a href="/community">Community</a id="nav-mempool">
+                <a href="/community">Community</a>
+            </li>
+            <li id="nav-stats">
+                <a href="/stats">Stats</a>
             </li>
         </ul>
     </nav>
@@ -78,7 +81,6 @@
         $(".nav-control").click(function() {
             $("#header-nav").toggleClass("mobile-show");
         });
-        $
     });
 </script>
 {{ end }}

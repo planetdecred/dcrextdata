@@ -1796,6 +1796,55 @@ func (s *Server) snapshotsChart(w http.ResponseWriter, r *http.Request) {
 	s.renderJSON(result, w)
 }
 
+func (s *Server) statsPage(res http.ResponseWriter, req *http.Request) {
+	mempoolCount, err := s.db.MempoolCount(req.Context())
+	if err != nil {
+		s.renderError(fmt.Sprintf("Cannot get mempools count, %s", err.Error()), res)
+		return
+	}
+
+	blocksCount, err := s.db.BlockCount(req.Context())
+	if err != nil {
+		s.renderError(fmt.Sprintf("Cannot get blocks count, %s", err.Error()), res)
+		return
+	}
+
+	votesCount, err := s.db.VotesCount(req.Context())
+	if err != nil {
+		s.renderError(fmt.Sprintf("Cannot get votes count, %s", err.Error()), res)
+		return
+	}
+
+	powCount, err := s.db.PowCount(req.Context())
+	if err != nil {
+		s.renderError(fmt.Sprintf("Cannot get PoW count, %s", err.Error()), res)
+		return
+	}
+
+	vspCount, err := s.db.VspTickCount(req.Context())
+	if err != nil {
+		s.renderError(fmt.Sprintf("Cannot get VSP count, %s", err.Error()), res)
+		return
+	}
+
+	exchangeCount, err := s.db.ExchangeTickCount(req.Context())
+	if err != nil {
+		s.renderError(fmt.Sprintf("Cannot get Exchange count, %s", err.Error()), res)
+		return
+	}
+
+	data := map[string]interface{}{
+		"mempoolCount": mempoolCount,
+		"blocksCount":  blocksCount,
+		"votesCount":   votesCount,
+		"powCount":     powCount,
+		"vspCount":     vspCount,
+		"exchangeTick": exchangeCount,
+	}
+
+	s.render("stats.html", data, res)
+}
+
 // /nodes/view/{ip}
 func (s *Server) nodeInfo(w http.ResponseWriter, r *http.Request) {
 	address := getNodeIPFromCtx(r)

@@ -6,33 +6,37 @@
     <div class="body">
         {{ template "header" }}
         <main>
-            <div class="container">
-                <div class="cards">
-                    <div class="info-card">
-                        <h2>{{ humanizeInt .mempoolCount}}</h2>
-                        <p>Mempool Data Collected</p>
+            <div class="main-container container-items">
+                <div class="items">
+                    <div class="item-info">
+                        <p>
+                            <a href="/mempool" class="header">Mempool -</a> Historical data on decred full node mempool size.
+                        </p>
                     </div>
-                    <div class="info-card">
-                        <h2>{{ humanizeInt .blocksCount}}</h2>
-                        <p>Blocks Recorded</p>
+                    <div class="item-info">
+                        <p>
+                            <a href="/propagation" class="header">Propagation -</a> Comparisons of block and vote propagation times on the network.
+                        </p>
                     </div>
-                    <div class="info-card">
-                        <h2>{{ humanizeInt .votesCount}}</h2>
-                        <p>Votes Recorded</p>
+                    <div class="item-info">
+                        <p>
+                            <a href="/pow" class="header">PoW -</a> Proof of Work mining pool data.
+                        </p>
                     </div>
-                </div>
-                <div class="cards">
-                    <div class="info-card">
-                        <h2>{{ humanizeInt .powCount}}</h2>
-                        <p>PoW Recorded</p>
+                    <div class="item-info">
+                        <p>
+                            <a href="/vsp" class="header">VSPs -</a> Voting Service Provider data.
+                        </p>
                     </div>
-                    <div class="info-card">
-                        <h2>{{ humanizeInt .vspCount}}</h2>
-                        <p>VSP Ticks Recorded</p>
+                    <div class="item-info">
+                        <p>
+                            <a href="/exchanges" class="header">Exchanges -</a> Historical exchange rate information.
+                        </p>
                     </div>
-                    <div class="info-card">
-                        <h2>{{ humanizeInt .exchangeTick}}</h2>
-                        <p>Exchange Ticks Recorded</p>
+                    <div class="item-info">
+                        <p>
+                            <a href="/community" class="header">Community -</a> Historical data points for twitter, reddit, github, etc.
+                        </p>
                     </div>
                 </div>
             </div>

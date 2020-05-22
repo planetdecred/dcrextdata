@@ -51,18 +51,18 @@ header {
 
   #header-nav {
     position: absolute;
-    right: 80px;
+    right: 100px;
     top: 13px;
 
     li {
       display: inline;
       padding-right: 30px;
-      color: #aaa;
+      color: #777;
       font-size: 15px;
       transition: 0.3s all;
 
       a {
-        color: #aaa;
+        color: #777;
         transition: 0.3s all;
 
         &:hover {
@@ -91,7 +91,7 @@ header {
   #menu {
     .menu-bar {
       position: absolute;
-      margin-left: 80px;
+      margin-left: 100px;
       margin-top: 10px;
       cursor: pointer;
 
@@ -157,12 +157,44 @@ header {
 }
 
 main {
-  background-color: #f2f2f2;
+  background-color: #f5f5f5;
 
   .container {
     width: 100%;
     padding: 80px;
     padding-top: 100px;
+  }
+
+  .main-container {
+    padding: 100px;
+  }
+
+  .container-items {
+    display: flex;
+    justify-content: center;
+  }
+
+  .items {
+    padding-top: 10px;
+  }
+}
+
+.item-info {
+  margin-bottom: 25px;
+
+  h2 {
+    color: #007bff;
+    font-weight: bold;
+  }
+
+  p {
+    font-size: 1.2em;
+    color: #777;
+
+    .header {
+      color: #007bff;
+      font-weight: bold;
+    }
   }
 }
 
@@ -1133,6 +1165,15 @@ table.collapsible tbody.clickable:hover {
   box-shadow: none;
 }
 
+.status-table {
+  display: flex;
+  justify-content: center;
+
+  table {
+    width: 50%;
+  }
+}
+
 @media screen and (min-width: 768px) {
   .side-vsp-panel {
     .form-check-inline {
@@ -1153,6 +1194,11 @@ table.collapsible tbody.clickable:hover {
     .container {
       padding: 30px;
       padding-top: 70px;
+    }
+
+    .main-container {
+      padding: 30px;
+      padding-top: 80px;
     }
 
     .cards {

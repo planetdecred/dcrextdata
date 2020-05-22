@@ -175,6 +175,7 @@ func (s *Server) registerHandlers(r *chi.Mux) {
 	r.Get("/blockdata", s.getBlockData)
 	r.Get("/getvotes", s.getVotes)
 	r.Get("/votesdata", s.getVoteData)
+	r.Get("/stats", s.statsPage)
 
 	r.Get("/community", s.community)
 	r.Get("/getCommunityStat", s.getCommunityStat)
