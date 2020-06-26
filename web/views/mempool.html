@@ -54,6 +54,16 @@
                             </div>
                         </div>
 
+                        <div data-target="mempool.graphIntervalWrapper" class="control-div p-0 chart-control-wrapper mr-2 mb-1">
+                            <div class="control-label">Interval:</div>
+                            <select data-target="mempool.interval" data-action="change->mempool#setInterval"
+                                class="form-control" style="width: 80px;">
+                                <option value="default">Default</option>
+                                <option value="hour">Hour</option>
+                                <option value="day">Day</option>
+                            </select>
+                        </div>
+
                         <div class="chart-control-wrapper mr-2 mb-1" data-target="mempool.zoomSelector">
                             <div class="chart-control">
                                 <ul

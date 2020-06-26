@@ -1087,7 +1087,7 @@ func (charts *ChartData) trim(sets ...Lengther) []Lengther {
 	return sets
 }
 
-func mempool(ctx context.Context, charts *ChartData, axis axisType, _ ...string) ([]byte, error) {
+func mempool(ctx context.Context, charts *ChartData, axis axisType, extras ...string) ([]byte, error) {
 	switch axis {
 	case MempoolSize:
 		return mempoolSize(charts)

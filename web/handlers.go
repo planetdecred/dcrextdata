@@ -1769,7 +1769,7 @@ func (s *Server) chartTypeData(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	chartType := getChartTypeCtx(r)
 	axis := getChartAxisTypeCtx(r)
-	extras := r.URL.Query().Get("sources")
+	extras := r.URL.Query().Get("extras")
 
 	// the extra data passed for exchange chart is the exchange set key
 	if chartType == cache.Exchange {
@@ -1785,6 +1785,7 @@ func (s *Server) chartTypeData(w http.ResponseWriter, r *http.Request) {
 
 		extras = cache.BuildExchangeKey(selectedExchange, selectedCurrencyPair, interval)
 	}
+
 	chartData, err := s.charts.Chart(r.Context(), chartType, axis, strings.Split(extras, "|")...)
 	if err != nil {
 		s.renderErrorJSON(err.Error(), w)

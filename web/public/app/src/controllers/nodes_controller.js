@@ -404,7 +404,7 @@ export default class extends Controller {
     })
     let q = ''
     if (this.selectedSources.length > 0) {
-      q = `sources=${this.selectedSources.join('|')}`
+      q = `extras=${this.selectedSources.join('|')}`
     }
     switch (this.dataType) {
       case dataTypeVersion:

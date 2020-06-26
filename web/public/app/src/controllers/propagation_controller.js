@@ -421,9 +421,9 @@ export default class extends Controller {
     showLoading(this.loadingDataTarget, elementsToToggle)
 
     const _this = this
-    axios.get(`/api/charts/propagation/${this.chartType}?sources=${this.syncSources.join('|')}`).then(function (response) {
+    axios.get(`/api/charts/propagation/${this.chartType}?extras=${this.syncSources.join('|')}`).then(function (response) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
-      if (response.data.x === null || response.data.x.length === 0) {
+      if (!response.data.x || response.data.x.length === 0) {
         _this.messageViewTarget.innerHTML = `<p class="text-danger" style="text-align: center;">
             No propagation data found, please add one sync source to the configuration and try again</p>`
         show(_this.messageViewTarget)

@@ -242,7 +242,7 @@ export default class extends Controller {
 
     const _this = this
 
-    axios.get(`/api/charts/pow/${this.dataType}?sources=${this.selectedPools.join('|')}`).then(function (response) {
+    axios.get(`/api/charts/pow/${this.dataType}?extras=${this.selectedPools.join('|')}`).then(function (response) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       let result = response.data
       if (result.error) {
