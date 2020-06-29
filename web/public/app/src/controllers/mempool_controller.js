@@ -79,7 +79,6 @@ export default class extends Controller {
     setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
     setActiveOptionBtn(this.dataType, this.chartDataTypeTargets)
     show(this.chartDataTypeSelectorTarget)
-    show(this.zoomSelectorTarget)
     hide(this.numPageWrapperTarget)
     show(this.chartWrapperTarget)
     show(this.graphIntervalWrapperTarget)
@@ -125,7 +124,7 @@ export default class extends Controller {
       this.selectedNumberOfRowsberOfRows = this.selectedNumberOfRowsTarget.value
       url = `/getmempool?page=${this.nextPage}&records-per-page=${this.selectedNumberOfRowsberOfRows}&view-option=${this.selectedViewOption}`
     } else {
-      url = `/api/charts/mempool/${this.dataType}?extras=${this.intervalTarget.value}`
+      url = `/api/charts/mempool/${this.dataType}?extras=${this.selectedInterval()}`
     }
 
     const _this = this
@@ -208,9 +207,12 @@ export default class extends Controller {
     this.validateZoom()
   }
 
-  setInterval () {
+  selectedInterval () { return selectedOption(this.intervalTargets) }
+
+  setInterval (e) {
+    const option = e.currentTarget.dataset.option
+    setActiveOptionBtn(option, this.intervalTargets)
     this.fetchData(this.selectedViewOption)
-    insertOrUpdateQueryParam('interval', this.intervalTarget.value, 'default')
   }
 
   async validateZoom () {
@@ -317,6 +319,7 @@ export default class extends Controller {
 
       _this.validateZoom()
       updateZoomSelector(_this.zoomOptionTargets, minDate, maxDate)
+      show(this.zoomSelectorTarget)
     }
   }
 

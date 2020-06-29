@@ -11,25 +11,29 @@
             <div class="control-wrapper">
 
                 <div class="d-flex flex-row bottom-ctl">
-
-                    <div class="chart-control ml-auto mr-3 my-2" data-target="mempool.viewOptionControl"
-                         data-initial-value="{{ .mempool.selectedViewOption }}">
-                        <ul class="nav nav-pills">
-                            <li class="nav-item">
-                                <a class="nav-link active" href="javascript:void(0);" data-target="mempool.viewOption"
-                                   data-action="click->mempool#setChart" data-option="chart">Chart</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="javascript:void(0);"
-                                   data-target="mempool.viewOption" data-action="click->mempool#setTable"
-                                   data-option="table">Table</a>
-                            </li>
-                        </ul>
+                    <div class="chart-control-wrapper ml-auto mr-3 my-2">
+                        <div class="chart-control-label">View</div>
+                        <div class="chart-control" data-target="mempool.viewOptionControl"
+                            data-initial-value="{{ .mempool.selectedViewOption }}">
+                            <ul class="nav nav-pills">
+                                <li class="nav-item">
+                                    <a class="nav-link active" href="javascript:void(0);" data-target="mempool.viewOption"
+                                    data-action="click->mempool#setChart" data-option="chart">Chart</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="javascript:void(0);"
+                                    data-target="mempool.viewOption" data-action="click->mempool#setTable"
+                                    data-option="table">Table</a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
+                    
 
                     <div class="d-flex mr-auto my-2">
                         <div class="chart-control-wrapper control-div p-0 d-none"
                              data-target="mempool.chartDataTypeSelector">
+                             <div class="chart-control-label">Data Type</div>
                             <div class="chart-control mempool-control mx-auto">
                                 <ul class="nav nav-pills">
                                     <li class="nav-item">
@@ -55,20 +59,32 @@
                         </div>
 
                         <div data-target="mempool.graphIntervalWrapper" class="control-div p-0 chart-control-wrapper mr-2 mb-1">
-                            <div class="control-label">Interval:</div>
-                            <select data-target="mempool.interval" data-action="change->mempool#setInterval"
-                                class="form-control" style="width: 80px;">
-                                <option value="default">Default</option>
-                                <option value="hour">Hour</option>
-                                <option value="day">Day</option>
-                            </select>
+                            <div class="chart-control-label">Group By</div>
+                            <div class="chart-control">
+                                <ul class="nav nav-pills">
+                                    <li class="nav-item">
+                                        <a data-target="mempool.interval"
+                                           data-action="click->mempool#setInterval" class="nav-link active"
+                                           href="javascript:void(0);" data-option="day">Day</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a data-target="mempool.interval"
+                                           data-action="click->mempool#setInterval" class="nav-link"
+                                           href="javascript:void(0);" data-option="hour">Hour</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a data-target="mempool.interval"
+                                           data-action="click->mempool#setInterval" class="nav-link"
+                                           href="javascript:void(0);" data-option="default">None</a>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
 
-                        <div class="chart-control-wrapper mr-2 mb-1" data-target="mempool.zoomSelector">
+                        <div class="chart-control-wrapper mr-2 mb-1 d-none" data-target="mempool.zoomSelector">
+                            <div class="chart-control-label">Zoom</div>
                             <div class="chart-control">
-                                <ul
-                                        class="nav nav-pills"
-                                >
+                                <ul class="nav nav-pills">
                                     <li class="nav-item">
                                         <a
                                                 class="nav-link active d-none"

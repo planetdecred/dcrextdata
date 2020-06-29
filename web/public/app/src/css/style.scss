@@ -718,8 +718,9 @@ table {
 }
 
 .chart-control {
+  padding: 2px;
+  background: #fff;
   width: max-content;
-  border-radius: 3px;
   white-space: nowrap;
 }
 
@@ -746,6 +747,21 @@ select.form-control:not([size]):not([multiple]) {
 
 .form-control * {
   font-size: 0.8rem;
+}
+
+/* chart theme */
+.chart-control-wrapper {
+  border: 1px solid #e6eaed;
+  border-left: 1px solid #e6eaed;
+  font-size: 0.9rem;
+}
+
+.chart-control-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #8997a5;
+  text-align: center;
+  border-bottom: 1px solid #e6eaed;
 }
 
 .chart-form-control {
