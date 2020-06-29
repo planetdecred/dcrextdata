@@ -813,26 +813,6 @@ func (charts *ChartData) TriggerUpdate(ctx context.Context, tag string) error {
 	return nil
 }
 
-// StateID returns a unique (enough) ID associated with the state of the chart
-// data in a thread-safe way.
-func (charts *ChartData) StateID() uint64 {
-	charts.mtx.RLock()
-	defer charts.mtx.RUnlock()
-	return charts.stateID()
-}
-
-// stateID returns a unique (enough) ID associated with the state of the chart
-// data.
-func (charts *ChartData) stateID() uint64 {
-	return charts.MempoolTimeTip()
-}
-
-// ValidState checks whether the provided chartID is still valid. ValidState
-// should be used under at least a (*ChartData).RLock.
-func (charts *ChartData) validState(stateID uint64) bool {
-	return charts.stateID() == stateID
-}
-
 // AddRetriever adds a Retriever to the Retrievers slice.
 func (charts *ChartData) AddRetriever(chartID string, retriever Retriver) {
 	charts.retrivers[chartID] = retriever
@@ -876,7 +856,7 @@ func (charts *ChartData) Update(ctx context.Context, tags ...string) error {
 				err = fmt.Errorf("error encountered during charts %s update. aborting update: %v", updater.Tag, err)
 			} else {
 				charts.mtx.Lock()
-				if !charts.validState(stateID) {
+				if stateID != charts.cacheID(updater.Tag) {
 					err = fmt.Errorf("state change detected during charts %s update. aborting update", updater.Tag)
 				} else {
 					err = updater.Appender(charts, rows)

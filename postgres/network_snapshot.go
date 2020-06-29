@@ -703,7 +703,9 @@ func (pg PgDb) LastSnapshot(ctx context.Context) (*netsnapshot.SnapShot, error) 
 }
 
 func (pg PgDb) AllNodeVersions(ctx context.Context) (versions []string, err error) {
-	nodes, err := models.Nodes(qm.Select("distinct user_agent"), qm.OrderBy(models.NodeColumns.UserAgent)).All(ctx, pg.db)
+	nodes, err := models.Nodes(qm.Select("distinct user_agent"), qm.OrderBy(
+		fmt.Sprintf("%s desc", models.NodeColumns.UserAgent),
+	)).All(ctx, pg.db)
 	for _, node := range nodes {
 		versions = append(versions, node.UserAgent)
 	}
@@ -961,14 +963,14 @@ func (pg *PgDb) fetchEncodeSnapshotNodesChart(ctx context.Context, charts *cache
 	return charts.Encode(nil, time, nodes, reachableNodes)
 }
 
-func (pg *PgDb) fetchEncodeSnapshotNodeVersionsChart(ctx context.Context, charts *cache.ChartData, extras ...string) ([]byte, error) {
+func (pg *PgDb) fetchEncodeSnapshotNodeVersionsChart(ctx context.Context, charts *cache.ChartData, userAgentsArg ...string) ([]byte, error) {
 	datesMap := map[int64]struct{}{}
 	allDates := cache.ChartUints{}
 	var userAgentMap = map[string]struct{}{}
 	var allUserAgents []string
 	var dateUserAgentCount = make(map[uint64]map[string]int64)
 
-	userAgents, err := pg.peerCountByUserAgentsByTime(ctx, 0, 0, extras...)
+	userAgents, err := pg.peerCountByUserAgentsByTime(ctx, 0, 0, userAgentsArg...)
 	if err != nil {
 		return nil, err
 	}
@@ -990,9 +992,13 @@ func (pg *PgDb) fetchEncodeSnapshotNodeVersionsChart(ctx context.Context, charts
 		dateUserAgentCount[uint64(item.Timestamp)][item.UserAgent] = item.Nodes
 	}
 
+	if len(userAgentsArg) == 0 {
+		userAgentsArg = allUserAgents
+	}
+
 	versions := map[string]cache.ChartUints{}
 	for _, d := range allDates {
-		for _, c := range allUserAgents {
+		for _, c := range userAgentsArg {
 			rec := dateUserAgentCount[d][c]
 			if record, found := versions[c]; found {
 				versions[c] = append(record, uint64(rec))
@@ -1009,14 +1015,14 @@ func (pg *PgDb) fetchEncodeSnapshotNodeVersionsChart(ctx context.Context, charts
 	return charts.Encode(nil, recs...)
 }
 
-func (pg *PgDb) fetchEncodeSnapshotLocationsChart(ctx context.Context, charts *cache.ChartData, extras ...string) ([]byte, error) {
+func (pg *PgDb) fetchEncodeSnapshotLocationsChart(ctx context.Context, charts *cache.ChartData, countriesArg ...string) ([]byte, error) {
 	var datesMap = map[int64]struct{}{}
 	var allDates cache.ChartUints
 	var countryMap = map[string]struct{}{}
 	var allCountries []string
 	var dateCountryCount = make(map[uint64]map[string]int64)
 
-	locations, err := pg.peerCountByCountriesByTime(ctx, 0, 0, extras...)
+	locations, err := pg.peerCountByCountriesByTime(ctx, 0, 0, countriesArg...)
 	if err != nil {
 		return nil, err
 	}
@@ -1038,9 +1044,13 @@ func (pg *PgDb) fetchEncodeSnapshotLocationsChart(ctx context.Context, charts *c
 		dateCountryCount[uint64(item.Timestamp)][item.Country] = item.Nodes
 	}
 
+	if len(countriesArg) == 0 {
+		countriesArg = allCountries
+	}
+
 	var locationSet = map[string]cache.ChartUints{}
 	for _, d := range allDates {
-		for _, c := range allCountries {
+		for _, c := range countriesArg {
 			rec := dateCountryCount[d][c]
 			if record, found := locationSet[c]; found {
 				locationSet[c] = append(record, uint64(rec))
