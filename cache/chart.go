@@ -1101,7 +1101,6 @@ func (charts *ChartData) encodeArr(keys []string, sets []Lengther) ([]byte, erro
 		}
 		sets[i] = sets[i].Truncate(smaller)
 	}
-	sets = charts.trim(sets...)
 	response := make(chartResponse)
 	for i := range sets {
 		rk := keys[i%len(keys)]
@@ -1287,6 +1286,7 @@ func MakePowChart(charts *ChartData, dates ChartUints, deviations []ChartNullUin
 	for _, d := range deviations {
 		recs = append(recs, d)
 	}
+	recs = charts.trim(recs...)
 	return charts.Encode(nil, recs...)
 }
 
@@ -1335,6 +1335,8 @@ func MakeVspChart(charts *ChartData, dates ChartUints, deviations []ChartNullDat
 	for _, d := range deviations {
 		recs = append(recs, d)
 	}
+
+	recs = charts.trim(recs...)
 	return charts.Encode(nil, recs...)
 }
 
