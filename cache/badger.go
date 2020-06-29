@@ -141,15 +141,13 @@ func (charts ChartData) AppendChartNullFloatsAxis(key string, set ChartNullFloat
 	return charts.SaveVal(data, key)
 }
 
-func (charts ChartData) NormalizeLength() error {
+func (charts ChartData) NormalizeLength(tags ...string) error {
 	txn := charts.db.NewTransaction(true)
 	defer txn.Discard()
-	ids := []string{
-		Mempool, Propagation, PowChart, VSP, Exchange, Snapshot, Community,
-	}
-	for _, chartID := range ids {
+	
+	for _, chartID := range tags {
 		if cerr := charts.normalizeLength(chartID, txn); cerr != nil {
-			return errors.Wrap(cerr, "Normalize failed for "+chartID)
+			return errors.Wrap(cerr, "Normalize failed for " + chartID)
 		}
 	}
 	if err := txn.Commit(); err != nil {

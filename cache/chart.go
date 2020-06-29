@@ -756,13 +756,27 @@ func ValidateLengths(lens ...Lengther) (int, error) {
 }
 
 // Lengthen performs data validation, the cacheID will be incremented.
-func (charts *ChartData) Lengthen() error {
-	if err := charts.NormalizeLength(); err != nil {
+func (charts *ChartData) Lengthen(tags ...string) error {
+	if len(tags) == 0 {
+		tags = []string{
+			Mempool, Propagation, PowChart, VSP, Exchange, Snapshot, Community,
+		}
+	}
+
+	if err := charts.NormalizeLength(tags...); err != nil {
 		return err
 	}
-	if err := charts.lengthenMempool(); err != nil {
-		return err
+	lengtheners := map[string]func () error {
+		Mempool: charts.lengthenMempool,
 	}
+	for _, t := range tags {
+		if lengthener, f := lengtheners[t]; f {
+			if err := lengthener(); err != nil {
+				return err
+			}
+		}
+	}
+	
 	return nil
 }
 
@@ -853,7 +867,7 @@ func (charts *ChartData) Update(ctx context.Context, tags ...string) error {
 	}
 
 	for _, updater := range updaters {
-		stateID := charts.StateID()
+		stateID := charts.cacheID(updater.Tag)
 		var completed bool
 		var page = 1
 		for !completed {
@@ -882,7 +896,7 @@ func (charts *ChartData) Update(ctx context.Context, tags ...string) error {
 	}
 
 	// Since the charts db data query is complete. Update derived dataset.
-	if err := charts.Lengthen(); err != nil {
+	if err := charts.Lengthen(tags...); err != nil {
 		return fmt.Errorf("(*ChartData).Lengthen failed: %v", err)
 	}
 	return nil
