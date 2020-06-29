@@ -3,12 +3,18 @@ package cache
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 
 	"github.com/dgraph-io/badger"
 	"github.com/friendsofgo/errors"
 )
 
-const versionKey = "CURRENT_VERSION"
+const (
+	versionKey = "CURRENT_VERSION"
+	// aDay defines the number of seconds in a day.
+	aDay   = 86400
+	anHour = aDay / 24
+)
 
 // chart version
 func (charts ChartData) SaveVersion() error {
@@ -143,7 +149,7 @@ func (charts ChartData) NormalizeLength() error {
 	}
 	for _, chartID := range ids {
 		if cerr := charts.normalizeLength(chartID, txn); cerr != nil {
-			return errors.Wrap(cerr, "Normalize failed for " + chartID)
+			return errors.Wrap(cerr, "Normalize failed for "+chartID)
 		}
 	}
 	if err := txn.Commit(); err != nil {
@@ -974,6 +980,150 @@ func (charts ChartData) MempoolTimeTip() uint64 {
 		return 0
 	}
 	return dates[dates.Length()-1]
+}
+
+// Reduce the timestamp to the previous midnight.
+func midnight(t uint64) (mid uint64) {
+	if t > 0 {
+		mid = t - t%aDay
+	}
+	return
+}
+
+// Reduce the timestamp to the previous hour
+func hourStamp(t uint64) (hour uint64) {
+	if t > 0 {
+		hour = t - t%anHour
+	}
+	return
+}
+
+func (charts ChartData) lengthenMempool() error {
+	txn := charts.db.NewTransaction(true)
+	defer txn.Discard()
+
+	if err := charts.lengthenMempoolFee(txn); err != nil {
+		return err
+	}
+
+	if err := txn.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (charts ChartData) lengthenMempoolFee(txn *badger.Txn) error {
+	var dates ChartUints
+	if err := charts.ReadValTx(Mempool+"-"+string(TimeAxis), &dates, txn); err != nil {
+		if err == badger.ErrKeyNotFound {
+			return nil
+		}
+		return err
+	}
+
+	if dates.Length() == 0 {
+		return nil
+	}
+
+	var fees ChartFloats
+	if err := charts.ReadValTx(Mempool+"-"+string(MempoolFees), &fees, txn); err != nil {
+		if err == badger.ErrKeyNotFound {
+			return nil
+		}
+		return err
+	}
+
+	// day bin
+	var days ChartUints
+	var daysFees ChartFloats
+	// Get the current first and last midnight stamps.
+	var start = midnight(dates[0])
+	end := midnight(dates[len(dates)-1])
+
+	// the index that begins new data.
+	offset := 0
+	intervals := [][2]int{}
+	// If there is day or more worth of new data, append to the Days zoomSet by
+	// finding the first and last+1 blocks of each new day, and taking averages
+	// or sums of the blocks in the interval.
+	if end > start+aDay {
+		next := start + aDay
+		startIdx := 0
+		for i, t := range dates[offset:] {
+			if t >= next {
+				// Once passed the next midnight, prepare a day window by storing the
+				// range of indices.
+				intervals = append(intervals, [2]int{startIdx + offset, i + offset})
+				days = append(days, start)
+				start = next
+				next += aDay
+				startIdx = i
+				if t > end {
+					break
+				}
+			}
+		}
+
+		for _, interval := range intervals {
+			// For each new day, take an appropriate snapshot.
+			daysFees = append(daysFees, fees.Avg(interval[0], interval[1]))
+		}
+	}
+
+	if err := charts.SaveValTx(days, fmt.Sprintf("%s-%s-%s", Mempool, dayBin, TimeAxis), txn); err != nil {
+		return err
+	}
+
+	if err := charts.SaveValTx(daysFees, fmt.Sprintf("%s-%s-%s", Mempool, dayBin, MempoolFees), txn); err != nil {
+		return err
+	}
+
+	// hour bin
+	var hours ChartUints
+	var hourFees ChartFloats
+	// Get the current first and last hour stamps.
+	start = hourStamp(dates[0])
+	end = hourStamp(dates[len(dates)-1])
+
+	// the index that begins new data.
+	offset = 0
+	intervals = [][2]int{}
+	// If there is day or more worth of new data, append to the Days zoomSet by
+	// finding the first and last+1 blocks of each new day, and taking averages
+	// or sums of the blocks in the interval.
+	if end > start+anHour {
+		next := start + anHour
+		startIdx := 0
+		for i, t := range dates[offset:] {
+			if t >= next {
+				// Once passed the next hour, prepare a day window by storing the
+				// range of indices.
+				intervals = append(intervals, [2]int{startIdx + offset, i + offset})
+				hours = append(hours, start)
+				start = next
+				next += anHour
+				startIdx = i
+				if t > end {
+					break
+				}
+			}
+		}
+
+		for _, interval := range intervals {
+			// For each new day, take an appropriate snapshot.
+			hourFees = append(hourFees, fees.Avg(interval[0], interval[1]))
+		}
+	}
+
+	if err := charts.SaveValTx(hours, fmt.Sprintf("%s-%s-%s", Mempool, hourBin, TimeAxis), txn); err != nil {
+		return err
+	}
+
+	if err := charts.SaveValTx(hourFees, fmt.Sprintf("%s-%s-%s", Mempool, hourBin, MempoolFees), txn); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (charts ChartData) PropagationHeightTip() uint64 {

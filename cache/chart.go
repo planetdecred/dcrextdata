@@ -65,6 +65,10 @@ const (
 	SnapshotReachableNodes axisType = "reachable-nodes"
 	SnapshotLocations      axisType = "locations"
 	SnapshotNodeVersions   axisType = "node-versions"
+
+	defaultBin binLevel = "default"
+	hourBin	   binLevel = "hour"
+	dayBin	   binLevel = "day"
 )
 
 // ParseAxis returns the matching axis type, else the default of time axis.
@@ -129,6 +133,17 @@ func ParseAxis(aType string) axisType {
 		return SnapshotNodeVersions
 	default:
 		return TimeAxis
+	}
+}
+
+func ParseBin(binString string) binLevel {
+	switch(binLevel(binString)) {
+	case hourBin:
+		return hourBin
+	case dayBin:
+		return dayBin
+	default:
+		return defaultBin
 	}
 }
 
@@ -201,6 +216,18 @@ func (data ChartFloats) snip(max int) ChartFloats {
 
 func (charts ChartFloats) Normalize() Lengther {
 	return charts
+}
+
+// Avg is the average value of a segment of the dataset.
+func (data ChartFloats) Avg(s, e int) float64 {
+	if e <= s {
+		return 0
+	}
+	var sum float64
+	for _, v := range data[s:e] {
+		sum += v
+	}
+	return sum / float64(e-s)
 }
 
 // A constructor for a sized ChartFloats.
@@ -718,7 +745,13 @@ func ValidateLengths(lens ...Lengther) (int, error) {
 
 // Lengthen performs data validation, the cacheID will be incremented.
 func (charts *ChartData) Lengthen() error {
-	return charts.NormalizeLength()
+	if err := charts.NormalizeLength(); err != nil {
+		return err
+	}
+	if err := charts.lengthenMempool(); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Load loads chart data from the gob file at the specified path and performs an
@@ -1088,13 +1121,14 @@ func (charts *ChartData) trim(sets ...Lengther) []Lengther {
 }
 
 func mempool(ctx context.Context, charts *ChartData, axis axisType, extras ...string) ([]byte, error) {
+	var bin = ParseBin(extras[0])
 	switch axis {
 	case MempoolSize:
 		return mempoolSize(charts)
 	case MempoolTxCount:
 		return mempoolTxCount(charts)
 	case MempoolFees:
-		return mempoolFees(charts)
+		return mempoolFees(charts, bin)
 	}
 	return nil, UnknownChartErr
 }
@@ -1121,13 +1155,24 @@ func mempoolTxCount(charts *ChartData) ([]byte, error) {
 	return charts.Encode(nil, dates, txCounts)
 }
 
-func mempoolFees(charts *ChartData) ([]byte, error) {
+func mempoolFees(charts *ChartData, bin binLevel) ([]byte, error) {
 	var dates ChartUints
 	var fees ChartFloats
-	if err := charts.ReadVal(Mempool+"-"+string(TimeAxis), &dates); err != nil {
+
+	var key = Mempool+"-"+string(TimeAxis)
+	if bin != defaultBin {
+		key = fmt.Sprintf("%s-%s-%s",  Mempool, bin, TimeAxis)
+	}
+	if err := charts.ReadVal(key, &dates); err != nil {
+		log.Info(key)
 		return nil, err
 	}
-	if err := charts.ReadVal(Mempool+"-"+string(MempoolFees), &fees); err != nil {
+	key = Mempool+"-"+string(MempoolFees)
+	if bin != defaultBin {
+		key = fmt.Sprintf("%s-%s-%s",  Mempool, bin, MempoolFees)
+	}
+	if err := charts.ReadVal(key, &fees); err != nil {
+		log.Info(key)
 		return nil, err
 	}
 	return charts.Encode(nil, dates, fees)
