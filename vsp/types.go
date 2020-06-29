@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/raedahgroup/dcrextdata/cache"
 	"github.com/raedahgroup/dcrextdata/datasync"
 )
 
@@ -75,6 +76,7 @@ type Collector struct {
 	period    time.Duration
 	request   *http.Request
 	dataStore DataStore
+	charts    *cache.ChartData
 }
 
 type PoolTickTimeExistsError struct {

@@ -257,12 +257,20 @@ func (c *Collector) StartMonitoring(ctx context.Context, charts *cache.ChartData
 		}
 		mempoolDto.Revocations = len(revocations)
 
-		err = c.dataStore.StoreMempool(ctx, mempoolDto)
-		if err != nil {
+		if err = c.dataStore.StoreMempool(ctx, mempoolDto); err != nil {
 			log.Error(err)
 		} else {
-			if err = charts.TriggerUpdate(ctx); err != nil {
-				log.Errorf("Charts update problem: %s", err.Error())
+			if err = charts.TriggerUpdate(ctx, cache.Mempool); err != nil {
+				log.Errorf("Charts update problem for %s: %s", cache.Mempool, err.Error())
+			}
+			if err = charts.TriggerUpdate(ctx, cache.Propagation); err != nil {
+				log.Errorf("Charts update problem for %s: %s", cache.Mempool, err.Error())
+			}
+			if err = charts.TriggerUpdate(ctx, cache.Snapshot); err != nil { // TODO: move the the module
+				log.Errorf("Charts update problem for %s: %s", cache.Snapshot, err.Error())
+			}
+			if err = charts.TriggerUpdate(ctx, cache.Community); err != nil { // TODO: move the the module
+				log.Errorf("Charts update problem for %s: %s", cache.Community, err.Error())
 			}
 		}
 	}

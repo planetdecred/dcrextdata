@@ -719,7 +719,7 @@ type ChartData struct {
 	cacheMtx  sync.RWMutex
 	db        *badger.DB
 	cache     map[string]*cachedChart
-	updaters  []ChartUpdater
+	updaters  map[string]ChartUpdater
 	retrivers map[string]Retriver
 
 	syncSource    []string
@@ -790,8 +790,8 @@ func (charts *ChartData) Load(ctx context.Context) error {
 }
 
 // TriggerUpdate triggers (*ChartData).Update.
-func (charts *ChartData) TriggerUpdate(ctx context.Context) error {
-	if err := charts.Update(ctx); err != nil {
+func (charts *ChartData) TriggerUpdate(ctx context.Context, tag string) error {
+	if err := charts.Update(ctx, tag); err != nil {
 		// Only log errors from ChartsData.Update. TODO: make this more severe.
 		log.Errorf("(*ChartData).Update failed: %v", err)
 	}
@@ -827,19 +827,32 @@ func (charts *ChartData) AddRetriever(chartID string, retriever Retriver) {
 // AddUpdater adds a ChartUpdater to the Updaters slice. Updaters are run
 // sequentially during (*ChartData).Update.
 func (charts *ChartData) AddUpdater(updater ChartUpdater) {
-	charts.updaters = append(charts.updaters, updater)
+	charts.updaters[updater.Tag] = updater
 }
 
 // Update refreshes chart data by calling the ChartUpdaters sequentially. The
 // Update is abandoned with a warning if stateID changes while running a Fetcher
 // (likely due to a new update starting during a query).
-func (charts *ChartData) Update(ctx context.Context) error {
+func (charts *ChartData) Update(ctx context.Context, tags ...string) error {
 	// only run updater if caching is enabled
 	if !charts.EnableCache {
 		return nil
 	}
 
-	for _, updater := range charts.updaters {
+	var updaters []ChartUpdater
+	if len(tags) > 0 {
+		for _, t := range tags {
+			if updater, found := charts.updaters[t]; found {
+				updaters = append(updaters, updater)
+			}
+		}
+	} else {
+		for _, updater := range charts.updaters { 
+			updaters = append(updaters, updater)
+		}
+	}
+
+	for _, updater := range updaters {
 		stateID := charts.StateID()
 		var completed bool
 		var page = 1
@@ -897,7 +910,7 @@ func NewChartData(ctx context.Context, enableCache bool, syncSources,
 		EnableCache:   enableCache,
 		db:            db,
 		cache:         make(map[string]*cachedChart),
-		updaters:      make([]ChartUpdater, 0),
+		updaters:      make(map[string]ChartUpdater),
 		retrivers:     make(map[string]Retriver),
 		syncSource:    syncSources,
 		PowSources:    poolSources,

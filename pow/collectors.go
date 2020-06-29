@@ -14,6 +14,7 @@ import (
 
 	"github.com/raedahgroup/dcrextdata/app"
 	"github.com/raedahgroup/dcrextdata/app/helpers"
+	"github.com/raedahgroup/dcrextdata/cache"
 	"github.com/raedahgroup/dcrextdata/datasync"
 )
 
@@ -37,9 +38,10 @@ type Collector struct {
 	pows   []Pow
 	period int64
 	store  PowDataStore
+	charts *cache.ChartData
 }
 
-func NewCollector(disabledPows []string, period int64, store PowDataStore) (*Collector, error) {
+func NewCollector(disabledPows []string, period int64, store PowDataStore, charts *cache.ChartData) (*Collector, error) {
 	pows := make([]Pow, 0, len(availablePows)-len(disabledPows))
 	disabledMap := make(map[string]struct{})
 	for _, pow := range disabledPows {
@@ -65,6 +67,7 @@ func NewCollector(disabledPows []string, period int64, store PowDataStore) (*Col
 		pows:   pows,
 		period: period,
 		store:  store,
+		charts: charts,
 	}, nil
 }
 
@@ -151,6 +154,9 @@ func (pc *Collector) Collect(ctx context.Context) {
 				log.Error(err)
 			}
 		}
+	}
+	if err := pc.charts.TriggerUpdate(ctx, cache.PowChart); err != nil {
+		log.Errorf("Charts update problem for %s: %s", cache.PowChart, err.Error())
 	}
 }
 

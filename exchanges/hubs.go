@@ -14,6 +14,7 @@ import (
 
 	"github.com/raedahgroup/dcrextdata/app"
 	"github.com/raedahgroup/dcrextdata/app/helpers"
+	"github.com/raedahgroup/dcrextdata/cache"
 	"github.com/raedahgroup/dcrextdata/datasync"
 	"github.com/raedahgroup/dcrextdata/exchanges/ticks"
 )
@@ -26,6 +27,7 @@ type TickHub struct {
 	collectors []ticks.Collector
 	client     *http.Client
 	store      ticks.Store
+	charts *cache.ChartData
 }
 
 var (
@@ -38,7 +40,7 @@ var (
 	}
 )
 
-func NewTickHub(ctx context.Context, disabledexchanges []string, store ticks.Store) (*TickHub, error) {
+func NewTickHub(ctx context.Context, disabledexchanges []string, store ticks.Store, charts *cache.ChartData) (*TickHub, error) {
 	collectors := make([]ticks.Collector, 0, len(availableExchanges)-len(disabledexchanges))
 	disabledMap := make(map[string]struct{})
 	for _, e := range disabledexchanges {
@@ -67,6 +69,7 @@ func NewTickHub(ctx context.Context, disabledexchanges []string, store ticks.Sto
 		collectors: collectors,
 		client:     &http.Client{Timeout: clientTimeout},
 		store:      store,
+		charts:		charts,
 	}, nil
 }
 
@@ -88,6 +91,10 @@ func (hub *TickHub) CollectShort(ctx context.Context) {
 	}
 	wg.Wait()
 	log.Info("Completed short collection")
+
+	if err := hub.charts.TriggerUpdate(ctx, cache.Exchange); err != nil {
+		log.Errorf("Charts update problem for %s: %s", cache.Exchange, err.Error())
+	}
 }
 
 func (hub *TickHub) CollectLong(ctx context.Context) {
@@ -108,6 +115,10 @@ func (hub *TickHub) CollectLong(ctx context.Context) {
 	}
 	wg.Wait()
 	log.Info("Completed long collection")
+
+	if err := hub.charts.TriggerUpdate(ctx, cache.Exchange); err != nil {
+		log.Errorf("Charts update problem for %s: %s", cache.Exchange, err.Error())
+	}
 }
 
 func (hub *TickHub) CollectHistoric(ctx context.Context) {
@@ -128,6 +139,10 @@ func (hub *TickHub) CollectHistoric(ctx context.Context) {
 	}
 	wg.Wait()
 	log.Info("Completed historic collection")
+
+	if err := hub.charts.TriggerUpdate(ctx, cache.Exchange); err != nil {
+		log.Errorf("Charts update problem for %s: %s", cache.Exchange, err.Error())
+	}
 }
 
 func (hub *TickHub) CollectAll(ctx context.Context) {
@@ -151,6 +166,10 @@ func (hub *TickHub) CollectAll(ctx context.Context) {
 		if err != nil {
 			log.Error(err)
 		}
+	}
+
+	if err := hub.charts.TriggerUpdate(ctx, cache.Exchange); err != nil {
+		log.Errorf("Charts update problem for %s: %s", cache.Exchange, err.Error())
 	}
 
 	/*hub.CollectShort(ctx)

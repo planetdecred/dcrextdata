@@ -298,7 +298,7 @@ func _main(ctx context.Context) error {
 	}
 
 	if !cfg.DisableVSP {
-		vspCollector, err := vsp.NewVspCollector(cfg.VSPInterval, db)
+		vspCollector, err := vsp.NewVspCollector(cfg.VSPInterval, db, charts)
 		if err == nil {
 			vspCollector.RegisterSyncer(syncCoordinator)
 			go vspCollector.Run(ctx)
@@ -309,7 +309,7 @@ func _main(ctx context.Context) error {
 
 	if !cfg.DisableExchangeTicks {
 		go func() {
-			ticksHub, err := exchanges.NewTickHub(ctx, cfg.DisabledExchanges, db)
+			ticksHub, err := exchanges.NewTickHub(ctx, cfg.DisabledExchanges, db, charts)
 			if err == nil {
 				ticksHub.RegisterSyncer(syncCoordinator)
 				ticksHub.Run(ctx)
@@ -320,7 +320,7 @@ func _main(ctx context.Context) error {
 	}
 
 	if !cfg.DisablePow {
-		powCollector, err := pow.NewCollector(cfg.DisabledPows, cfg.PowInterval, db)
+		powCollector, err := pow.NewCollector(cfg.DisabledPows, cfg.PowInterval, db, charts)
 		if err == nil {
 			powCollector.RegisterSyncer(syncCoordinator)
 			go powCollector.Run(ctx)
@@ -340,7 +340,7 @@ func _main(ctx context.Context) error {
 	}
 
 	if !cfg.DisableNetworkSnapshot {
-		snapshotTaker := netsnapshot.NewTaker(db, cfg.NetworkSnapshotOptions)
+		snapshotTaker := netsnapshot.NewTaker(db, cfg.NetworkSnapshotOptions,)
 		go snapshotTaker.Start(ctx)
 	}
 

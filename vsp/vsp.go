@@ -15,6 +15,7 @@ import (
 
 	"github.com/raedahgroup/dcrextdata/app"
 	"github.com/raedahgroup/dcrextdata/app/helpers"
+	"github.com/raedahgroup/dcrextdata/cache"
 	"github.com/raedahgroup/dcrextdata/datasync"
 )
 
@@ -23,7 +24,7 @@ const (
 	retryLimit = 3
 )
 
-func NewVspCollector(period int64, store DataStore) (*Collector, error) {
+func NewVspCollector(period int64, store DataStore, charts *cache.ChartData) (*Collector, error) {
 	request, err := http.NewRequest(http.MethodGet, requestURL, nil)
 	if err != nil {
 		return nil, err
@@ -34,6 +35,7 @@ func NewVspCollector(period int64, store DataStore) (*Collector, error) {
 		period:    time.Duration(period),
 		request:   request,
 		dataStore: store,
+		charts:    charts,
 	}, nil
 }
 
@@ -143,6 +145,11 @@ func (vsp *Collector) collectAndStore(ctx context.Context) error {
 	}
 
 	log.Infof("Saved ticks for %d VSPs from %s", numberStored, requestURL)
+	go func ()  {
+		if err = vsp.charts.TriggerUpdate(ctx, cache.VSP); err != nil {
+			log.Errorf("Charts update problem for %s: %s", cache.VSP, err.Error())
+		}
+	}()
 	return nil
 }
 

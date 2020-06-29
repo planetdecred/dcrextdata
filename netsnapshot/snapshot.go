@@ -23,7 +23,7 @@ func Snapshotinterval() int {
 	return snapshotinterval
 }
 
-func NewTaker(store DataStore, cfg config.NetworkSnapshotOptions) *taker {
+func NewTaker(store DataStore, cfg config.NetworkSnapshotOptions,) *taker {
 	snapshotinterval = cfg.SnapshotInterval
 	return &taker{
 		dataStore: store,

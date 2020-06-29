@@ -6,9 +6,11 @@ package commstats
 
 import (
 	"context"
-	"github.com/raedahgroup/dcrextdata/app/config"
 	"net/http"
 	"time"
+
+	"github.com/raedahgroup/dcrextdata/app/config"
+	"github.com/raedahgroup/dcrextdata/cache"
 )
 
 type CommStat struct {
@@ -70,4 +72,5 @@ type Collector struct {
 	client    http.Client
 	dataStore DataStore
 	options   *config.CommunityStatOptions
+	charts    *cache.ChartData
 }
