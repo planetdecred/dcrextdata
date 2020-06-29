@@ -666,6 +666,18 @@ func (data ChartUints) Normalize() Lengther {
 	return data
 }
 
+// Avg is the average value of a segment of the dataset.
+func (data ChartUints) Avg(s, e int) uint64 {
+	if e <= s {
+		return 0
+	}
+	var sum uint64
+	for _, v := range data[s:e] {
+		sum += v
+	}
+	return sum / uint64(e-s)
+}
+
 // A constructor for a sized ChartUints.
 func newChartUints() ChartUints {
 	return make(ChartUints, 0)
@@ -1124,34 +1136,58 @@ func mempool(ctx context.Context, charts *ChartData, axis axisType, extras ...st
 	var bin = ParseBin(extras[0])
 	switch axis {
 	case MempoolSize:
-		return mempoolSize(charts)
+		return mempoolSize(charts, bin)
 	case MempoolTxCount:
-		return mempoolTxCount(charts)
+		return mempoolTxCount(charts, bin)
 	case MempoolFees:
 		return mempoolFees(charts, bin)
 	}
 	return nil, UnknownChartErr
 }
 
-func mempoolSize(charts *ChartData) ([]byte, error) {
+func mempoolSize(charts *ChartData, bin binLevel) ([]byte, error) {
 	var dates, sizes ChartUints
-	if err := charts.ReadVal(Mempool+"-"+string(TimeAxis), &dates); err != nil {
+	
+	var key = Mempool+"-"+string(TimeAxis)
+	if bin != defaultBin {
+		key = fmt.Sprintf("%s-%s-%s",  Mempool, bin, TimeAxis)
+	}
+	if err := charts.ReadVal(key, &dates); err != nil {
+		log.Info(key)
 		return nil, err
 	}
-	if err := charts.ReadVal(Mempool+"-"+string(MempoolSize), &sizes); err != nil {
+
+	key = Mempool+"-"+string(MempoolSize)
+	if bin != defaultBin {
+		key = fmt.Sprintf("%s-%s-%s",  Mempool, bin, MempoolSize)
+	}
+	if err := charts.ReadVal(key, &sizes); err != nil {
 		return nil, err
 	}
+
 	return charts.Encode(nil, dates, sizes)
 }
 
-func mempoolTxCount(charts *ChartData) ([]byte, error) {
+func mempoolTxCount(charts *ChartData, bin binLevel) ([]byte, error) {
 	var dates, txCounts ChartUints
-	if err := charts.ReadVal(Mempool+"-"+string(TimeAxis), &dates); err != nil {
+
+	var key = Mempool+"-"+string(TimeAxis)
+	if bin != defaultBin {
+		key = fmt.Sprintf("%s-%s-%s",  Mempool, bin, TimeAxis)
+	}
+	if err := charts.ReadVal(key, &dates); err != nil {
+		log.Info(key)
 		return nil, err
 	}
-	if err := charts.ReadVal(Mempool+"-"+string(MempoolTxCount), &txCounts); err != nil {
+
+	key = Mempool+"-"+string(MempoolTxCount)
+	if bin != defaultBin {
+		key = fmt.Sprintf("%s-%s-%s",  Mempool, bin, MempoolTxCount)
+	}
+	if err := charts.ReadVal(key, &txCounts); err != nil {
 		return nil, err
 	}
+
 	return charts.Encode(nil, dates, txCounts)
 }
 
@@ -1164,15 +1200,14 @@ func mempoolFees(charts *ChartData, bin binLevel) ([]byte, error) {
 		key = fmt.Sprintf("%s-%s-%s",  Mempool, bin, TimeAxis)
 	}
 	if err := charts.ReadVal(key, &dates); err != nil {
-		log.Info(key)
 		return nil, err
 	}
+
 	key = Mempool+"-"+string(MempoolFees)
 	if bin != defaultBin {
 		key = fmt.Sprintf("%s-%s-%s",  Mempool, bin, MempoolFees)
 	}
 	if err := charts.ReadVal(key, &fees); err != nil {
-		log.Info(key)
 		return nil, err
 	}
 	return charts.Encode(nil, dates, fees)

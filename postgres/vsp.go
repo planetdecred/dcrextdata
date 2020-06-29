@@ -537,11 +537,14 @@ func (pg *PgDb) fetchCacheVspChart(ctx context.Context, charts *cache.ChartData,
 	startDate := charts.VSPTimeTip()
 	// Get close to the nearest value after the start date to avoid continue loop for situations where there is a gap
 	var receiver time.Time
-	rows := pg.db.QueryRow(fmt.Sprintf("SELECT %s FROM %s WHERE %s > '%s' ORDER BY %s LIMIT 1", models.VSPTickColumns.Time,
+		statement := fmt.Sprintf("SELECT %s FROM %s WHERE %s > '%s' ORDER BY %s LIMIT 1", models.VSPTickColumns.Time,
 		models.TableNames.VSPTick, models.VSPTickColumns.Time, 
-		helpers.UnixTime(int64(startDate)).Format("2006-01-02 15:04:05+0700"), models.VSPTickColumns.Time))
+		helpers.UnixTime(int64(startDate)).Format("2006-01-02 15:04:05+0700"), models.VSPTickColumns.Time)
+	rows := pg.db.QueryRow(statement)
 	if err := rows.Scan(&receiver); err != nil {
-		log.Errorf("Error in getting min vsp date - %s", err.Error())
+		if err.Error() != sql.ErrNoRows.Error() {
+			log.Errorf("Error in getting min vsp date - %s", err.Error())
+		}
 	}
 	if int64(startDate) < receiver.Unix() {
 		startDate = uint64(receiver.Unix())

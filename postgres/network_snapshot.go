@@ -741,7 +741,7 @@ func (pg *PgDb) fetchNetworkSnapshotChart(ctx context.Context, charts *cache.Cha
 		 	models.TableNames.NetworkSnapshot, models.NetworkSnapshotColumns.Timestamp))
 		err := rows.Scan(&startDate)
 		if err != nil {
-			log.Errorf("Error in getting min vsp date - %s", err.Error())
+			log.Errorf("Error in getting min Network Snapshot date - %s", err.Error())
 		}
 	}
 
