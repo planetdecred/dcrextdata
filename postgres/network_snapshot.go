@@ -749,7 +749,7 @@ func (pg *PgDb) fetchNetworkSnapshotChart(ctx context.Context, charts *cache.Cha
 		}
 	}
 
-	pageSize := 10000
+	pageSize := 10000000
 	done := true
 	result, err := pg.SnapshotsByTime(ctx, int64(startDate), pageSize)
 	if err != nil {
@@ -874,15 +874,18 @@ func appendSnapshotChart(charts *cache.ChartData, data interface{}) error {
 		return nil
 	}
 
-	if err := charts.AppendChartUintsAxis(cache.Snapshot + "-" + string(cache.TimeAxis), tickSets.time); err !=  nil {
+	key := fmt.Sprintf("%s-%s", cache.Snapshot, cache.TimeAxis)
+	if err := charts.AppendChartUintsAxis(key, tickSets.time); err !=  nil {
 		return err 
 	}
 
-	if err := charts.AppendChartUintsAxis(cache.Snapshot + "-" + string(cache.SnapshotNodes), tickSets.nodes); err !=  nil {
+	key = fmt.Sprintf("%s-%s", cache.Snapshot, cache.SnapshotNodes)
+	if err := charts.AppendChartUintsAxis(key, tickSets.nodes); err !=  nil {
 		return err 
 	}
 
-	if err := charts.AppendChartUintsAxis(cache.Snapshot + "-" + string(cache.SnapshotReachableNodes), tickSets.reachableNodes); err !=  nil {
+	key = fmt.Sprintf("%s-%s", cache.Snapshot, cache.SnapshotReachableNodes)
+	if err := charts.AppendChartUintsAxis(key, tickSets.reachableNodes); err !=  nil {
 		return err 
 	}
 
@@ -895,8 +898,8 @@ func appendSnapshotChart(charts *cache.ChartData, data interface{}) error {
 		return false
 	}
 	
-	if err := charts.AppendChartUintsAxis(cache.Snapshot + "-" + string(cache.SnapshotLocations) + 
-		"-" + string(cache.TimeAxis), tickSets.locationDates); err !=  nil {
+	key = fmt.Sprintf("%s-%s-%s", cache.Snapshot, cache.SnapshotLocations, cache.TimeAxis)
+	if err := charts.AppendChartUintsAxis(key, tickSets.locationDates); err !=  nil {
 		return err 
 	}
 
@@ -907,10 +910,16 @@ func appendSnapshotChart(charts *cache.ChartData, data interface{}) error {
 		if !keyExists(charts.NodeLocations, country) {
 			charts.NodeLocations = append(charts.NodeLocations, country)
 		}
-		if err := charts.AppendChartUintsAxis(cache.Snapshot + "-" + string(cache.SnapshotLocations) + "-" + country, 
+		key = fmt.Sprintf("%s-%s-%s", cache.Snapshot, cache.SnapshotLocations, country)
+		if err := charts.AppendChartUintsAxis(key, 
 			record); err !=  nil {
 			return err 
 		}
+	}
+	
+	key = fmt.Sprintf("%s-%s-%s", cache.Snapshot, cache.SnapshotNodeVersions, cache.TimeAxis)
+	if err := charts.AppendChartUintsAxis(key, tickSets.versionDates); err !=  nil {
+		return err 
 	}
 
 	for userAgent, record := range tickSets.versions {
@@ -920,15 +929,11 @@ func appendSnapshotChart(charts *cache.ChartData, data interface{}) error {
 		if !keyExists(charts.NodeVersion, userAgent) {
 			charts.NodeVersion = append(charts.NodeVersion, userAgent)
 		}
-		if err := charts.AppendChartUintsAxis(cache.Snapshot + "-" + string(cache.SnapshotNodeVersions) + "-" + userAgent, 
+		key = fmt.Sprintf("%s-%s-%s", cache.Snapshot, cache.SnapshotNodeVersions, userAgent)
+		if err := charts.AppendChartUintsAxis(key, 
 			record); err !=  nil {
 			return err 
 		}
-	}
-	
-	if err := charts.AppendChartUintsAxis(cache.Snapshot + "-" + string(cache.SnapshotNodeVersions) + 
-		"-" + string(cache.TimeAxis), tickSets.versionDates); err !=  nil {
-		return err 
 	}
 
 	return nil

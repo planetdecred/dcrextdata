@@ -356,7 +356,7 @@ export default class extends Controller {
   setInterval (e) {
     const option = e.currentTarget.dataset.option
     setActiveOptionBtn(option, this.intervalTargets)
-    this.fetchData(this.selectedViewOption)
+    this.reloadChat()
   }
 
   async validateZoom () {
@@ -427,7 +427,7 @@ export default class extends Controller {
         break
       case dataTypeNodes:
       default:
-        url = '/api/charts/snapshot/nodes'
+        url = `/api/charts/snapshot/nodes?${q}`
         drawChartFn = this.drawSnapshotChart
         break
     }
