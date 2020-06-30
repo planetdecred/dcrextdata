@@ -768,6 +768,7 @@ func (charts *ChartData) Lengthen(tags ...string) error {
 	}
 	lengtheners := map[string]func () error {
 		Mempool: charts.lengthenMempool,
+		Propagation: charts.lengthenPropagation,
 		Snapshot: charts.lengthenSnapshot,
 	}
 	for _, t := range tags {
@@ -1226,20 +1227,23 @@ func mempoolFees(charts *ChartData, bin binLevel) ([]byte, error) {
 func propagation(ctx context.Context, charts *ChartData, dataType, axis axisType, bin binLevel, syncSources ...string) ([]byte, error) {
 	switch dataType {
 	case BlockPropagation:
-		return blockPropagation(charts, axis, syncSources...)
+		return blockPropagation(charts, axis, bin, syncSources...)
 	case BlockTimestamp:
-		return blockTimestamp(charts, axis)
+		return blockTimestamp(charts, axis, bin)
 	case VotesReceiveTime:
-		return votesReceiveTime(charts, axis)
+		return votesReceiveTime(charts, axis, bin)
 	}
 	return nil, UnknownChartErr
 }
 
-func blockPropagation(charts *ChartData, axis axisType, syncSources ...string) ([]byte, error) {
+func blockPropagation(charts *ChartData, axis axisType, bin binLevel, syncSources ...string) ([]byte, error) {
 	var xData ChartUints
 	key := fmt.Sprintf("%s-%s", Propagation, HeightAxis)
 	if axis == TimeAxis {
 		key = fmt.Sprintf("%s-%s", Propagation, TimeAxis)
+	}
+	if bin != defaultBin {
+		key = fmt.Sprintf("%s-%s",  key, bin)
 	}
 	if err := charts.ReadVal(key, &xData); err != nil {
 		log.Info(err, key)
@@ -1249,6 +1253,9 @@ func blockPropagation(charts *ChartData, axis axisType, syncSources ...string) (
 	for _, source := range syncSources {
 		var d ChartFloats
 		key = fmt.Sprintf("%s-%s-%s", Propagation, BlockPropagation, source)
+		if bin != defaultBin {
+			key = fmt.Sprintf("%s-%s",  key, bin)
+		}
 		if err := charts.ReadVal(key, &d); err != nil {
 			log.Info(err, key)
 			return nil, err
@@ -1259,33 +1266,47 @@ func blockPropagation(charts *ChartData, axis axisType, syncSources ...string) (
 	return charts.encodeArr(nil, deviations)
 }
 
-func blockTimestamp(charts *ChartData, axis axisType) ([]byte, error) {
+func blockTimestamp(charts *ChartData, axis axisType, bin binLevel) ([]byte, error) {
 	var xData ChartUints
 	key := fmt.Sprintf("%s-%s", Propagation, HeightAxis)
 	if axis == TimeAxis {
 		key = fmt.Sprintf("%s-%s", Propagation, TimeAxis)
+	}
+	if bin != defaultBin {
+		key = fmt.Sprintf("%s-%s",  key, bin)
 	}
 	if err := charts.ReadVal(key, &xData); err != nil {
 		return nil, err
 	}
 	var blockDelays ChartFloats
-	if err := charts.ReadVal(Propagation+"-"+string(BlockTimestamp), &blockDelays); err != nil {
+	key = fmt.Sprintf("%s-%s", Propagation, BlockTimestamp)
+	if bin != defaultBin {
+		key = fmt.Sprintf("%s-%s",  key, bin)
+	}
+	if err := charts.ReadVal(key, &blockDelays); err != nil {
 		return nil, err
 	}
 	return charts.Encode(nil, xData, blockDelays)
 }
 
-func votesReceiveTime(charts *ChartData, axis axisType) ([]byte, error) {
+func votesReceiveTime(charts *ChartData, axis axisType, bin binLevel) ([]byte, error) {
 	var xData ChartUints
 	key := fmt.Sprintf("%s-%s", Propagation, HeightAxis)
 	if axis == TimeAxis {
 		key = fmt.Sprintf("%s-%s", Propagation, TimeAxis)
 	}
+	if bin != defaultBin {
+		key = fmt.Sprintf("%s-%s",  key, bin)
+	}
 	if err := charts.ReadVal(key, &xData); err != nil {
 		return nil, err
 	}
 	var votesReceiveTime ChartFloats
-	if err := charts.ReadVal(Propagation+"-"+string(VotesReceiveTime), &votesReceiveTime); err != nil {
+	key = fmt.Sprintf("%s-%s", Propagation, VotesReceiveTime)
+	if bin != defaultBin {
+		key = fmt.Sprintf("%s-%s",  key, bin)
+	}
+	if err := charts.ReadVal(key, &votesReceiveTime); err != nil {
 		return nil, err
 	}
 	return charts.Encode(nil, xData, votesReceiveTime)

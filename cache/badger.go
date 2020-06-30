@@ -1011,6 +1011,36 @@ func (charts ChartData) lengthenMempool() error {
 	return nil
 }
 
+func (charts ChartData) lengthenPropagation() error {
+	txn := charts.db.NewTransaction(true)
+	defer txn.Discard()
+
+	key := fmt.Sprintf("%s-%s", Propagation, TimeAxis)
+	dayIntervals, hourIntervals, err := charts.lengthenTime(key, txn)
+	if err != nil {
+		return err
+	}
+
+	keys := []string{
+		fmt.Sprintf("%s-%s", Propagation, BlockTimestamp),
+		fmt.Sprintf("%s-%s", Propagation, VotesReceiveTime),
+	}
+	for _, source := range charts.syncSource {
+		keys = append(keys, fmt.Sprintf("%s-%s-%s", Propagation, BlockPropagation, source))
+	}
+	
+	for _, key := range keys {
+		if err := charts.lengthenChartFloats(key, dayIntervals, hourIntervals, txn); err != nil {
+			return err
+		}
+	}
+
+	if err := txn.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (charts ChartData) lengthenSnapshot() error {
 	txn := charts.db.NewTransaction(true)
 	defer txn.Discard()
