@@ -38,12 +38,12 @@ export default class extends Controller {
 
   static get targets () {
     return [
-      'viewOptionControl', 'viewOption', 'chartDataTypeSelector', 'chartDataType',
+      'viewOption', 'chartDataTypeSelector', 'chartDataType',
       'numPageWrapper', 'pageSize', 'messageView', 'chartWrapper', 'chartsView', 'labels',
       'btnWrapper', 'nextPageButton', 'previousPageButton', 'tableTitle', 'tableWrapper', 'tableHeader', 'tableBody',
       'snapshotRowTemplate', 'userAgentRowTemplate', 'countriesRowTemplate', 'totalPageCount', 'currentPage', 'loadingData',
       'dataTypeSelector', 'dataType', 'chartWrapper', 'chartSourceWrapper', 'chartSource', 'chartsViewWrapper', 'chartSourceList',
-      'allChartSource'
+      'allChartSource', 'graphIntervalWrapper', 'interval'
     ]
   }
 
@@ -75,6 +75,7 @@ export default class extends Controller {
     setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
     hide(this.chartWrapperTarget)
     hide(this.messageViewTarget)
+    hide(this.graphIntervalWrapperTarget)
     show(this.tableWrapperTarget)
     show(this.numPageWrapperTarget)
     insertOrUpdateQueryParam('view-option', this.selectedViewOption, 'chart')
@@ -91,6 +92,7 @@ export default class extends Controller {
     setActiveOptionBtn(this.dataType, this.chartDataTypeTargets)
     hide(this.numPageWrapperTarget)
     show(this.chartWrapperTarget)
+    show(this.graphIntervalWrapperTarget)
     updateQueryParam('view-option', this.selectedViewOption, 'chart')
     this.reloadChat()
     trimUrl(['view-option', 'data-type'])
@@ -349,6 +351,14 @@ export default class extends Controller {
     this.validateZoom()
   }
 
+  selectedInterval () { return selectedOption(this.intervalTargets) }
+
+  setInterval (e) {
+    const option = e.currentTarget.dataset.option
+    setActiveOptionBtn(option, this.intervalTargets)
+    this.fetchData(this.selectedViewOption)
+  }
+
   async validateZoom () {
     await animationFrame()
     await animationFrame()
@@ -402,9 +412,9 @@ export default class extends Controller {
         this.selectedSources.push(el.value)
       }
     })
-    let q = ''
+    let q = `bin=${this.selectedInterval()}`
     if (this.selectedSources.length > 0) {
-      q = `extras=${this.selectedSources.join('|')}`
+      q += `&extras=${this.selectedSources.join('|')}`
     }
     switch (this.dataType) {
       case dataTypeVersion:

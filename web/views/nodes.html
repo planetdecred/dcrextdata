@@ -17,37 +17,38 @@
 
             <div class="control-wrapper">
                 <div class="d-flex flex-row bottom-ctl">
-                    <div class="chart-control ml-auto mr-3 my-2" data-target="nodes.viewOptionControl"
-                         data-initial-value="{{ .selectedViewOption }}">
-                        
-                        <ul class="nav nav-pills">
-                                    <li class="nav-item">
-                                        <a data-target="nodes.dataType"
-                                           data-action="click->nodes#setDataType" class="nav-link active"
-                                           href="javascript:void(0);" data-option="nodes"
-                                           >Nodes</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a data-target="nodes.dataType"
-                                           data-action="click->nodes#setDataType" class="nav-link"
-                                           href="javascript:void(0);" data-option="version"
-                                           >Version</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a data-target="nodes.dataType"
-                                           data-action="click->nodes#setDataType" class="nav-link"
-                                           href="javascript:void(0);" data-option="location"
-                                           >Location</a>
-                                    </li>
-                                </ul>
 
+                    <div class="chart-control-wrapper ml-auto mr-3 my-2">
+                        <div class="chart-control-label">Data Type</div>
+                        <div class="chart-control">
+                            <ul class="nav nav-pills">
+                                <li class="nav-item">
+                                    <a data-target="nodes.dataType"
+                                    data-action="click->nodes#setDataType" class="nav-link active"
+                                    href="javascript:void(0);" data-option="nodes"
+                                    >Nodes</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a data-target="nodes.dataType"
+                                    data-action="click->nodes#setDataType" class="nav-link"
+                                    href="javascript:void(0);" data-option="version"
+                                    >Version</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a data-target="nodes.dataType"
+                                    data-action="click->nodes#setDataType" class="nav-link"
+                                    href="javascript:void(0);" data-option="location"
+                                    >Location</a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
 
-                    <div class="mr-auto my-2">
+                    <div class="d-flex mr-auto my-2">
                         <div class="chart-control-wrapper control-div p-0"
                              data-target="nodes.dataTypeSelector">
-                            <div class="chart-control mempool-control mx-auto">
-
+                            <div class="chart-control-label">View</div>
+                            <div class="chart-control mx-auto">
                                 <ul class="nav nav-pills">
                                     <li class="nav-item">
                                         <a class="nav-link active" href="javascript:void(0);" data-target="nodes.viewOption"
@@ -60,6 +61,29 @@
                                     </li>
                                 </ul>
                                 
+                            </div>
+                        </div>
+
+                        <div data-target="nodes.graphIntervalWrapper" class="control-div p-0 chart-control-wrapper mr-2 mb-1">
+                            <div class="chart-control-label">Group By</div>
+                            <div class="chart-control">
+                                <ul class="nav nav-pills">
+                                    <li class="nav-item">
+                                        <a data-target="nodes.interval"
+                                           data-action="click->nodes#setInterval" class="nav-link active"
+                                           href="javascript:void(0);" data-option="day">Day</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a data-target="nodes.interval"
+                                           data-action="click->nodes#setInterval" class="nav-link"
+                                           href="javascript:void(0);" data-option="hour">Hour</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a data-target="nodes.interval"
+                                           data-action="click->nodes#setInterval" class="nav-link"
+                                           href="javascript:void(0);" data-option="default">None</a>
+                                    </li>
+                                </ul>
                             </div>
                         </div>
                     </div>

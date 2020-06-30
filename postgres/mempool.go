@@ -465,7 +465,7 @@ func (pg *PgDb) fetchBlockReceiveTimeByHeight(ctx context.Context, height int32)
 
 // *****CHARTS******* //
 
-func (pg *PgDb) fetchEncodeMempoolChart(ctx context.Context, charts *cache.ChartData, axisString string, extras ...string) ([]byte, error) {
+func (pg *PgDb) fetchEncodeMempoolChart(ctx context.Context, charts *cache.ChartData, axisString string, binString string, extras ...string) ([]byte, error) {
 	
 	switch(axisString){
 	case cache.MempoolSize:
@@ -572,7 +572,7 @@ type propagationSet struct {
 	blockPropagation          map[string][]float64
 }
 
-func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.ChartData, axisString string, extras ...string) ([]byte, error) {
+func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.ChartData, axisString string, binString string, extras ...string) ([]byte, error) {
 	blockDelays, err := pg.propagationBlockChartData(ctx, 0)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err

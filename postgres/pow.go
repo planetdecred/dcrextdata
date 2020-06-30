@@ -347,7 +347,7 @@ type powSet struct {
 	hashrate map[string]cache.ChartNullUints
 }
 
-func (pg *PgDb) fetchEncodePowChart(ctx context.Context, charts *cache.ChartData, axisString string, pools ...string) ([]byte, error) {
+func (pg *PgDb) fetchEncodePowChart(ctx context.Context, charts *cache.ChartData, axisString string, binString string, pools ...string) ([]byte, error) {
 	data, err := pg.fetchPowChart(ctx, 0)
 	if err != nil {
 		return nil, err

@@ -47,7 +47,7 @@ func (charts *ChartData) ExchangeSetTime(key string) uint64 {
 	return dates[len(dates)-1]
 }
 
-func makeExchangeChart(ctx context.Context, charts *ChartData, axis axisType, key ...string) ([]byte, error) {
+func makeExchangeChart(ctx context.Context, charts *ChartData, axis axisType, bin binLevel, key ...string) ([]byte, error) {
 	if len(key) < 1 {
 		return nil, errors.New("exchange set key is required for exchange chart")
 	}

@@ -461,7 +461,7 @@ type vspSet struct {
 	usersActive      map[string]cache.ChartNullUints
 }
 
-func (pg *PgDb) fetchEncodeVspChart(ctx context.Context, charts *cache.ChartData, axisString string, vspSources ...string) ([]byte, error) {
+func (pg *PgDb) fetchEncodeVspChart(ctx context.Context, charts *cache.ChartData, axisString string, binString string, vspSources ...string) ([]byte, error) {
 	data, _, err := pg.fetchVspChart(ctx, 0, 0, axisString, vspSources...)
 	if err != nil {
 		return nil, err
