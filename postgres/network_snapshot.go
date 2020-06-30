@@ -939,8 +939,8 @@ func appendSnapshotChart(charts *cache.ChartData, data interface{}) error {
 	return nil
 }
 
-func (pg *PgDb) fetchEncodeSnapshotChart(ctx context.Context, charts *cache.ChartData, axisString string, binString string, extras ...string) ([]byte, error) {
-	switch axisString {
+func (pg *PgDb) fetchEncodeSnapshotChart(ctx context.Context, charts *cache.ChartData, dataType, _ string, binString string, extras ...string) ([]byte, error) {
+	switch dataType {
 	case string(cache.SnapshotNodes):
 		return pg.fetchEncodeSnapshotNodesChart(ctx, charts)
 	case string(cache.SnapshotNodeVersions):

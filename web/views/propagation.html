@@ -275,11 +275,44 @@
             </div>
 
             <div data-target="propagation.chartWrapper" class="inner-content chart-wrapper pl-2 pr-2 mb-5" style="width:100%;">
+                <style>
+                    .dygraph-label {
+                        display: none !important;
+                    }
+                </style>
+                
                 <div id="chart" data-target="propagation.chartsView"
                      style="width:100%; height:73vh; margin:0 auto;"></div>
-                <div class="d-flex justify-content-center legend-wrapper">
+
+                <div class="d-flex justify-content-center legend-wrapper d-none">
                     <div class="legend d-flex" data-target="propagation.labels"></div>
                 </div>
+
+                <div class="d-flex flex-wrap justify-content-center align-items-center mb-1 mt-1">
+                    <div class="chart-control chart-control-wrapper">
+                        <ul class="nav nav-pills">
+                            <li class="nav-item active">
+                                <a
+                                    class="nav-link active"
+                                    href="javascript:void(0);"
+                                    data-target="propagation.axisOption"
+                                    data-action="click->propagation#setAxis"
+                                    data-option="time"
+                                >Time</a>
+                            </li>
+                            <li class="nav-item">
+                                <a
+                                    class="nav-link"
+                                    href="javascript:void(0);"
+                                    data-target="propagation.axisOption"
+                                    data-action="click->propagation#setAxis"
+                                    data-option="height"
+                                >Blocks</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
             </div>
             <div data-target="propagation.messageView" class="d-hide">
             </div>

@@ -47,7 +47,7 @@ func (charts *ChartData) ExchangeSetTime(key string) uint64 {
 	return dates[len(dates)-1]
 }
 
-func makeExchangeChart(ctx context.Context, charts *ChartData, axis axisType, bin binLevel, key ...string) ([]byte, error) {
+func makeExchangeChart(ctx context.Context, charts *ChartData, dataType, _ axisType, bin binLevel, key ...string) ([]byte, error) {
 	if len(key) < 1 {
 		return nil, errors.New("exchange set key is required for exchange chart")
 	}
@@ -57,7 +57,7 @@ func makeExchangeChart(ctx context.Context, charts *ChartData, axis axisType, bi
 	}
 
 	var yAxis ChartFloats
-	if err := charts.ReadVal(key[0] + "-" + string(axis), &yAxis); err != nil {
+	if err := charts.ReadVal(key[0] + "-" + string(dataType), &yAxis); err != nil {
 		log.Errorf("Cannot create exchange chart, %s", err.Error())
 		return nil, errors.New("no record found for the selected exchange")
 	}

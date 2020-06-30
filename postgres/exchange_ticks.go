@@ -546,7 +546,7 @@ type exchangeTickSet struct {
 	low   cache.ChartFloats
 }
 
-func (pg *PgDb) fetchEncodeExchangeChart(ctx context.Context, charts *cache.ChartData, axisString string, binString string, setKey ...string) ([]byte, error) {
+func (pg *PgDb) fetchEncodeExchangeChart(ctx context.Context, charts *cache.ChartData, dataType, _ string, binString string, setKey ...string) ([]byte, error) {
 	if len(setKey) < 1 {
 		return nil, errors.New("exchange set key is required for exchange chart")
 	}
@@ -559,7 +559,7 @@ func (pg *PgDb) fetchEncodeExchangeChart(ctx context.Context, charts *cache.Char
 	var yAxis cache.ChartFloats
 	for _, t := range tickSlice {
 		dates = append(dates, uint64(t.Time.Unix()))
-		switch(strings.ToLower(axisString)) {
+		switch(strings.ToLower(dataType)) {
 		case string(cache.ExchangeOpenAxis):
 			yAxis = append(yAxis, t.Open)
 			break

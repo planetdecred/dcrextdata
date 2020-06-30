@@ -27,7 +27,7 @@ export default class extends Controller {
       'tablesWrapper', 'table', 'blocksTbody', 'votesTbody', 'chartWrapper', 'chartsView', 'labels', 'messageView',
       'blocksTable', 'blocksTableBody', 'blocksRowTemplate', 'votesTable', 'votesTableBody', 'votesRowTemplate',
       'totalPageCount', 'currentPage', 'viewOptionControl', 'viewOption', 'loadingData',
-      'graphIntervalWrapper', 'interval'
+      'graphIntervalWrapper', 'interval', 'axisOption'
     ]
   }
 
@@ -402,7 +402,8 @@ export default class extends Controller {
     showLoading(this.loadingDataTarget, elementsToToggle)
 
     const _this = this
-    axios.get(`/api/charts/propagation/${this.chartType}?bin=${this.selectedInterval()}`).then(function (response) {
+    const url = `/api/charts/propagation/${this.chartType}?bin=${this.selectedInterval()}&axis=${this.selectedAxis()}`
+    axios.get(url).then(function (response) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       _this.plotGraph(response.data)
     }).catch(function (e) {
@@ -425,7 +426,7 @@ export default class extends Controller {
     showLoading(this.loadingDataTarget, elementsToToggle)
 
     const _this = this
-    const url = `/api/charts/propagation/${this.chartType}?extras=${this.syncSources.join('|')}&bin=${this.selectedInterval()}`
+    const url = `/api/charts/propagation/${this.chartType}?extras=${this.syncSources.join('|')}&bin=${this.selectedInterval()}&axis=${this.selectedAxis()}`
     axios.get(url).then(function (response) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       if (!response.data.x || response.data.x.length === 0) {
@@ -448,29 +449,29 @@ export default class extends Controller {
     const _this = this
 
     let yLabel = this.chartType === 'votes-receive-time' ? 'Time Difference (Milliseconds)' : 'Delay (s)'
+    let xLabel = this.selectedAxis() === 'height' ? 'Height' : 'Time'
     let options = {
       legend: 'always',
       includeZero: true,
       legendFormatter: _this.propagationLegendFormatter,
       labelsDiv: _this.labelsTarget,
       ylabel: yLabel,
-      xlabel: 'Height',
-      labels: ['Height', yLabel],
+      xlabel: xLabel,
+      labels: [xLabel, yLabel],
       labelsKMB: true,
       drawPoints: true,
       strokeWidth: 0.0,
       showRangeSelector: true
     }
-
-    const chartData = zipXYZData(data, true)
-
+    const chartData = zipXYZData(data, this.selectedAxis() === 'height')
     _this.chartsView = new Dygraph(_this.chartsViewTarget, chartData, options)
   }
 
   plotExtDataGraph (data) {
     const _this = this
 
-    const labels = ['Height']
+    let xLabel = this.selectedAxis() === 'height' ? 'Height' : 'Time'
+    const labels = [xLabel]
     this.syncSources.forEach(source => {
       labels.push(source)
     })
@@ -480,7 +481,7 @@ export default class extends Controller {
       legendFormatter: legendFormatter,
       labelsDiv: _this.labelsTarget,
       ylabel: 'Block Time Variance (seconds)',
-      xlabel: 'Height',
+      xlabel: xLabel,
       labels: labels,
       labelsKMB: true,
       drawPoints: true,
@@ -493,7 +494,7 @@ export default class extends Controller {
       }
     }
 
-    const chartData = zipXYZData(data, true)
+    const chartData = zipXYZData(data, this.selectedAxis() === 'height')
 
     _this.chartsView = new Dygraph(_this.chartsViewTarget, chartData, options)
   }
@@ -540,6 +541,14 @@ export default class extends Controller {
   setInterval (e) {
     const option = e.currentTarget.dataset.option
     setActiveOptionBtn(option, this.intervalTargets)
+    this.plotSelectedChart()
+  }
+
+  selectedAxis () { return selectedOption(this.axisOptionTargets) }
+
+  setAxis (e) {
+    const option = e.currentTarget.dataset.option
+    setActiveOptionBtn(option, this.axisOptionTargets)
     this.plotSelectedChart()
   }
 }

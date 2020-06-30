@@ -189,7 +189,7 @@ func (s *Server) registerHandlers(r *chi.Mux) {
 	r.Get("/api/snapshot/node-countries", s.nodeCountries)
 
 	r.With(syncDataType).Get("/api/sync/{dataType}", s.sync)
-	r.With(chartTypeCtx).With(chartAxisTypeCtx).Get("/api/charts/{chartType}/{chartAxisType}", s.chartTypeData)
+	r.With(chartTypeCtx).With(chartDataTypeCtx).Get("/api/charts/{chartType}/{chartDataType}", s.chartTypeData)
 	r.With(chartTypeCtx).Get("/api/charts/{chartType}", s.chartTypeData)
 }
 
