@@ -731,24 +731,25 @@ func appendBlockPropagationChart(charts *cache.ChartData, data interface{}) erro
 	propagationSet := data.(propagationSet)
 
 	if len(propagationSet.height) == 0 {
+		log.Info("No propagation records found. Ensure that external sources are configured.")
 		return nil
 	}
 	
-	if err := charts.AppendChartUintsAxis(cache.Propagation + "-" + string(cache.HeightAxis), 
-		propagationSet.height); err !=  nil {
+	key := fmt.Sprintf("%s-%s", cache.Propagation, cache.HeightAxis)
+	if err := charts.AppendChartUintsAxis(key, propagationSet.height); err !=  nil {
 		return err 
 	}
-	if err := charts.AppendChartFloatsAxis(cache.Propagation + "-" + string(cache.BlockTimestamp), 
-		propagationSet.blockDelay); err !=  nil {
+	key = fmt.Sprintf("%s-%s", cache.Propagation, cache.BlockTimestamp)
+	if err := charts.AppendChartFloatsAxis(key, propagationSet.blockDelay); err !=  nil {
 		return err 
 	}
-	if err := charts.AppendChartFloatsAxis(cache.Propagation + "-" + string(cache.VotesReceiveTime), 
-		propagationSet.voteReceiveTimeDeviations); err !=  nil {
+	key = fmt.Sprintf("%s-%s", cache.Propagation, cache.VotesReceiveTime)
+	if err := charts.AppendChartFloatsAxis(key, propagationSet.voteReceiveTimeDeviations); err !=  nil {
 		return err 
 	}
 	for source, deviations := range propagationSet.blockPropagation {
-		if err := charts.AppendChartFloatsAxis(cache.Propagation + "-" + string(cache.BlockPropagation) + "-" + source, 
-			deviations); err !=  nil {
+		key = fmt.Sprintf("%s-%s-%s", cache.Propagation, cache.BlockPropagation, source)
+		if err := charts.AppendChartFloatsAxis(key, deviations); err !=  nil {
 			return err 
 		}
 	}

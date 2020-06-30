@@ -8,7 +8,7 @@ import {
   hideLoading,
   displayPillBtnOption,
   setActiveRecordSetBtn,
-  legendFormatter, insertOrUpdateQueryParam, updateQueryParam, trimUrl, zipXYZData
+  legendFormatter, insertOrUpdateQueryParam, updateQueryParam, trimUrl, zipXYZData, selectedOption
 } from '../utils'
 import dompurify from 'dompurify'
 
@@ -21,11 +21,13 @@ export default class extends Controller {
   static get targets () {
     return [
       'nextPageButton', 'previousPageButton', 'recordSetSelector', 'bothRecordSetOption',
-      'tableRecordSetOptions', 'selectedRecordSet', 'bothRecordWrapper', 'selectedNum', 'numPageWrapper', 'paginationButtonsWrapper',
+      'tableRecordSetOptions', 'selectedRecordSet', 'bothRecordWrapper',
+      'selectedNum', 'numPageWrapper', 'paginationButtonsWrapper',
       'chartTypesWrapper', 'chartType',
       'tablesWrapper', 'table', 'blocksTbody', 'votesTbody', 'chartWrapper', 'chartsView', 'labels', 'messageView',
       'blocksTable', 'blocksTableBody', 'blocksRowTemplate', 'votesTable', 'votesTableBody', 'votesRowTemplate',
-      'totalPageCount', 'currentPage', 'viewOptionControl', 'viewOption', 'loadingData'
+      'totalPageCount', 'currentPage', 'viewOptionControl', 'viewOption', 'loadingData',
+      'graphIntervalWrapper', 'interval'
     ]
   }
 
@@ -67,6 +69,7 @@ export default class extends Controller {
     show(this.paginationButtonsWrapperTarget)
     show(this.numPageWrapperTarget)
     hide(this.chartWrapperTarget)
+    hide(this.graphIntervalWrapperTarget)
     show(this.tablesWrapperTarget)
     setActiveRecordSetBtn(this.selectedRecordSet, this.selectedRecordSetTargets)
     displayPillBtnOption(this.selectedViewOption, this.selectedRecordSetTargets)
@@ -84,6 +87,7 @@ export default class extends Controller {
     hide(this.paginationButtonsWrapperTarget)
     hide(this.tablesWrapperTarget)
     show(this.chartWrapperTarget)
+    show(this.graphIntervalWrapperTarget)
     setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
     setActiveRecordSetBtn(this.selectedRecordSet, this.selectedRecordSetTargets)
     displayPillBtnOption(this.selectedViewOption, this.selectedRecordSetTargets)
@@ -398,7 +402,7 @@ export default class extends Controller {
     showLoading(this.loadingDataTarget, elementsToToggle)
 
     const _this = this
-    axios.get(`/api/charts/propagation/${this.chartType}`).then(function (response) {
+    axios.get(`/api/charts/propagation/${this.chartType}?bin=${this.selectedInterval()}`).then(function (response) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       _this.plotGraph(response.data)
     }).catch(function (e) {
@@ -421,7 +425,8 @@ export default class extends Controller {
     showLoading(this.loadingDataTarget, elementsToToggle)
 
     const _this = this
-    axios.get(`/api/charts/propagation/${this.chartType}?extras=${this.syncSources.join('|')}`).then(function (response) {
+    const url = `/api/charts/propagation/${this.chartType}?extras=${this.syncSources.join('|')}&bin=${this.selectedInterval()}`
+    axios.get(url).then(function (response) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       if (!response.data.x || response.data.x.length === 0) {
         _this.messageViewTarget.innerHTML = `<p class="text-danger" style="text-align: center;">
@@ -469,7 +474,6 @@ export default class extends Controller {
     this.syncSources.forEach(source => {
       labels.push(source)
     })
-    console.log(labels)
     let options = {
       legend: 'always',
       includeZero: true,
@@ -491,7 +495,6 @@ export default class extends Controller {
 
     const chartData = zipXYZData(data, true)
 
-    console.log(chartData)
     _this.chartsView = new Dygraph(_this.chartsViewTarget, chartData, options)
   }
 
@@ -530,5 +533,13 @@ export default class extends Controller {
 
     dompurify.sanitize(html)
     return html
+  }
+
+  selectedInterval () { return selectedOption(this.intervalTargets) }
+
+  setInterval (e) {
+    const option = e.currentTarget.dataset.option
+    setActiveOptionBtn(option, this.intervalTargets)
+    this.plotSelectedChart()
   }
 }

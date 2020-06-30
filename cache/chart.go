@@ -1236,13 +1236,17 @@ func propagation(ctx context.Context, charts *ChartData, axis axisType, bin binL
 
 func blockPropagation(charts *ChartData, syncSources ...string) ([]byte, error) {
 	var heights ChartUints
-	if err := charts.ReadVal(Propagation+"-"+string(HeightAxis), &heights); err != nil {
+	key := fmt.Sprintf("%s-%s", Propagation, HeightAxis)
+	if err := charts.ReadVal(key, &heights); err != nil {
+		log.Info(err, key)
 		return nil, err
 	}
 	var deviations = []Lengther{heights}
 	for _, source := range syncSources {
 		var d ChartFloats
-		if err := charts.ReadVal(Propagation+"-"+string(BlockPropagation)+"-"+source, &d); err != nil {
+		key = fmt.Sprintf("%s-%s-%s", Propagation, BlockPropagation, source)
+		if err := charts.ReadVal(key, &d); err != nil {
+			log.Info(err, key)
 			return nil, err
 		}
 		deviations = append(deviations, d)

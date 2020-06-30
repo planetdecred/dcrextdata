@@ -10,95 +10,118 @@
 
             <div class="control-wrapper">
 
-                <div class="d-flex flex-row justify-content-center bottom-ctl">
+                <div class="d-flex flex-row bottom-ctl">
 
-                    <div class="chart-control ml-auto mr-3 my-2" data-target="propagation.viewOptionControl"
-                         data-initial-value="{{ .propagation.selectedViewOption }}">
-                        <ul class="nav nav-pills">
-                            <li class="nav-item">
-                                <a
-                                        class="nav-link {{ if eq .propagation.selectedViewOption "chart"}} active {{ end }}"
-                                        href="javascript:void(0);"
-                                        data-target="propagation.viewOption"
-                                        data-action="click->propagation#setChart"
-                                        data-option="chart"
-                                >Chart</a>
-                            </li>
-                            <li class="nav-item">
-                                <a
-                                        class="nav-link {{ if eq .propagation.selectedViewOption "table"}} active {{ end }}"
-                                        href="javascript:void(0);"
-                                        data-target="propagation.viewOption"
-                                        data-action="click->propagation#setTable"
-                                        data-option="table"
-                                >Table</a>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div class="d-flex chart-control-wrapper mr-auto p-0 my-2"
-                         data-target="propagation.recordSetSelector">
-                        <div class="chart-control propagation-control mx-auto">
-                            <ul class="nav nav-pills {{ if eq .propagation.selectedViewOption "table"}} d-none {{ end }}"
-                                data-target="propagation.tableRecordSetOptions"
-                                data-initial-value="{{ .propagation.selectedRecordSet }}">
-                                <li class="nav-item" data-target="propagation.bothRecordWrapper">
-                                    <a
-                                            data-target="propagation.selectedRecordSet"
-                                            data-action="click->propagation#setBothRecordSet"
-                                            class="nav-link active"
+                    <div class="chart-control-wrapper ml-auto mr-3 my-2">
+                        <div class="chart-control-label">View</div>
+                        <div class="chart-control ml-auto mr-3" data-target="propagation.viewOptionControl"
+                            data-initial-value="{{ .propagation.selectedViewOption }}">
+                            <ul class="nav nav-pills">
+                                <li class="nav-item">
+                                    <a class="nav-link {{ if eq .propagation.selectedViewOption "chart"}} active {{ end }}"
                                             href="javascript:void(0);"
-                                            data-option="both">Both</a>
+                                            data-target="propagation.viewOption"
+                                            data-action="click->propagation#setChart"
+                                            data-option="chart"
+                                    >Chart</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a
-                                            data-target="propagation.selectedRecordSet"
-                                            data-action="click->propagation#setBlocksRecordSet"
-                                            class="nav-link"
+                                    <a class="nav-link {{ if eq .propagation.selectedViewOption "table"}} active {{ end }}"
                                             href="javascript:void(0);"
-                                            data-option="blocks">Blocks</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a
-                                            data-target="propagation.selectedRecordSet"
-                                            data-action="click->propagation#setVotesRecordSet"
-                                            class="nav-link"
-                                            href="javascript:void(0);"
-                                            data-option="votes">Votes</a>
-                                </li>
-                            </ul>
-
-                            <ul class="nav nav-pills {{ if eq .propagation.selectedViewOption "chart"}} d-none {{ end }}"
-                                data-target="propagation.chartTypesWrapper"
-                                data-sync-sources="{{ .propagation.syncSources }}"
-                                data-initial-value="{{ .propagation.chartType }}">
-                                <li class="nav-item">
-                                    <a
-                                            data-target="propagation.chartType"
-                                            data-action="click->propagation#changeChartType"
-                                            class="nav-link active"
-                                            href="javascript:void(0);"
-                                            data-option="block-propagation">Block Propagation</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a
-                                            data-target="propagation.chartType"
-                                            data-action="click->propagation#changeChartType"
-                                            class="nav-link"
-                                            href="javascript:void(0);"
-                                            data-option="block-timestamp">Block Timestamp</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a
-                                            data-target="propagation.chartType"
-                                            data-action="click->propagation#changeChartType"
-                                            class="nav-link"
-                                            href="javascript:void(0);"
-                                            data-option="votes-receive-time">Votes Receive Time</a>
+                                            data-target="propagation.viewOption"
+                                            data-action="click->propagation#setTable"
+                                            data-option="table"
+                                    >Table</a>
                                 </li>
                             </ul>
                         </div>
                     </div>
+
+                    <div class="d-flex mr-auto my-2">
+                        <div class="chart-control-wrapper p-0 mr-3"
+                            data-target="propagation.recordSetSelector">
+                            <div class="chart-control-label">Data Type</div>
+                            <div class="chart-control propagation-control mx-auto">
+                                <ul class="nav nav-pills {{ if eq .propagation.selectedViewOption "table"}} d-none {{ end }}"
+                                    data-target="propagation.tableRecordSetOptions"
+                                    data-initial-value="{{ .propagation.selectedRecordSet }}">
+                                    <li class="nav-item" data-target="propagation.bothRecordWrapper">
+                                        <a data-target="propagation.selectedRecordSet"
+                                                data-action="click->propagation#setBothRecordSet"
+                                                class="nav-link active"
+                                                href="javascript:void(0);"
+                                                data-option="both">Both</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a data-target="propagation.selectedRecordSet"
+                                                data-action="click->propagation#setBlocksRecordSet"
+                                                class="nav-link"
+                                                href="javascript:void(0);"
+                                                data-option="blocks">Blocks</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a data-target="propagation.selectedRecordSet"
+                                                data-action="click->propagation#setVotesRecordSet"
+                                                class="nav-link"
+                                                href="javascript:void(0);"
+                                                data-option="votes">Votes</a>
+                                    </li>
+                                </ul>
+
+                                <ul class="nav nav-pills {{ if eq .propagation.selectedViewOption "chart"}} d-none {{ end }}"
+                                    data-target="propagation.chartTypesWrapper"
+                                    data-sync-sources="{{ .propagation.syncSources }}"
+                                    data-initial-value="{{ .propagation.chartType }}">
+                                    <li class="nav-item">
+                                        <a data-target="propagation.chartType"
+                                                data-action="click->propagation#changeChartType"
+                                                class="nav-link active"
+                                                href="javascript:void(0);"
+                                                data-option="block-propagation">Block Propagation</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a data-target="propagation.chartType"
+                                                data-action="click->propagation#changeChartType"
+                                                class="nav-link"
+                                                href="javascript:void(0);"
+                                                data-option="block-timestamp">Block Timestamp</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a data-target="propagation.chartType"
+                                                data-action="click->propagation#changeChartType"
+                                                class="nav-link"
+                                                href="javascript:void(0);"
+                                                data-option="votes-receive-time">Votes Receive Time</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div data-target="propagation.graphIntervalWrapper" 
+                            class="control-div p-0 chart-control-wrapper mr-2 mb-1">
+                            <div class="chart-control-label">Group By</div>
+                            <div class="chart-control">
+                                <ul class="nav nav-pills">
+                                    <li class="nav-item">
+                                        <a data-target="propagation.interval"
+                                        data-action="click->propagation#setInterval" class="nav-link active"
+                                        href="javascript:void(0);" data-option="day">Day</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a data-target="propagation.interval"
+                                        data-action="click->propagation#setInterval" class="nav-link"
+                                        href="javascript:void(0);" data-option="hour">Hour</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a data-target="propagation.interval"
+                                        data-action="click->propagation#setInterval" class="nav-link"
+                                        href="javascript:void(0);" data-option="default">None</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
