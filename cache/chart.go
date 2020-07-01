@@ -220,6 +220,10 @@ func (charts ChartFloats) Normalize() Lengther {
 
 // Avg is the average value of a segment of the dataset.
 func (data ChartFloats) Avg(s, e int) float64 {
+	if s >= data.Length() || e >= data.Length() {
+		return 0
+	}
+	
 	if e <= s {
 		return 0
 	}
@@ -668,6 +672,9 @@ func (data ChartUints) Normalize() Lengther {
 
 // Avg is the average value of a segment of the dataset.
 func (data ChartUints) Avg(s, e int) uint64 {
+	if s >= data.Length() || e >= data.Length() {
+		return 0
+	}
 	if e <= s {
 		return 0
 	}
