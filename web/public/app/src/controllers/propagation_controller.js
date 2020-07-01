@@ -8,9 +8,12 @@ import {
   hideLoading,
   displayPillBtnOption,
   setActiveRecordSetBtn,
-  legendFormatter, insertOrUpdateQueryParam, updateQueryParam, trimUrl, zipXYZData, selectedOption
+  legendFormatter, insertOrUpdateQueryParam, updateQueryParam, trimUrl, zipXYZData, selectedOption, updateZoomSelector
 } from '../utils'
+import TurboQuery from '../helpers/turbolinks_helper'
 import dompurify from 'dompurify'
+import Zoom from '../helpers/zoom_helper'
+import { animationFrame } from '../helpers/animation_helper'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
 
@@ -27,7 +30,7 @@ export default class extends Controller {
       'tablesWrapper', 'table', 'blocksTbody', 'votesTbody', 'chartWrapper', 'chartsView', 'labels', 'messageView',
       'blocksTable', 'blocksTableBody', 'blocksRowTemplate', 'votesTable', 'votesTableBody', 'votesRowTemplate',
       'totalPageCount', 'currentPage', 'viewOptionControl', 'viewOption', 'loadingData',
-      'graphIntervalWrapper', 'interval', 'axisOption'
+      'graphIntervalWrapper', 'interval', 'axisOption', 'zoomSelector', 'zoomOption'
     ]
   }
 
@@ -40,6 +43,14 @@ export default class extends Controller {
     this.selectedViewOption = this.viewOptionControlTarget.dataset.initialValue
     this.selectedRecordSet = this.tableRecordSetOptionsTarget.dataset.initialValue
     this.chartType = this.chartTypesWrapperTarget.dataset.initialValue
+
+    this.query = new TurboQuery()
+    this.settings = TurboQuery.nullTemplate([
+      'zoom', 'bin', 'axis', 'dataType', 'page', 'view-option', 'interval'
+    ])
+
+    this.zoomCallback = this._zoomCallback.bind(this)
+    this.drawCallback = this._drawCallback.bind(this)
 
     const syncSources = this.chartTypesWrapperTarget.dataset.syncSources
     if (syncSources) {
@@ -471,6 +482,22 @@ export default class extends Controller {
     }
     const chartData = zipXYZData(data, this.selectedAxis() === 'height')
     _this.chartsView = new Dygraph(_this.chartsViewTarget, chartData, options)
+    if (this.selectedAxis() === 'time') {
+      _this.validateZoom()
+      let minDate, maxDate
+      data.x.forEach(unixTime => {
+        let date = new Date(unixTime * 1000)
+        if (minDate === undefined || date < minDate) {
+          minDate = date
+        }
+
+        if (maxDate === undefined || date > maxDate) {
+          maxDate = date
+        }
+      })
+      updateZoomSelector(_this.zoomOptionTargets, minDate, maxDate)
+      show(this.zoomSelectorTarget)
+    }
   }
 
   plotExtDataGraph (data) {
@@ -540,6 +567,65 @@ export default class extends Controller {
 
     dompurify.sanitize(html)
     return html
+  }
+
+  async validateZoom () {
+    await animationFrame()
+    await animationFrame()
+    let oldLimits = this.limits || this.chartsView.xAxisExtremes()
+    this.limits = this.chartsView.xAxisExtremes()
+    var selected = this.selectedZoom()
+    if (selected) {
+      this.lastZoom = Zoom.validate(selected, this.limits, 1, 1)
+    } else {
+      this.lastZoom = Zoom.project(this.settings.zoom, oldLimits, this.limits)
+    }
+    if (this.lastZoom) {
+      this.chartsView.updateOptions({
+        dateWindow: [this.lastZoom.start, this.lastZoom.end]
+      })
+    }
+    if (selected !== this.settings.zoom) {
+      this._zoomCallback(this.lastZoom.start, this.lastZoom.end)
+    }
+    await animationFrame()
+    this.chartsView.updateOptions({
+      zoomCallback: this.zoomCallback,
+      drawCallback: this.drawCallback
+    })
+  }
+
+  _zoomCallback (start, end) {
+    this.lastZoom = Zoom.object(start, end)
+    this.settings.zoom = Zoom.encode(this.lastZoom)
+    let ex = this.chartsView.xAxisExtremes()
+    let option = Zoom.mapKey(this.settings.zoom, ex, 1)
+    setActiveOptionBtn(option, this.zoomOptionTargets)
+  }
+
+  _drawCallback (graph, first) {
+    if (first) return
+    var start, end
+    [start, end] = this.chartsView.xAxisRange()
+    if (start === end) return
+    if (this.lastZoom.start === start) return // only handle slide event.
+    this._zoomCallback(start, end)
+  }
+
+  selectedZoom () { return selectedOption(this.zoomOptionTargets) }
+
+  setZoom (e) {
+    var target = e.srcElement || e.target
+    var option
+    if (!target) {
+      let ex = this.chartsView.xAxisExtremes()
+      option = Zoom.mapKey(e, ex, 1)
+    } else {
+      option = target.dataset.option
+    }
+    setActiveOptionBtn(option, this.zoomOptionTargets)
+    if (!target) return // Exit if running for the first time
+    this.validateZoom()
   }
 
   selectedInterval () { return selectedOption(this.intervalTargets) }
