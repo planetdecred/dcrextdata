@@ -12,9 +12,11 @@ import {
   hideAll,
   trimUrl,
   csv,
-  notifyFailure
+  notifyFailure,
+  updateZoomSelector
 } from '../utils'
 
+import TurboQuery from '../helpers/turbolinks_helper'
 import { animationFrame } from '../helpers/animation_helper'
 import Zoom from '../helpers/zoom_helper'
 import humanize from '../helpers/humanize_helper'
@@ -43,7 +45,7 @@ export default class extends Controller {
       'btnWrapper', 'nextPageButton', 'previousPageButton', 'tableTitle', 'tableWrapper', 'tableHeader', 'tableBody',
       'snapshotRowTemplate', 'userAgentRowTemplate', 'countriesRowTemplate', 'totalPageCount', 'currentPage', 'loadingData',
       'dataTypeSelector', 'dataType', 'chartWrapper', 'chartSourceWrapper', 'chartSource', 'chartsViewWrapper', 'chartSourceList',
-      'allChartSource', 'graphIntervalWrapper', 'interval'
+      'allChartSource', 'graphIntervalWrapper', 'interval', 'zoomSelector', 'zoomOption'
     ]
   }
 
@@ -53,6 +55,11 @@ export default class extends Controller {
     this.selectedViewOption = this.data.get('viewOption')
     this.dataType = this.data.get('dataType') || dataTypeNodes
     setActiveOptionBtn(this.dataType, this.dataTypeTargets)
+
+    this.query = new TurboQuery()
+    this.settings = TurboQuery.nullTemplate([
+      'zoom', 'bin', 'axis', 'dataType', 'page', 'view-option', 'interval'
+    ])
 
     this.zoomCallback = this._zoomCallback.bind(this)
     this.drawCallback = this._drawCallback.bind(this)
@@ -351,14 +358,6 @@ export default class extends Controller {
     this.validateZoom()
   }
 
-  selectedInterval () { return selectedOption(this.intervalTargets) }
-
-  setInterval (e) {
-    const option = e.currentTarget.dataset.option
-    setActiveOptionBtn(option, this.intervalTargets)
-    this.reloadChat()
-  }
-
   async validateZoom () {
     await animationFrame()
     await animationFrame()
@@ -400,6 +399,14 @@ export default class extends Controller {
     if (start === end) return
     if (this.lastZoom.start === start) return // only handle slide event.
     this._zoomCallback(start, end)
+  }
+
+  selectedInterval () { return selectedOption(this.intervalTargets) }
+
+  setInterval (e) {
+    const option = e.currentTarget.dataset.option
+    setActiveOptionBtn(option, this.intervalTargets)
+    this.reloadChat()
   }
 
   async reloadChat () {
@@ -478,6 +485,20 @@ export default class extends Controller {
       }
     )
     hideLoading(this.loadingDataTarget)
+    this.validateZoom()
+    let minDate, maxDate
+    result.x.forEach(unixTime => {
+      let date = new Date(unixTime * 1000)
+      if (minDate === undefined || date < minDate) {
+        minDate = date
+      }
+
+      if (maxDate === undefined || date > maxDate) {
+        maxDate = date
+      }
+    })
+    updateZoomSelector(this.zoomOptionTargets, minDate, maxDate)
+    show(this.zoomSelectorTarget)
   }
 
   drawUserAgentsChart (result) {
@@ -505,6 +526,20 @@ export default class extends Controller {
       options
     )
     hideLoading(this.loadingDataTarget)
+    this.validateZoom()
+    let minDate, maxDate
+    result.x.forEach(unixTime => {
+      let date = new Date(unixTime * 1000)
+      if (minDate === undefined || date < minDate) {
+        minDate = date
+      }
+
+      if (maxDate === undefined || date > maxDate) {
+        maxDate = date
+      }
+    })
+    updateZoomSelector(this.zoomOptionTargets, minDate, maxDate)
+    show(this.zoomSelectorTarget)
   }
 
   drawCountriesChart (result) {
@@ -533,6 +568,20 @@ export default class extends Controller {
       options
     )
     hideLoading(this.loadingDataTarget)
+    this.validateZoom()
+    let minDate, maxDate
+    result.x.forEach(unixTime => {
+      let date = new Date(unixTime * 1000)
+      if (minDate === undefined || date < minDate) {
+        minDate = date
+      }
+
+      if (maxDate === undefined || date > maxDate) {
+        maxDate = date
+      }
+    })
+    updateZoomSelector(this.zoomOptionTargets, minDate, maxDate)
+    show(this.zoomSelectorTarget)
   }
 
   drawInitialGraph () {
