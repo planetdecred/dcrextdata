@@ -653,7 +653,7 @@ export default class extends Controller {
 
   selectedAxis () {
     let axis = selectedOption(this.axisOptionTargets)
-    if (axis) {
+    if (!axis) {
       axis = 'time'
     }
     return axis
