@@ -528,8 +528,23 @@ export default class extends Controller {
     }
 
     const chartData = zipXYZData(data, this.selectedAxis() === 'height')
+    this.chartsView = new Dygraph(_this.chartsViewTarget, chartData, options)
+    if (this.selectedAxis() === 'time') {
+      this.validateZoom()
+      let minDate, maxDate
+      data.x.forEach(unixTime => {
+        let date = new Date(unixTime * 1000)
+        if (minDate === undefined || date < minDate) {
+          minDate = date
+        }
 
-    _this.chartsView = new Dygraph(_this.chartsViewTarget, chartData, options)
+        if (maxDate === undefined || date > maxDate) {
+          maxDate = date
+        }
+      })
+      updateZoomSelector(this.zoomOptionTargets, minDate, maxDate)
+      show(this.zoomSelectorTarget)
+    }
   }
 
   propagationLegendFormatter (data) {
@@ -636,7 +651,13 @@ export default class extends Controller {
     this.plotSelectedChart()
   }
 
-  selectedAxis () { return selectedOption(this.axisOptionTargets) }
+  selectedAxis () {
+    let axis = selectedOption(this.axisOptionTargets)
+    if (axis) {
+      axis = 'time'
+    }
+    return axis
+  }
 
   setAxis (e) {
     const option = e.currentTarget.dataset.option
