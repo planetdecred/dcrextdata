@@ -1125,16 +1125,18 @@ func (charts ChartData) lengthenTime(key string, txn *badger.Txn) (dayIntervals 
 	offset := 0
 	// If there is day or more worth of new data, append to the Days zoomSet by
 	// finding the first and last+1 blocks of each new day, and taking averages
-	// or sums of the blocks in the interval.
+	// or sums of the blocks in the interval.  0.06096031
 	if end > start+aDay {
 		next := start + aDay
 		startIdx := 0
 		for i, t := range dates[offset:] {
 			if t >= next {
 				// Once passed the next midnight, prepare a day window by storing the
-				// range of indices.
+				// range of indices. 0, 1, 2, 3, 4, 5
 				dayIntervals = append(dayIntervals, [2]int{startIdx + offset, i + offset})
+				// check for records b/4 appending.
 				days = append(days, start)
+				next = midnight(t)
 				start = next
 				next += aDay
 				startIdx = i
@@ -1169,6 +1171,7 @@ func (charts ChartData) lengthenTime(key string, txn *badger.Txn) (dayIntervals 
 				// range of indices.
 				hourIntervals = append(hourIntervals, [2]int{startIdx + offset, i + offset})
 				hours = append(hours, start)
+				next = hourStamp(t)
 				start = next
 				next += anHour
 				startIdx = i
