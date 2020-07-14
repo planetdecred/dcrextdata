@@ -289,7 +289,7 @@ func (data chartNullIntsPointer) IsZero(index int) bool {
 	if index >= data.Length() {
 		return false
 	}
-	return data.Items[index].HasValue
+	return data.Items[index].Value.IsZero()
 }
 
 func (data chartNullIntsPointer) Remove(index int) Lengther {
@@ -315,11 +315,13 @@ type nullUint64Pointer struct {
 	Value    null.Uint64
 }
 
-func (data chartNullIntsPointer) toChartNullUint() ChartNullUints {
+func (data *chartNullIntsPointer) toChartNullUint() ChartNullUints {
 	var result ChartNullUints
 	for _, item := range data.Items {
 		if item.HasValue {
-			result = append(result, &item.Value)
+			result = append(result, &null.Uint64{
+				Uint64: item.Value.Uint64, Valid: item.HasValue,
+			})
 		} else {
 			result = append(result, nil)
 		}
@@ -475,7 +477,7 @@ func (data chartNullFloatsPointer) IsZero(index int) bool {
 	if index >= data.Length() {
 		return false
 	}
-	return !data.Items[index].HasValue
+	return data.Items[index].Value.IsZero()
 }
 
 func (data chartNullFloatsPointer) Remove(index int) Lengther {
@@ -495,11 +497,13 @@ func (data chartNullFloatsPointer) snip(max int) chartNullFloatsPointer {
 	return data
 }
 
-func (data chartNullFloatsPointer) toChartNullFloats() ChartNullFloats {
+func (data *chartNullFloatsPointer) toChartNullFloats() ChartNullFloats {
 	var result ChartNullFloats
 	for _, item := range data.Items {
 		if item.HasValue {
-			result = append(result, &item.Value)
+			result = append(result, &null.Float64{
+				Float64: item.Value.Float64, Valid: item.Value.Valid,
+			})
 		} else {
 			result = append(result, nil)
 		}
@@ -724,7 +728,7 @@ type ChartData struct {
 	EnableCache bool
 
 	cacheMtx  sync.RWMutex
-	db        *badger.DB
+	DB        *badger.DB
 	cache     map[string]*cachedChart
 	updaters  map[string]ChartUpdater
 	retrivers map[string]Retriver
@@ -866,7 +870,9 @@ func (charts *ChartData) Update(ctx context.Context, tags ...string) error {
 			} else {
 				charts.mtx.Lock()
 				if stateID != charts.cacheID(updater.Tag) {
-					err = fmt.Errorf("state change detected during charts %s update. aborting update", updater.Tag)
+					if updater.Tag != VSP {
+						err = fmt.Errorf("state change detected during charts %s update. aborting update", updater.Tag)
+					}
 				} else {
 					err = updater.Appender(charts, rows)
 					if err != nil {
@@ -874,6 +880,9 @@ func (charts *ChartData) Update(ctx context.Context, tags ...string) error {
 					}
 				}
 				charts.mtx.Unlock()
+			}
+			if updater.Tag != VSP {
+				completed = true
 			}
 			completed = done
 			cancel()
@@ -911,7 +920,7 @@ func NewChartData(ctx context.Context, enableCache bool, syncSources,
 	return &ChartData{
 		ctx:           ctx,
 		EnableCache:   enableCache,
-		db:            db,
+		DB:            db,
 		cache:         make(map[string]*cachedChart),
 		updaters:      make(map[string]ChartUpdater),
 		retrivers:     make(map[string]Retriver),
@@ -963,7 +972,7 @@ func (charts *ChartData) getCache(chartID string, axis axisType) (data *cachedCh
 	cacheID = charts.cacheID(chartID)
 	data, found = charts.cache[ck]
 
-	err := charts.db.View(func(txn *badger.Txn) error {
+	err := charts.DB.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte(ck))
 		if err != nil {
 			return err
@@ -998,7 +1007,7 @@ func (charts *ChartData) cacheChart(chartID string, version uint64, axis axisTyp
 	if err := e.Encode(c); err != nil {
 		log.Errorf("Error caching cart, %s, %s", chartID, err.Error())
 	}
-	err := charts.db.Update(func(txn *badger.Txn) error {
+	err := charts.DB.Update(func(txn *badger.Txn) error {
 		err := txn.Set([]byte(ck), b.Bytes())
 		return err
 	})
@@ -1010,7 +1019,7 @@ func (charts *ChartData) cacheChart(chartID string, version uint64, axis axisTyp
 
 func (charts *ChartData) removeCache(chartID string, axis axisType) {
 	ck := cacheKey(chartID, axis)
-	err := charts.db.Update(func(txn *badger.Txn) error {
+	err := charts.DB.Update(func(txn *badger.Txn) error {
 		err := txn.Delete([]byte(ck))
 		return err
 	})
@@ -1134,14 +1143,16 @@ func (charts *ChartData) trim(sets ...Lengther) []Lengther {
 		var isZero bool = true
 	out:
 		for j := 1; j < len(sets); j++ {
-			if !sets[j].IsZero(i) {
+			if sets[j] != nil && !sets[j].IsZero(i) {
 				isZero = false
 				break out
 			}
 		}
 		if isZero {
 			for j := 0; j < len(sets); j++ {
-				sets[j] = sets[j].Remove(i)
+				if sets[j] != nil {
+					sets[j] = sets[j].Remove(i)
+				}
 			}
 		}
 	}
@@ -1338,33 +1349,41 @@ func MakePowChart(charts *ChartData, dates ChartUints, deviations []ChartNullUin
 }
 
 func makeVspChart(ctx context.Context, charts *ChartData, dataType, axis axisType, bin binLevel, vsps ...string) ([]byte, error) {
-	// var dates ChartUints
-	// if err := charts.ReadAxis(VSP+"-"+string(TimeAxis), &dates); err != nil {
-	// 	return nil, err
-	// }
+	var dates ChartUints
+	if err := charts.ReadVal(VSP+"-"+string(TimeAxis), &dates); err != nil {
+		return nil, err
+	}
 
-	// var deviations = make([]ChartNullData, len(vsps))
+	var deviations = make([]ChartNullData, len(vsps))
 
-	// for i, s := range vsps {
-	// 	switch axis {
-	// 	case ImmatureAxis, LiveAxis, VotedAxis, MissedAxis, UserCountAxis, UsersActiveAxis:
-	// 		var data chartNullIntsPointer
-	// 		if err := charts.ReadAxis(VSP + "-" + string(axis) + "-" + s, &data); err != nil {
-	// 			return nil, err
-	// 		}
-	// 		deviations[i] = data.toChartNullUint()
+	for i, s := range vsps {
+		var key = fmt.Sprintf("%s-%s-%s", VSP, dataType, s)
+		switch dataType {
+		case ImmatureAxis, LiveAxis, VotedAxis, MissedAxis, UserCountAxis, UsersActiveAxis:
+			var data chartNullIntsPointer
+			if err := charts.ReadVal(key, &data); err != nil {
+				return nil, err
+			}
+			var valid = 0
+			for _, d := range data.Items {
+				if !d.Value.IsZero() {
+					valid++
+				}
+			}
+			deviations[i] = data.toChartNullUint()
 
-	// 	case ProportionLiveAxis, ProportionMissedAxis:
-	// 		var data chartNullFloatsPointer
-	// 		if err := charts.ReadAxis(VSP + "-" + string(axis) + "-" + s, &data); err != nil {
-	// 			return nil, err
-	// 		}
-	// 		deviations[i] = data.toChartNullFloats()
-	// 	}
+		case ProportionLiveAxis, ProportionMissedAxis:
+			var data chartNullFloatsPointer
+			if err := charts.ReadVal(key, &data); err != nil {
+				return nil, err
+			}
+			deviations[i] = data.toChartNullFloats()
+		}
+		
 
-	// }
+	}
 
-	// return MakeVspChart(charts, dates, deviations, vsps)
+	return MakeVspChart(charts, dates, deviations, vsps)
 
 	// Because the dates for vsp tick vary from source to source,
 	// a single date collection cannot be used for all and so

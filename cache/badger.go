@@ -35,7 +35,7 @@ func (charts ChartData) SaveVal(val interface{}, key string) error {
 	if err := e.Encode(val); err != nil {
 		return err
 	}
-	err := charts.db.Update(func(txn *badger.Txn) error {
+	err := charts.DB.Update(func(txn *badger.Txn) error {
 		err := txn.Set([]byte(key), b.Bytes())
 		return err
 	})
@@ -53,14 +53,14 @@ func (charts ChartData) SaveValTx(val interface{}, key string, txn *badger.Txn) 
 
 func (charts ChartData) ClearVLog() {
 again:
-	verr := charts.db.RunValueLogGC(0.7)
+	verr := charts.DB.RunValueLogGC(0.7)
 	if verr == nil {
 		goto again
 	}
 }
 
 func (charts ChartData) ReadVal(key string, result interface{}) error {
-	return charts.db.View(func(txn *badger.Txn) error {
+	return charts.DB.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte(key))
 		if err != nil {
 			return err
@@ -117,6 +117,18 @@ func (charts ChartData) AppendChartNullUintsAxis(key string, set ChartNullUints)
 	return charts.SaveVal(data, key)
 }
 
+func (charts ChartData) AppendChartNullUintsAxisTx(key string, set ChartNullUints, txn *badger.Txn) error {
+	var data chartNullIntsPointer
+	err := charts.ReadValTx(key, &data, txn)
+	if err != nil {
+		if err != badger.ErrKeyNotFound {
+			return err
+		}
+	}
+	data = data.Append(set)
+	return charts.SaveValTx(data, key, txn)
+}
+
 func (charts ChartData) AppendChartFloatsAxis(key string, set ChartFloats) error {
 	var data ChartFloats
 	err := charts.ReadVal(key, &data)
@@ -141,8 +153,20 @@ func (charts ChartData) AppendChartNullFloatsAxis(key string, set ChartNullFloat
 	return charts.SaveVal(data, key)
 }
 
+func (charts ChartData) AppendChartNullFloatsAxisTx(key string, set ChartNullFloats, txn *badger.Txn) error {
+	var data chartNullFloatsPointer
+	err := charts.ReadValTx(key, &data, txn)
+	if err != nil {
+		if err != badger.ErrKeyNotFound {
+			return err
+		}
+	}
+	data = data.Append(set)
+	return charts.SaveValTx(data, key, txn)
+}
+
 func (charts ChartData) NormalizeLength(tags ...string) error {
-	txn := charts.db.NewTransaction(true)
+	txn := charts.DB.NewTransaction(true)
 	defer txn.Discard()
 	
 	for _, chartID := range tags {
@@ -981,7 +1005,7 @@ func (charts ChartData) MempoolTimeTip() uint64 {
 }
 
 func (charts ChartData) lengthenMempool() error {
-	txn := charts.db.NewTransaction(true)
+	txn := charts.DB.NewTransaction(true)
 	defer txn.Discard()
 
 	dayIntervals, hourIntervals, err := charts.lengthenTime(fmt.Sprintf("%s-%s", Mempool, TimeAxis), txn)
@@ -1012,7 +1036,7 @@ func (charts ChartData) lengthenMempool() error {
 }
 
 func (charts ChartData) lengthenPropagation() error {
-	txn := charts.db.NewTransaction(true)
+	txn := charts.DB.NewTransaction(true)
 	defer txn.Discard()
 
 	key := fmt.Sprintf("%s-%s", Propagation, TimeAxis)
@@ -1042,7 +1066,7 @@ func (charts ChartData) lengthenPropagation() error {
 }
 
 func (charts ChartData) lengthenSnapshot() error {
-	txn := charts.db.NewTransaction(true)
+	txn := charts.DB.NewTransaction(true)
 	defer txn.Discard()
 
 	dayIntervals, hourIntervals, err := charts.lengthenTime(fmt.Sprintf("%s-%s", Snapshot, TimeAxis), txn)
