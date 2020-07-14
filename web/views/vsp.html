@@ -9,48 +9,78 @@
             <div class="container-fluid">
                 <div class="control-wrapper">
                     <div class="d-flex flex-row bottom-ctl">
-                        <div class="chart-control ml-auto mr-3 my-2" data-target="vsp.viewOptionControl" data-initial-value="{{ .selectedViewOption }}">
-                            <ul class="nav nav-pills">
-                                <li class="nav-item">
-                                    <a class="nav-link active" href="javascript:void(0);" data-target="vsp.viewOption"
-                                    data-action="click->vsp#setChart" data-option="chart">Chart</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="javascript:void(0);" data-target="vsp.viewOption"
-                                    data-action="click->vsp#setTable" data-option="table">Table</a>
-                                </li>
-                            </ul>
+                        <div class="chart-control-wrapper ml-auto mr-3 my-2">
+                            <div class="chart-control-label">View</div>
+                            <div class="chart-control" data-target="vsp.viewOptionControl" data-initial-value="{{ .selectedViewOption }}">
+                                <ul class="nav nav-pills">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" href="javascript:void(0);" data-target="vsp.viewOption"
+                                        data-action="click->vsp#setChart" data-option="chart">Chart</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="javascript:void(0);" data-target="vsp.viewOption"
+                                        data-action="click->vsp#setTable" data-option="table">Table</a>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
+
                         <div class="mr-auto d-flex my-2">
-                            <div class="control-div p-0 {{ if .chartView }}d-none{{ end }}" data-target="vsp.vspSelectorWrapper">
-                                <div class="control-label">VSP:</div>
-                                <select data-target="vsp.selectedFilter" data-action="change->vsp#selectedFilterChanged"
-                                    class="form-control" style="width: 278px;">
-                                    {{$selectedFilter := .selectedFilter}}
-                                    <option value="All">All</option>
-                                    {{ range $index, $filter := .allVspData}}
-                                    <option value="{{$filter.Name}}" {{ if eq $filter.Name $selectedFilter}} selected
-                                    {{ end }}>{{$filter.Host}} ({{$filter.Name}})</option>
-                                    {{ end }}
-                                </select>
+                            <div class="chart-control-wrapper p-0 {{ if .chartView }}d-none{{ end }}" data-target="vsp.vspSelectorWrapper">
+                                <div class="chart-control-label">VSP</div>
+                                <div class="chart-control control-div p-0">
+                                    <select data-target="vsp.selectedFilter" data-action="change->vsp#selectedFilterChanged"
+                                        class="form-control" style="width: 278px;">
+                                        {{$selectedFilter := .selectedFilter}}
+                                        <option value="All">All</option>
+                                        {{ range $index, $filter := .allVspData}}
+                                        <option value="{{$filter.Name}}" {{ if eq $filter.Name $selectedFilter}} selected
+                                        {{ end }}>{{$filter.Host}} ({{$filter.Name}})</option>
+                                        {{ end }}
+                                    </select>
+                                </div>
                             </div>
 
-                            <div data-target="vsp.graphTypeWrapper" class="control-div p-0 d-none ">
-                                <div class="control-label">Data:</div>
-                                {{ $selectedDataType := .dataType }}
-                                <select data-target="vsp.dataType" data-action="change->vsp#dataTypeChanged" data-initial-value="{{ $selectedDataType }}"
-                                    class="form-control" style="width: 150px;">
-                                    {{ range $index, $dataType := .allDataTypes}}
-                                    <option value="{{$dataType}}" {{ if eq $dataType $selectedDataType}}selected{{ end }}>{{ stringsReplace $dataType "_" " " }}</option>
-                                    {{ end }}
-                                </select>
+                            <div class="chart-control-wrapper p-0 d-none mr-3" data-target="vsp.graphTypeWrapper">
+                                <div class="chart-control-label">Data</div>
+                                <div class="chart-control control-div">
+                                    {{ $selectedDataType := .dataType }}
+                                    <select data-target="vsp.dataType" data-action="change->vsp#dataTypeChanged" data-initial-value="{{ $selectedDataType }}"
+                                        class="form-control" style="width: 150px;">
+                                        {{ range $index, $dataType := .allDataTypes}}
+                                        <option value="{{$dataType}}" {{ if eq $dataType $selectedDataType}}selected{{ end }}>{{ stringsReplace $dataType "_" " " }}</option>
+                                        {{ end }}
+                                    </select>
+                                </div>
                             </div>
 
-                            <div class="chart-control-wrapper mr-2 mb-1" data-target="vsp.zoomSelector">
+                            <div data-target="vsp.graphIntervalWrapper" class="control-div p-0 chart-control-wrapper mr-3">
+                                <div class="chart-control-label">Group By</div>
                                 <div class="chart-control">
-                                    <ul
-                                            class="nav nav-pills"
-                                    >
+                                    <ul class="nav nav-pills">
+                                        <li class="nav-item">
+                                            <a data-target="vsp.interval"
+                                               data-action="click->vsp#setInterval" class="nav-link active"
+                                               href="javascript:void(0);" data-option="day">Day</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a data-target="vsp.interval"
+                                               data-action="click->vsp#setInterval" class="nav-link"
+                                               href="javascript:void(0);" data-option="hour">Hour</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a data-target="vsp.interval"
+                                               data-action="click->vsp#setInterval" class="nav-link"
+                                               href="javascript:void(0);" data-option="default">None</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="chart-control-wrapper mr-2 mb-1 d-none" data-target="vsp.zoomSelector">
+                                <div class="chart-control-label">Zoom</div>
+                                <div class="chart-control">
+                                    <ul class="nav nav-pills">
                                         <li class="nav-item">
                                             <a
                                                     class="nav-link active d-none"

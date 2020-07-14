@@ -25,7 +25,7 @@ export default class extends Controller {
       'graphTypeWrapper', 'dataType', 'pageSizeWrapper', 'viewOptionControl',
       'vspSelectorWrapper', 'chartSourceWrapper', 'allChartSource', 'chartSource',
       'chartWrapper', 'labels', 'chartsView', 'viewOption', 'loadingData',
-      'zoomSelector', 'zoomOption'
+      'zoomSelector', 'zoomOption', 'interval', 'graphIntervalWrapper'
     ]
   }
 
@@ -85,6 +85,7 @@ export default class extends Controller {
     hide(this.graphTypeWrapperTarget)
     hide(this.chartSourceWrapperTarget)
     hide(this.zoomSelectorTarget)
+    hide(this.graphIntervalWrapperTarget)
     show(this.vspTableWrapperTarget)
     hide(this.messageViewTarget)
     show(this.numPageWrapperTarget)
@@ -103,9 +104,9 @@ export default class extends Controller {
     hide(this.messageViewTarget)
     hide(this.vspSelectorWrapperTarget)
     show(this.graphTypeWrapperTarget)
-    show(this.zoomSelectorTarget)
     show(this.chartWrapperTarget)
     show(this.chartSourceWrapperTarget)
+    show(this.graphIntervalWrapperTarget)
     hide(this.pageSizeWrapperTarget)
     setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
     updateQueryParam('view-option', this.selectedViewOption, 'chart')
@@ -265,7 +266,7 @@ export default class extends Controller {
     showLoading(this.loadingDataTarget, elementsToToggle)
 
     let _this = this
-    const queryString = `extras=${this.vsps.join('|')}`
+    const queryString = `extras=${this.vsps.join('|')}&bin=${this.selectedInterval()}`
     axios.get(`/api/charts/vsp/${this.dataType}?${queryString}`).then(function (response) {
       let result = response.data
       hideLoading(_this.loadingDataTarget, elementsToToggle)
@@ -278,6 +279,14 @@ export default class extends Controller {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       _this.drawInitialGraph()
     })
+  }
+
+  selectedInterval () { return selectedOption(this.intervalTargets) }
+
+  setInterval (e) {
+    const option = e.currentTarget.dataset.option
+    setActiveOptionBtn(option, this.intervalTargets)
+    this.fetchData(this.selectedViewOption)
   }
 
   selectedZoom () { return selectedOption(this.zoomOptionTargets) }
@@ -350,6 +359,18 @@ export default class extends Controller {
     if (_this.yLabel === '') {
       _this.yLabel = 'n/a'
     }
+    let minDate, maxDate
+
+    dataSet.x.forEach(unixTime => {
+      let date = new Date(unixTime * 1000)
+      if (minDate === undefined || date < minDate) {
+        minDate = date
+      }
+
+      if (maxDate === undefined || date > maxDate) {
+        maxDate = date
+      }
+    })
 
     let options = {
       legend: 'always',
@@ -375,7 +396,8 @@ export default class extends Controller {
       options
     )
 
-    updateZoomSelector(_this.zoomOptionTargets, new Date(dataSet.min_date), new Date(dataSet.max_date))
+    updateZoomSelector(_this.zoomOptionTargets, minDate, maxDate)
+    show(this.zoomSelectorTarget)
   }
 
   drawInitialGraph () {
