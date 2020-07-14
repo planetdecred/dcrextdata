@@ -1065,6 +1065,50 @@ func (charts ChartData) lengthenPropagation() error {
 	return nil
 }
 
+func (charts ChartData) lengthenVsp() error {
+	txn := charts.DB.NewTransaction(true)
+	defer txn.Discard()
+
+	key := fmt.Sprintf("%s-%s", VSP, TimeAxis)
+	dayIntervals, hourIntervals, err := charts.lengthenTime(key, txn)
+	if err != nil {
+		return err
+	}
+
+	var uintAxisKeys, floatAxisKeys []string
+
+	for _, source := range charts.VSPSources {
+		uintAxisKeys = append(uintAxisKeys, fmt.Sprintf("%s-%s-%s", VSP, ImmatureAxis, source))
+		uintAxisKeys = append(uintAxisKeys, fmt.Sprintf("%s-%s-%s", VSP, LiveAxis, source))
+		uintAxisKeys = append(uintAxisKeys, fmt.Sprintf("%s-%s-%s", VSP, VotedAxis, source))
+		uintAxisKeys = append(uintAxisKeys, fmt.Sprintf("%s-%s-%s", VSP, MissedAxis, source))
+		uintAxisKeys = append(uintAxisKeys, fmt.Sprintf("%s-%s-%s", VSP, UserCountAxis, source))
+		uintAxisKeys = append(uintAxisKeys, fmt.Sprintf("%s-%s-%s", VSP, UsersActiveAxis, source))
+
+		floatAxisKeys = append(floatAxisKeys, fmt.Sprintf("%s-%s-%s", VSP, PoolFeesAxis, source))
+		floatAxisKeys = append(floatAxisKeys, fmt.Sprintf("%s-%s-%s", VSP, ProportionLiveAxis, source))
+		floatAxisKeys = append(floatAxisKeys, fmt.Sprintf("%s-%s-%s", VSP, ProportionMissedAxis, source))
+	}
+
+	for _, key := range uintAxisKeys {
+		if err := charts.lengthenChartNullUints(key, dayIntervals, hourIntervals, txn); err != nil {
+			return err
+		}
+	}
+
+	for _, key := range floatAxisKeys {
+		if err := charts.lengthenChartNullFloats(key, dayIntervals, hourIntervals, txn); err != nil {
+			return err
+		}
+	}
+
+	if err := txn.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (charts ChartData) lengthenSnapshot() error {
 	txn := charts.DB.NewTransaction(true)
 	defer txn.Discard()
@@ -1246,6 +1290,39 @@ func (charts ChartData) lengthenChartUints(key string, dayIntervals [][2]int, ho
 	return nil
 }
 
+func (charts ChartData) lengthenChartNullUints(key string, dayIntervals [][2]int, hourIntervals [][2]int, txn *badger.Txn) error {
+
+	var data, dayData, hourData chartNullIntsPointer
+	if err := charts.ReadValTx(key, &data, txn); err != nil {
+		if err == badger.ErrKeyNotFound {
+			return nil
+		}
+		return err
+	}
+
+	// day bin
+	for _, interval := range dayIntervals {
+		// For each new day, take an appropriate snapshot.
+		dayData.Items = append(dayData.Items, data.Avg(interval[0], interval[1]))
+	}
+
+	if err := charts.SaveValTx(dayData, fmt.Sprintf("%s-%s", key, dayBin), txn); err != nil {
+		return err
+	}
+
+	// hour bin
+	for _, interval := range hourIntervals {
+		// For each new day, take an appropriate snapshot.
+		hourData.Items = append(hourData.Items, data.Avg(interval[0], interval[1]))
+	}
+
+	if err := charts.SaveValTx(hourData, fmt.Sprintf("%s-%s", key, hourBin), txn); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (charts ChartData) lengthenChartFloats(key string, dayIntervals [][2]int, hourIntervals [][2]int, txn *badger.Txn) error {
 
 	var data, dayData, hourData ChartFloats
@@ -1270,6 +1347,39 @@ func (charts ChartData) lengthenChartFloats(key string, dayIntervals [][2]int, h
 	for _, interval := range hourIntervals {
 		// For each new day, take an appropriate snapshot.
 		hourData = append(hourData, data.Avg(interval[0], interval[1]))
+	}
+
+	if err := charts.SaveValTx(hourData, fmt.Sprintf("%s-%s", key, hourBin), txn); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (charts ChartData) lengthenChartNullFloats(key string, dayIntervals [][2]int, hourIntervals [][2]int, txn *badger.Txn) error {
+
+	var data, dayData, hourData chartNullFloatsPointer
+	if err := charts.ReadValTx(key, &data, txn); err != nil {
+		if err == badger.ErrKeyNotFound {
+			return nil
+		}
+		return err
+	}
+
+	// day bin
+	for _, interval := range dayIntervals {
+		// For each new day, take an appropriate snapshot.
+		dayData.Items = append(dayData.Items, data.Avg(interval[0], interval[1]))
+	}
+
+	if err := charts.SaveValTx(dayData, fmt.Sprintf("%s-%s", key, dayBin), txn); err != nil {
+		return err
+	}
+
+	// hour bin
+	for _, interval := range hourIntervals {
+		// For each new day, take an appropriate snapshot.
+		hourData.Items = append(hourData.Items, data.Avg(interval[0], interval[1]))
 	}
 
 	if err := charts.SaveValTx(hourData, fmt.Sprintf("%s-%s", key, hourBin), txn); err != nil {

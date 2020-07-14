@@ -273,6 +273,25 @@ func (data chartNullIntsPointer) Truncate(l int) Lengther {
 	return data
 }
 
+// Avg is the average value of a segment of the dataset.
+func (data chartNullIntsPointer) Avg(s, e int) (d nullUint64Pointer) {
+	if s >= data.Length() || e >= data.Length() {
+		return
+	}
+	if e <= s {
+		return
+	}
+	var sum uint64
+	for _, v := range data.Items[s:e] {
+		if v.HasValue {
+			d.HasValue = true
+		}
+		sum += v.Value.Uint64
+	}
+	d.Value.Uint64 = sum / uint64(e-s)
+	return
+}
+
 func (data chartNullIntsPointer) Append(set ChartNullUints) chartNullIntsPointer {
 	for _, item := range set {
 		var intPointer nullUint64Pointer
@@ -459,6 +478,25 @@ func (data chartNullFloatsPointer) Length() int {
 func (data chartNullFloatsPointer) Truncate(l int) Lengther {
 	data.Items = data.Items[:l]
 	return data
+}
+
+// Avg is the average value of a segment of the dataset.
+func (data chartNullFloatsPointer) Avg(s, e int) (d nullFloat64Pointer) {
+	if s >= data.Length() || e >= data.Length() {
+		return
+	}
+	if e <= s {
+		return
+	}
+	var sum float64
+	for _, v := range data.Items[s:e] {
+		if v.HasValue {
+			d.HasValue = true
+		}
+		sum += v.Value.Float64
+	}
+	d.Value.Float64 = sum / float64(e-s)
+	return
 }
 
 func (data chartNullFloatsPointer) Append(set ChartNullFloats) chartNullFloatsPointer {
@@ -781,6 +819,7 @@ func (charts *ChartData) Lengthen(tags ...string) error {
 		Mempool: charts.lengthenMempool,
 		Propagation: charts.lengthenPropagation,
 		Snapshot: charts.lengthenSnapshot,
+		VSP: charts.lengthenVsp,
 	}
 	for _, t := range tags {
 		if lengthener, f := lengtheners[t]; f {
@@ -1350,14 +1389,21 @@ func MakePowChart(charts *ChartData, dates ChartUints, deviations []ChartNullUin
 
 func makeVspChart(ctx context.Context, charts *ChartData, dataType, axis axisType, bin binLevel, vsps ...string) ([]byte, error) {
 	var dates ChartUints
-	if err := charts.ReadVal(VSP+"-"+string(TimeAxis), &dates); err != nil {
+	key := VSP+"-"+string(TimeAxis)
+	if bin != defaultBin {
+		key = fmt.Sprintf("%s-%s",  key, bin)
+	}
+	if err := charts.ReadVal(key, &dates); err != nil {
 		return nil, err
 	}
 
 	var deviations = make([]ChartNullData, len(vsps))
 
 	for i, s := range vsps {
-		var key = fmt.Sprintf("%s-%s-%s", VSP, dataType, s)
+		key = fmt.Sprintf("%s-%s-%s", VSP, dataType, s)
+		if bin != defaultBin {
+			key = fmt.Sprintf("%s-%s",  key, bin)
+		}
 		switch dataType {
 		case ImmatureAxis, LiveAxis, VotedAxis, MissedAxis, UserCountAxis, UsersActiveAxis:
 			var data chartNullIntsPointer

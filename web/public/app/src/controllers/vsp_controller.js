@@ -286,7 +286,7 @@ export default class extends Controller {
   setInterval (e) {
     const option = e.currentTarget.dataset.option
     setActiveOptionBtn(option, this.intervalTargets)
-    this.fetchData(this.selectedViewOption)
+    this.fetchDataAndPlotGraph()
   }
 
   selectedZoom () { return selectedOption(this.zoomOptionTargets) }
