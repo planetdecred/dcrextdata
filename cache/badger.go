@@ -309,8 +309,6 @@ func (charts *ChartData) normalizePropagationLength(txn *badger.Txn) error {
 		}
 	}
 
-	// sync source data can alway have a mis-match.
-	// TODO: resolve peculiar issue
 	for _, source := range charts.syncSource {
 		key = Propagation + "-" + string(BlockPropagation) + "-" + source
 		dLen, err = charts.chartFloatsLength(key, txn)
@@ -1229,8 +1227,8 @@ func (charts *ChartData) lengthenTime(key string, txn *badger.Txn) (dayIntervals
 		startIdx := 0
 		for i, t := range dates[offset:] {
 			if t >= next {
-				// Once passed the next midnight, prepare a day window by storing the
-				// range of indices. 0, 1, 2, 3, 4, 5
+				// Once passed the next midnight, prepare a day window by
+				// storing the range of indices. 0, 1, 2, 3, 4, 5
 				dayIntervals = append(dayIntervals, [2]int{startIdx + offset, i + offset})
 				// check for records b/4 appending.
 				days = append(days, start)
@@ -1265,8 +1263,8 @@ func (charts *ChartData) lengthenTime(key string, txn *badger.Txn) (dayIntervals
 		startIdx := 0
 		for i, t := range dates[offset:] {
 			if t >= next {
-				// Once passed the next hour, prepare a day window by storing the
-				// range of indices.
+				// Once passed the next hour, prepare a day window by storing
+				// the range of indices.
 				hourIntervals = append(hourIntervals, [2]int{startIdx + offset, i + offset})
 				hours = append(hours, start)
 				next = hourStamp(t)
