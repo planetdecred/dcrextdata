@@ -24,7 +24,7 @@ export default class extends Controller {
       'powRowTemplate', 'currentPage', 'selectedNum', 'powTableWrapper', 'messageView',
       'chartSourceWrapper', 'pool', 'chartWrapper', 'chartDataTypeSelector', 'dataType', 'labels',
       'chartsView', 'viewOption', 'pageSizeWrapper', 'poolDiv', 'loadingData',
-      'zoomSelector', 'zoomOption'
+      'zoomSelector', 'zoomOption', 'interval', 'graphIntervalWrapper'
     ]
   }
 
@@ -242,7 +242,7 @@ export default class extends Controller {
 
     const _this = this
 
-    axios.get(`/api/charts/pow/${this.dataType}?extras=${this.selectedPools.join('|')}`).then(function (response) {
+    axios.get(`/api/charts/pow/${this.dataType}?extras=${this.selectedPools.join('|')}&bin=${this.selectedInterval()}`).then(function (response) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       let result = response.data
       if (result.error) {
@@ -255,6 +255,14 @@ export default class extends Controller {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       console.log(e)
     })
+  }
+
+  selectedInterval () { return selectedOption(this.intervalTargets) }
+
+  setInterval (e) {
+    const option = e.currentTarget.dataset.option
+    setActiveOptionBtn(option, this.intervalTargets)
+    this.fetchDataAndPlotGraph()
   }
 
   selectedZoom () { return selectedOption(this.zoomOptionTargets) }
@@ -324,6 +332,17 @@ export default class extends Controller {
     if (_this.dataType === 'workers') {
       dataTypeLabel = 'Workers'
     }
+    let minDate, maxDate
+    data.x.forEach(unixTime => {
+      let date = new Date(unixTime * 1000)
+      if (minDate === undefined || date < minDate) {
+        minDate = date
+      }
+
+      if (maxDate === undefined || date > maxDate) {
+        maxDate = date
+      }
+    })
 
     let options = {
       legend: 'always',
@@ -347,6 +366,7 @@ export default class extends Controller {
     _this.chartsView = new Dygraph(_this.chartsViewTarget, csv(data, this.selectedPools.length), options)
     _this.validateZoom()
 
-    updateZoomSelector(_this.zoomOptionTargets, data.min_date, data.max_date)
+    updateZoomSelector(_this.zoomOptionTargets, minDate, maxDate)
+    show(this.zoomSelectorTarget)
   }
 }
