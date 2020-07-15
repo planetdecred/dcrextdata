@@ -67,8 +67,8 @@ const (
 	SnapshotNodeVersions   axisType = "node-versions"
 
 	defaultBin binLevel = "default"
-	hourBin	   binLevel = "hour"
-	dayBin	   binLevel = "day"
+	hourBin    binLevel = "hour"
+	dayBin     binLevel = "day"
 )
 
 // ParseAxis returns the matching axis type, else the default of time axis.
@@ -137,7 +137,7 @@ func ParseAxis(aType string) axisType {
 }
 
 func ParseBin(binString string) binLevel {
-	switch(binLevel(binString)) {
+	switch binLevel(binString) {
 	case hourBin:
 		return hourBin
 	case dayBin:
@@ -223,7 +223,7 @@ func (data ChartFloats) Avg(s, e int) float64 {
 	if s >= data.Length() || e >= data.Length() {
 		return 0
 	}
-	
+
 	if e <= s {
 		return 0
 	}
@@ -815,11 +815,12 @@ func (charts *ChartData) Lengthen(tags ...string) error {
 	if err := charts.NormalizeLength(tags...); err != nil {
 		return err
 	}
-	lengtheners := map[string]func () error {
-		Mempool: charts.lengthenMempool,
+	lengtheners := map[string]func() error{
+		Mempool:     charts.lengthenMempool,
 		Propagation: charts.lengthenPropagation,
-		Snapshot: charts.lengthenSnapshot,
-		VSP: charts.lengthenVsp,
+		Snapshot:    charts.lengthenSnapshot,
+		VSP:         charts.lengthenVsp,
+		PowChart:    charts.lengthenPow,
 	}
 	for _, t := range tags {
 		if lengthener, f := lengtheners[t]; f {
@@ -828,7 +829,7 @@ func (charts *ChartData) Lengthen(tags ...string) error {
 			}
 		}
 	}
-	
+
 	return nil
 }
 
@@ -847,8 +848,8 @@ func (charts *ChartData) Load(ctx context.Context) error {
 	}
 
 	if !Compatible(cacheVersion, currentVersion) {
-		return fmt.Errorf("Invalid cache version detected. Expected %s, got %s", 
-		cacheVersion.String(), currentVersion.String())
+		return fmt.Errorf("Invalid cache version detected. Expected %s, got %s",
+			cacheVersion.String(), currentVersion.String())
 	}
 	// Bring the charts up to date.
 	log.Infof("Updating charts data...")
@@ -893,7 +894,7 @@ func (charts *ChartData) Update(ctx context.Context, tags ...string) error {
 			}
 		}
 	} else {
-		for _, updater := range charts.updaters { 
+		for _, updater := range charts.updaters {
 			updaters = append(updaters, updater)
 		}
 	}
@@ -1083,7 +1084,7 @@ var chartMakers = map[string]ChartMaker{
 // Chart will return a JSON-encoded chartResponse of the provided type
 // and BinLevel.
 func (charts *ChartData) Chart(ctx context.Context, chartID, dataType, axisString, binString string, extras ...string) ([]byte, error) {
-	
+
 	dataTypeAxis := ParseAxis(dataType)
 	bin := ParseBin(binString)
 	axis := ParseAxis(axisString)
@@ -1213,10 +1214,10 @@ func mempool(ctx context.Context, charts *ChartData, dataType, _ axisType, bin b
 
 func mempoolSize(charts *ChartData, bin binLevel) ([]byte, error) {
 	var dates, sizes ChartUints
-	
+
 	var key = fmt.Sprintf("%s-%s", Mempool, TimeAxis)
 	if bin != defaultBin {
-		key = fmt.Sprintf("%s-%s",  key, bin)
+		key = fmt.Sprintf("%s-%s", key, bin)
 	}
 	if err := charts.ReadVal(key, &dates); err != nil {
 		log.Info(key)
@@ -1225,7 +1226,7 @@ func mempoolSize(charts *ChartData, bin binLevel) ([]byte, error) {
 
 	key = fmt.Sprintf("%s-%s", Mempool, MempoolSize)
 	if bin != defaultBin {
-		key = fmt.Sprintf("%s-%s",  key, bin)
+		key = fmt.Sprintf("%s-%s", key, bin)
 	}
 	if err := charts.ReadVal(key, &sizes); err != nil {
 		return nil, err
@@ -1239,7 +1240,7 @@ func mempoolTxCount(charts *ChartData, bin binLevel) ([]byte, error) {
 
 	var key = fmt.Sprintf("%s-%s", Mempool, TimeAxis)
 	if bin != defaultBin {
-		key = fmt.Sprintf("%s-%s",  key, bin)
+		key = fmt.Sprintf("%s-%s", key, bin)
 	}
 
 	if err := charts.ReadVal(key, &dates); err != nil {
@@ -1249,7 +1250,7 @@ func mempoolTxCount(charts *ChartData, bin binLevel) ([]byte, error) {
 
 	key = fmt.Sprintf("%s-%s", Mempool, MempoolTxCount)
 	if bin != defaultBin {
-		key = fmt.Sprintf("%s-%s",  key, bin)
+		key = fmt.Sprintf("%s-%s", key, bin)
 	}
 	if err := charts.ReadVal(key, &txCounts); err != nil {
 		return nil, err
@@ -1264,7 +1265,7 @@ func mempoolFees(charts *ChartData, bin binLevel) ([]byte, error) {
 
 	var key = fmt.Sprintf("%s-%s", Mempool, TimeAxis)
 	if bin != defaultBin {
-		key = fmt.Sprintf("%s-%s",  key, bin)
+		key = fmt.Sprintf("%s-%s", key, bin)
 	}
 
 	if err := charts.ReadVal(key, &dates); err != nil {
@@ -1273,7 +1274,7 @@ func mempoolFees(charts *ChartData, bin binLevel) ([]byte, error) {
 
 	key = fmt.Sprintf("%s-%s", Mempool, MempoolFees)
 	if bin != defaultBin {
-		key = fmt.Sprintf("%s-%s",  key, bin)
+		key = fmt.Sprintf("%s-%s", key, bin)
 	}
 	if err := charts.ReadVal(key, &fees); err != nil {
 		return nil, err
@@ -1300,7 +1301,7 @@ func blockPropagation(charts *ChartData, axis axisType, bin binLevel, syncSource
 		key = fmt.Sprintf("%s-%s", Propagation, TimeAxis)
 	}
 	if bin != defaultBin {
-		key = fmt.Sprintf("%s-%s",  key, bin)
+		key = fmt.Sprintf("%s-%s", key, bin)
 	}
 	if err := charts.ReadVal(key, &xData); err != nil {
 		log.Info(err, key)
@@ -1311,7 +1312,7 @@ func blockPropagation(charts *ChartData, axis axisType, bin binLevel, syncSource
 		var d ChartFloats
 		key = fmt.Sprintf("%s-%s-%s", Propagation, BlockPropagation, source)
 		if bin != defaultBin {
-			key = fmt.Sprintf("%s-%s",  key, bin)
+			key = fmt.Sprintf("%s-%s", key, bin)
 		}
 		if err := charts.ReadVal(key, &d); err != nil {
 			log.Info(err, key)
@@ -1330,7 +1331,7 @@ func blockTimestamp(charts *ChartData, axis axisType, bin binLevel) ([]byte, err
 		key = fmt.Sprintf("%s-%s", Propagation, TimeAxis)
 	}
 	if bin != defaultBin {
-		key = fmt.Sprintf("%s-%s",  key, bin)
+		key = fmt.Sprintf("%s-%s", key, bin)
 	}
 	if err := charts.ReadVal(key, &xData); err != nil {
 		return nil, err
@@ -1338,7 +1339,7 @@ func blockTimestamp(charts *ChartData, axis axisType, bin binLevel) ([]byte, err
 	var blockDelays ChartFloats
 	key = fmt.Sprintf("%s-%s", Propagation, BlockTimestamp)
 	if bin != defaultBin {
-		key = fmt.Sprintf("%s-%s",  key, bin)
+		key = fmt.Sprintf("%s-%s", key, bin)
 	}
 	if err := charts.ReadVal(key, &blockDelays); err != nil {
 		return nil, err
@@ -1353,7 +1354,7 @@ func votesReceiveTime(charts *ChartData, axis axisType, bin binLevel) ([]byte, e
 		key = fmt.Sprintf("%s-%s", Propagation, TimeAxis)
 	}
 	if bin != defaultBin {
-		key = fmt.Sprintf("%s-%s",  key, bin)
+		key = fmt.Sprintf("%s-%s", key, bin)
 	}
 	if err := charts.ReadVal(key, &xData); err != nil {
 		return nil, err
@@ -1361,7 +1362,7 @@ func votesReceiveTime(charts *ChartData, axis axisType, bin binLevel) ([]byte, e
 	var votesReceiveTime ChartFloats
 	key = fmt.Sprintf("%s-%s", Propagation, VotesReceiveTime)
 	if bin != defaultBin {
-		key = fmt.Sprintf("%s-%s",  key, bin)
+		key = fmt.Sprintf("%s-%s", key, bin)
 	}
 	if err := charts.ReadVal(key, &votesReceiveTime); err != nil {
 		return nil, err
@@ -1370,6 +1371,34 @@ func votesReceiveTime(charts *ChartData, axis axisType, bin binLevel) ([]byte, e
 }
 
 func powChart(ctx context.Context, charts *ChartData, dataType, axis axisType, bin binLevel, pools ...string) ([]byte, error) {
+	var dates ChartUints
+	key := PowChart + "-" + string(TimeAxis)
+	if bin != defaultBin {
+		key = fmt.Sprintf("%s-%s", key, bin)
+	}
+	if err := charts.ReadVal(key, &dates); err != nil {
+		return nil, err
+	}
+
+	var deviations = make([]ChartNullUints, len(pools))
+
+	for i, s := range pools {
+		key = fmt.Sprintf("%s-%s-%s", PowChart, dataType, s)
+		if bin != defaultBin {
+			key = fmt.Sprintf("%s-%s", key, bin)
+		}
+		var data chartNullIntsPointer
+		if err := charts.ReadVal(key, &data); err != nil {
+			return nil, err
+		}
+		deviations[i] = data.toChartNullUint()
+
+	}
+
+	return MakePowChart(charts, dates, deviations, pools)
+}
+
+func powCharta(ctx context.Context, charts *ChartData, dataType, axis axisType, bin binLevel, pools ...string) ([]byte, error) {
 	retriever, hasRetriever := charts.retrivers[PowChart]
 	if !hasRetriever {
 		return nil, UnknownChartErr
@@ -1389,9 +1418,9 @@ func MakePowChart(charts *ChartData, dates ChartUints, deviations []ChartNullUin
 
 func makeVspChart(ctx context.Context, charts *ChartData, dataType, axis axisType, bin binLevel, vsps ...string) ([]byte, error) {
 	var dates ChartUints
-	key := VSP+"-"+string(TimeAxis)
+	key := VSP + "-" + string(TimeAxis)
 	if bin != defaultBin {
-		key = fmt.Sprintf("%s-%s",  key, bin)
+		key = fmt.Sprintf("%s-%s", key, bin)
 	}
 	if err := charts.ReadVal(key, &dates); err != nil {
 		return nil, err
@@ -1402,7 +1431,7 @@ func makeVspChart(ctx context.Context, charts *ChartData, dataType, axis axisTyp
 	for i, s := range vsps {
 		key = fmt.Sprintf("%s-%s-%s", VSP, dataType, s)
 		if bin != defaultBin {
-			key = fmt.Sprintf("%s-%s",  key, bin)
+			key = fmt.Sprintf("%s-%s", key, bin)
 		}
 		switch dataType {
 		case ImmatureAxis, LiveAxis, VotedAxis, MissedAxis, UserCountAxis, UsersActiveAxis:
@@ -1425,21 +1454,10 @@ func makeVspChart(ctx context.Context, charts *ChartData, dataType, axis axisTyp
 			}
 			deviations[i] = data.toChartNullFloats()
 		}
-		
 
 	}
 
 	return MakeVspChart(charts, dates, deviations, vsps)
-
-	// Because the dates for vsp tick vary from source to source,
-	// a single date collection cannot be used for all and so
-	// the record is retrieved at every request.
-
-	retriever, hasRetriever := charts.retrivers[VSP]
-	if !hasRetriever {
-		return nil, UnknownChartErr
-	}
-	return retriever(ctx, charts, string(dataType), string(bin), string(axis), vsps...)
 }
 
 func MakeVspChart(charts *ChartData, dates ChartUints, deviations []ChartNullData, vsps []string) ([]byte, error) {
@@ -1467,10 +1485,10 @@ func networkSnapshorChart(ctx context.Context, charts *ChartData, dataType, _ ax
 
 func networkSnapshotNodesChart(charts *ChartData, bin binLevel) ([]byte, error) {
 	var dates, nodes, reachableNodes ChartUints
-	
+
 	var key = fmt.Sprintf("%s-%s", Mempool, TimeAxis)
 	if bin != defaultBin {
-		key = fmt.Sprintf("%s-%s",  key, bin)
+		key = fmt.Sprintf("%s-%s", key, bin)
 	}
 	if err := charts.ReadVal(key, &dates); err != nil {
 		log.Info(key)
@@ -1479,7 +1497,7 @@ func networkSnapshotNodesChart(charts *ChartData, bin binLevel) ([]byte, error) 
 
 	key = fmt.Sprintf("%s-%s", Snapshot, SnapshotNodes)
 	if bin != defaultBin {
-		key = fmt.Sprintf("%s-%s",  key, bin)
+		key = fmt.Sprintf("%s-%s", key, bin)
 	}
 	if err := charts.ReadVal(key, &nodes); err != nil {
 		return nil, err
@@ -1487,7 +1505,7 @@ func networkSnapshotNodesChart(charts *ChartData, bin binLevel) ([]byte, error) 
 
 	key = fmt.Sprintf("%s-%s", Snapshot, SnapshotReachableNodes)
 	if bin != defaultBin {
-		key = fmt.Sprintf("%s-%s",  key, bin)
+		key = fmt.Sprintf("%s-%s", key, bin)
 	}
 	if err := charts.ReadVal(key, &reachableNodes); err != nil {
 		return nil, err
@@ -1501,7 +1519,7 @@ func networkSnapshotLocationsChart(charts *ChartData, bin binLevel, countries ..
 	var dates ChartUints
 	key := fmt.Sprintf("%s-%s-%s", Snapshot, SnapshotLocations, TimeAxis)
 	if bin != defaultBin {
-		key = fmt.Sprintf("%s-%s",  key, bin)
+		key = fmt.Sprintf("%s-%s", key, bin)
 	}
 	if err := charts.ReadVal(key, &dates); err != nil {
 		return nil, err
@@ -1514,7 +1532,7 @@ func networkSnapshotLocationsChart(charts *ChartData, bin binLevel, countries ..
 		}
 		var key = fmt.Sprintf("%s-%s-%s", Snapshot, SnapshotLocations, country)
 		if bin != defaultBin {
-			key = fmt.Sprintf("%s-%s",  key, bin)
+			key = fmt.Sprintf("%s-%s", key, bin)
 		}
 		var rec ChartUints
 		if err := charts.ReadVal(key, &rec); err != nil {
@@ -1531,7 +1549,7 @@ func networkSnapshotNodeVersionsChart(charts *ChartData, bin binLevel, userAgent
 	var dates ChartUints
 	key := fmt.Sprintf("%s-%s-%s", Snapshot, SnapshotNodeVersions, TimeAxis)
 	if bin != defaultBin {
-		key = fmt.Sprintf("%s-%s",  key, bin)
+		key = fmt.Sprintf("%s-%s", key, bin)
 	}
 	if err := charts.ReadVal(key, &dates); err != nil {
 		log.Info(key)
@@ -1546,7 +1564,7 @@ func networkSnapshotNodeVersionsChart(charts *ChartData, bin binLevel, userAgent
 
 		var key = fmt.Sprintf("%s-%s-%s", Snapshot, SnapshotNodeVersions, userAgent)
 		if bin != defaultBin {
-			key = fmt.Sprintf("%s-%s",  key, bin)
+			key = fmt.Sprintf("%s-%s", key, bin)
 		}
 		var rec ChartUints
 		if err := charts.ReadVal(key, &rec); err != nil {
