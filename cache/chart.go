@@ -610,7 +610,6 @@ func (data ChartNullFloats) Remove(index int) Lengther {
 		return data
 	}
 	return append(data[:index], data[index+1:]...)
-	return data
 }
 
 func (data ChartNullFloats) String(index int) string {
@@ -668,7 +667,6 @@ func (data ChartStrings) Remove(index int) Lengther {
 		return data
 	}
 	return append(data[:index], data[index+1:]...)
-	return data
 }
 
 // ChartUints is a slice of uints. It satisfies the lengther interface, and
