@@ -145,7 +145,7 @@ func (vsp *Collector) collectAndStore(ctx context.Context) error {
 	}
 
 	log.Infof("Saved ticks for %d VSPs from %s", numberStored, requestURL)
-	go func ()  {
+	go func() {
 		if err = vsp.charts.TriggerUpdate(ctx, cache.VSP); err != nil {
 			log.Errorf("Charts update problem for %s: %s", cache.VSP, err.Error())
 		}

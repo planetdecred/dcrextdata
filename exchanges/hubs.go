@@ -27,7 +27,7 @@ type TickHub struct {
 	collectors []ticks.Collector
 	client     *http.Client
 	store      ticks.Store
-	charts *cache.ChartData
+	charts     *cache.ChartData
 }
 
 var (
@@ -69,7 +69,7 @@ func NewTickHub(ctx context.Context, disabledexchanges []string, store ticks.Sto
 		collectors: collectors,
 		client:     &http.Client{Timeout: clientTimeout},
 		store:      store,
-		charts:		charts,
+		charts:     charts,
 	}, nil
 }
 

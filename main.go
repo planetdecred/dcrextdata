@@ -204,8 +204,8 @@ func _main(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	
-	charts := cache.NewChartData(ctx, cfg.EnableChartCache, cfg.SyncDatabases, poolSources, vsps, 
+
+	charts := cache.NewChartData(ctx, cfg.EnableChartCache, cfg.SyncDatabases, poolSources, vsps,
 		nodeCountries, noveVersions, netParams(cfg.DcrdNetworkType), bdb)
 	db.RegisterCharts(charts, cfg.SyncDatabases, func(name string) (*postgres.PgDb, error) {
 		db, found := syncDbs[name]
@@ -214,13 +214,12 @@ func _main(ctx context.Context) error {
 		}
 		return db, nil
 	})
-	
+
 	if err = charts.Load(ctx); err != nil {
 		return err
 	}
 
 	defer charts.SaveVersion()
-
 
 	// http server method
 	if cfg.HttpMode {
@@ -340,7 +339,7 @@ func _main(ctx context.Context) error {
 	}
 
 	if !cfg.DisableNetworkSnapshot {
-		snapshotTaker := netsnapshot.NewTaker(db, cfg.NetworkSnapshotOptions,)
+		snapshotTaker := netsnapshot.NewTaker(db, cfg.NetworkSnapshotOptions)
 		go snapshotTaker.Start(ctx)
 	}
 

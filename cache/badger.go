@@ -168,10 +168,10 @@ func (charts ChartData) AppendChartNullFloatsAxisTx(key string, set ChartNullFlo
 func (charts ChartData) NormalizeLength(tags ...string) error {
 	txn := charts.DB.NewTransaction(true)
 	defer txn.Discard()
-	
+
 	for _, chartID := range tags {
 		if cerr := charts.normalizeLength(chartID, txn); cerr != nil {
-			return errors.Wrap(cerr, "Normalize failed for " + chartID)
+			return errors.Wrap(cerr, "Normalize failed for "+chartID)
 		}
 	}
 	if err := txn.Commit(); err != nil {
@@ -1052,7 +1052,7 @@ func (charts ChartData) lengthenPropagation() error {
 	for _, source := range charts.syncSource {
 		keys = append(keys, fmt.Sprintf("%s-%s-%s", Propagation, BlockPropagation, source))
 	}
-	
+
 	for _, key := range keys {
 		if err := charts.lengthenChartFloats(key, dayIntervals, hourIntervals, txn); err != nil {
 			return err
@@ -1152,7 +1152,7 @@ func (charts ChartData) lengthenSnapshot() error {
 		fmt.Sprintf("%s-%s", Snapshot, SnapshotNodes),
 		fmt.Sprintf("%s-%s", Snapshot, SnapshotReachableNodes),
 	}
-	for _, key := range keys{
+	for _, key := range keys {
 		if err := charts.lengthenChartUints(key, dayIntervals, hourIntervals, txn); err != nil {
 			return err
 		}
@@ -1169,7 +1169,7 @@ func (charts ChartData) lengthenSnapshot() error {
 	for _, userAgent := range charts.NodeVersion {
 		keys = append(keys, fmt.Sprintf("%s-%s-%s", Snapshot, SnapshotNodeVersions, userAgent))
 	}
-	for _, key := range keys{
+	for _, key := range keys {
 		if err := charts.lengthenChartUints(key, dayIntervals, hourIntervals, txn); err != nil {
 			return err
 		}
@@ -1186,7 +1186,7 @@ func (charts ChartData) lengthenSnapshot() error {
 	for _, country := range charts.NodeLocations {
 		keys = append(keys, fmt.Sprintf("%s-%s-%s", Snapshot, SnapshotLocations, country))
 	}
-	for _, key := range keys{
+	for _, key := range keys {
 		if err := charts.lengthenChartUints(key, dayIntervals, hourIntervals, txn); err != nil {
 			return err
 		}

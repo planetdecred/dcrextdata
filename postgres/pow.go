@@ -352,7 +352,7 @@ func (pg *PgDb) fetchEncodePowChart(ctx context.Context, charts *cache.ChartData
 	if err != nil {
 		return nil, err
 	}
-	switch(strings.ToLower(dataType)) {
+	switch strings.ToLower(dataType) {
 	case string(cache.WorkerAxis):
 		var deviations []cache.ChartNullUints
 		for _, p := range pools {
@@ -371,11 +371,11 @@ func (pg *PgDb) fetchEncodePowChart(ctx context.Context, charts *cache.ChartData
 
 func (pg *PgDb) fetchCachePowChart(ctx context.Context, charts *cache.ChartData, _ int) (interface{}, func(), bool, error) {
 	data, err := pg.fetchPowChart(ctx, charts.PowTimeTip())
-	return data, func() {}, true, err 
+	return data, func() {}, true, err
 }
 
 func (pg *PgDb) fetchPowChart(ctx context.Context, startDate uint64) (*powSet, error) {
-	
+
 	var powDataSet = powSet{
 		time:     []uint64{},
 		workers:  make(map[string]cache.ChartNullUints),
@@ -439,13 +439,13 @@ func appendPowChart(charts *cache.ChartData, data interface{}) error {
 	if len(powDataSet.time) == 0 {
 		return nil
 	}
-	
-	if err := charts.AppendChartUintsAxis(cache.PowChart + "-" + string(cache.TimeAxis), 
-		powDataSet.time); err !=  nil {
-		return err 
+
+	if err := charts.AppendChartUintsAxis(cache.PowChart+"-"+string(cache.TimeAxis),
+		powDataSet.time); err != nil {
+		return err
 	}
 
-	keyExists := func (arr []string, key string) bool {
+	keyExists := func(arr []string, key string) bool {
 		for _, s := range arr {
 			if s == key {
 				return true
@@ -458,16 +458,16 @@ func appendPowChart(charts *cache.ChartData, data interface{}) error {
 		if !keyExists(charts.PowSources, pool) {
 			charts.PowSources = append(charts.PowSources, pool)
 		}
-		if err := charts.AppendChartNullUintsAxis(cache.PowChart + "-" + string(cache.WorkerAxis) + "-" + pool, 
-			workers); err !=  nil {
-			return err 
+		if err := charts.AppendChartNullUintsAxis(cache.PowChart+"-"+string(cache.WorkerAxis)+"-"+pool,
+			workers); err != nil {
+			return err
 		}
 	}
 
 	for pool, hashrate := range powDataSet.hashrate {
-		if err := charts.AppendChartNullUintsAxis(cache.PowChart + "-" + string(cache.HashrateAxis) + "-" + pool, 
-			hashrate); err !=  nil {
-			return err 
+		if err := charts.AppendChartNullUintsAxis(cache.PowChart+"-"+string(cache.HashrateAxis)+"-"+pool,
+			hashrate); err != nil {
+			return err
 		}
 	}
 

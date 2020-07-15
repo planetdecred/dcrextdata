@@ -279,8 +279,8 @@ func (pg *PgDb) AllExchangeTicks(ctx context.Context, currencyPair string, inter
 }
 
 func (pg *PgDb) AllExchangeTicksCurrencyPair(ctx context.Context) ([]ticks.TickDtoCP, error) {
-	exchangeTickCPSlice, err := models.ExchangeTicks(qm.Select("currency_pair"), qm.GroupBy("currency_pair"), 
-	qm.OrderBy("currency_pair")).All(ctx, pg.db)
+	exchangeTickCPSlice, err := models.ExchangeTicks(qm.Select("currency_pair"), qm.GroupBy("currency_pair"),
+		qm.OrderBy("currency_pair")).All(ctx, pg.db)
 
 	if err != nil {
 		return nil, err
@@ -345,7 +345,7 @@ func (pg *PgDb) TickIntervalsByExchangeAndPair(ctx context.Context, exchangeName
 		}
 		query = append(query, models.ExchangeTickWhere.ExchangeID.EQ(exchange.ID))
 	}
-	
+
 	query = append(query, models.ExchangeTickWhere.CurrencyPair.EQ(currencyPair),
 		qm.Select("interval"), qm.GroupBy("interval"), qm.OrderBy("interval"))
 
@@ -414,7 +414,7 @@ func (pg *PgDb) ExchangeTicksChartData(ctx context.Context, selectedTick string,
 }
 
 func (pg *PgDb) exchangeTicksChartData(ctx context.Context, currencyPair string, selectedInterval int,
-	 exchangeName string, exchangeTickTime uint64, cols ...string) (models.ExchangeTickSlice, error) {
+	exchangeName string, exchangeTickTime uint64, cols ...string) (models.ExchangeTickSlice, error) {
 
 	exchange, err := models.Exchanges(models.ExchangeWhere.Name.EQ(exchangeName)).One(ctx, pg.db)
 	if err != nil {
@@ -551,7 +551,7 @@ func (pg *PgDb) fetchEncodeExchangeChart(ctx context.Context, charts *cache.Char
 		return nil, errors.New("exchange set key is required for exchange chart")
 	}
 	exchangeName, currencyPair, interval := cache.ExtractExchangeKey(setKey[0])
-	tickSlice, err := pg.exchangeTicksChartData(ctx, currencyPair, interval, exchangeName, 0,)
+	tickSlice, err := pg.exchangeTicksChartData(ctx, currencyPair, interval, exchangeName, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -559,7 +559,7 @@ func (pg *PgDb) fetchEncodeExchangeChart(ctx context.Context, charts *cache.Char
 	var yAxis cache.ChartFloats
 	for _, t := range tickSlice {
 		dates = append(dates, uint64(t.Time.Unix()))
-		switch(strings.ToLower(dataType)) {
+		switch strings.ToLower(dataType) {
 		case string(cache.ExchangeOpenAxis):
 			yAxis = append(yAxis, t.Open)
 			break
@@ -627,7 +627,7 @@ func (pg *PgDb) fetchExchangeChart(ctx context.Context, charts *cache.ChartData,
 
 func appendExchangeChart(charts *cache.ChartData, data interface{}) error {
 	var tickSets = data.(map[string]exchangeTickSet)
-	keyExists := func (arr []string, key string) bool {
+	keyExists := func(arr []string, key string) bool {
 		for _, s := range arr {
 			if s == key {
 				return true

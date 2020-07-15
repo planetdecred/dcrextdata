@@ -533,7 +533,7 @@ func (pg *PgDb) fetchEncodeVspChart(ctx context.Context, charts *cache.ChartData
 	return nil, cache.UnknownChartErr
 }
 
-func (pg *PgDb) fetchAndAppendVspChartAxis(ctx context.Context, charts *cache.ChartData, 
+func (pg *PgDb) fetchAndAppendVspChartAxis(ctx context.Context, charts *cache.ChartData,
 	dates cache.ChartUints, dataType string, startDate uint64) error {
 
 	txn := charts.DB.NewTransaction(true)
@@ -711,7 +711,7 @@ func (pg *PgDb) fetchCacheVspChart(ctx context.Context, charts *cache.ChartData,
 	}
 	//
 
-	dates, err := pg.allVspTickDates(ctx, helpers.UnixTime(int64(startDate)),)
+	dates, err := pg.allVspTickDates(ctx, helpers.UnixTime(int64(startDate)))
 	if err != nil && err != sql.ErrNoRows {
 		return nil, func() {}, true, err
 	}
@@ -738,11 +738,11 @@ func (pg *PgDb) fetchCacheVspChart(ctx context.Context, charts *cache.ChartData,
 	}
 	for _, ax := range axis {
 		if err := pg.fetchAndAppendVspChartAxis(ctx, charts, unixTimes, ax, startDate); err != nil {
-			return nil, func () {}, true, err
+			return nil, func() {}, true, err
 		}
 	}
 
-	return &vspSet{}, func () {}, true, nil
+	return &vspSet{}, func() {}, true, nil
 
 	// aDay := 86400
 	// endDate := startDate + uint64(7*aDay)

@@ -24,14 +24,14 @@ type NodeCount struct {
 }
 
 type UserAgentInfo struct {
-	UserAgent  string `json:"user_agent"`
-	Nodes      int64  `json:"nodes"`
-	Timestamp int64   `json:"timestamp"`
+	UserAgent string `json:"user_agent"`
+	Nodes     int64  `json:"nodes"`
+	Timestamp int64  `json:"timestamp"`
 }
 
 type CountryInfo struct {
-	Country    string `json:"country"`
-	Nodes      int64  `json:"nodes"`
+	Country   string `json:"country"`
+	Nodes     int64  `json:"nodes"`
 	Timestamp int64  `json:"timestamp"`
 }
 

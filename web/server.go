@@ -14,8 +14,8 @@ import (
 
 	"github.com/decred/dcrd/chaincfg"
 	"github.com/go-chi/chi"
-	"github.com/raedahgroup/dcrextdata/app/helpers"
 	"github.com/go-chi/chi/middleware"
+	"github.com/raedahgroup/dcrextdata/app/helpers"
 	"github.com/raedahgroup/dcrextdata/cache"
 	"github.com/raedahgroup/dcrextdata/commstats"
 	"github.com/raedahgroup/dcrextdata/exchanges/ticks"
@@ -97,9 +97,9 @@ type Server struct {
 	charts       *cache.ChartData
 }
 
-func StartHttpServer(httpHost, httpPort string, charts *cache.ChartData, db DataQuery, 
+func StartHttpServer(httpHost, httpPort string, charts *cache.ChartData, db DataQuery,
 	activeChain *chaincfg.Params, extDbFactory func(name string) (DataQuery, error)) {
-		
+
 	server := &Server{
 		templates:    map[string]*template.Template{},
 		db:           db,

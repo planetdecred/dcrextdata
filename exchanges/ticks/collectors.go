@@ -14,13 +14,13 @@ import (
 )
 
 const (
-	Bittrex         = "bittrex"
-	Bittrexusd      = Bittrex + "usd"
-	bittrexAPIURL   = "https://bittrex.com/Api/v2.0/pub/market/GetTicks"
-	Poloniex        = "poloniex"
-	poloniexAPIURL  = "https://poloniex.com/public"
-	Binance         = "binance"
-	binanceAPIURL   = "https://api.binance.com/api/v1/klines"
+	Bittrex        = "bittrex"
+	Bittrexusd     = Bittrex + "usd"
+	bittrexAPIURL  = "https://bittrex.com/Api/v2.0/pub/market/GetTicks"
+	Poloniex       = "poloniex"
+	poloniexAPIURL = "https://poloniex.com/public"
+	Binance        = "binance"
+	binanceAPIURL  = "https://api.binance.com/api/v1/klines"
 
 	btcdcrPair = "BTC/DCR"
 	usdbtcPair = "USD/BTC"

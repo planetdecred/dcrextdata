@@ -39,9 +39,9 @@ const (
 	defaultGithubStatInterval  = 60 * 24
 	defaultYoutubeInterval     = 60 * 24
 	//dcrseeder
-	defaultSeeder              = "127.0.0.1"
-	defaultSeederPort          = 9108
-	maxPeerConnectionFailure   = 3
+	defaultSeeder            = "127.0.0.1"
+	defaultSeederPort        = 9108
+	maxPeerConnectionFailure = 3
 )
 
 var (
@@ -54,24 +54,24 @@ var (
 
 func defaultFileOptions() ConfigFileOptions {
 	cfg := ConfigFileOptions{
-		LogFile:         defaultLogFilename,
-		DBHost:          defaultDbHost,
-		DBPort:          defaultDbPort,
-		DBUser:          defaultDbUser,
-		DBPass:          defaultDbPass,
-		DBName:          defaultDbName,
-		DebugLevel:      defaultLogLevel,
-		VSPInterval:     defaultVSPInterval,
-		PowInterval:     defaultPowInterval,
-		MempoolInterval: defaultMempoolInterval,
-		DcrdNetworkType: defaultDcrdNetworkType,
-		DcrdRpcServer:   defaultDcrdServer,
-		DcrdRpcUser:     defaultDcrdUser,
-		DcrdRpcPassword: defaultDcrdPassword,
-		HTTPHost:        defaultHttpHost,
-		HTTPPort:        defaultHttpPort,
-		SyncInterval:    defaultSyncInterval,
-		ChartsCacheDump: defaultChartsCacheDump,
+		LogFile:          defaultLogFilename,
+		DBHost:           defaultDbHost,
+		DBPort:           defaultDbPort,
+		DBUser:           defaultDbUser,
+		DBPass:           defaultDbPass,
+		DBName:           defaultDbName,
+		DebugLevel:       defaultLogLevel,
+		VSPInterval:      defaultVSPInterval,
+		PowInterval:      defaultPowInterval,
+		MempoolInterval:  defaultMempoolInterval,
+		DcrdNetworkType:  defaultDcrdNetworkType,
+		DcrdRpcServer:    defaultDcrdServer,
+		DcrdRpcUser:      defaultDcrdUser,
+		DcrdRpcPassword:  defaultDcrdPassword,
+		HTTPHost:         defaultHttpHost,
+		HTTPPort:         defaultHttpPort,
+		SyncInterval:     defaultSyncInterval,
+		ChartsCacheDump:  defaultChartsCacheDump,
 		EnableChartCache: true,
 	}
 
@@ -148,7 +148,7 @@ type ConfigFileOptions struct {
 
 	// charts
 	EnableChartCache bool `long:"enablechartcache" description:"Enable chart data caching"`
-	ChartsCacheDump string
+	ChartsCacheDump  string
 
 	CommunityStatOptions
 	NetworkSnapshotOptions
