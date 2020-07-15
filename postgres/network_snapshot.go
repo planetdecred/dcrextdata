@@ -749,7 +749,7 @@ func (pg *PgDb) fetchNetworkSnapshotChart(ctx context.Context, charts *cache.Cha
 		}
 	}
 
-	pageSize := 10000000
+	pageSize := 100000000
 	done := true
 	result, err := pg.SnapshotsByTime(ctx, int64(startDate), pageSize)
 	if err != nil {
@@ -865,7 +865,8 @@ func (pg *PgDb) fetchNetworkSnapshotChart(ctx context.Context, charts *cache.Cha
 		set.versionDates = append(set.versionDates, uint64(d))
 	}
 
-	return set, func() {}, done, nil
+	fmt.Println(done)
+	return set, func() {}, true, nil
 }
 
 func appendSnapshotChart(charts *cache.ChartData, data interface{}) error {
