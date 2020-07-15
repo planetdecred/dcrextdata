@@ -898,10 +898,10 @@ func (charts *ChartData) Update(ctx context.Context, tags ...string) error {
 	}
 
 	for _, updater := range updaters {
-		stateID := charts.cacheID(updater.Tag)
 		var completed bool
 		var page = 1
 		for !completed {
+			stateID := charts.cacheID(updater.Tag)
 			rows, cancel, done, err := updater.Fetcher(ctx, charts, page)
 			if err != nil {
 				err = fmt.Errorf("error encountered during charts %s update. aborting update: %v", updater.Tag, err)
