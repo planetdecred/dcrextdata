@@ -266,7 +266,7 @@ func _main(ctx context.Context) error {
 				log.Errorf(fmt.Sprintf("Unable to connect to dcrd at %s. Is it running?", cfg.DcrdRpcServer))
 				return nil
 			} //running on port
-			fmt.Print(fmt.Sprintf("Error in opening a dcrd connection: %s\n", err.Error()))
+			fmt.Printf("Error in opening a dcrd connection: %s\n", err.Error())
 			return nil
 		}
 
