@@ -8,8 +8,10 @@ import (
 	"github.com/go-chi/chi"
 )
 
+type contextKey int
+
 const (
-	ctxSyncDataType = iota
+	ctxSyncDataType contextKey = iota
 	ctxTimestamp
 	ctxNodeIp
 	ctxChartType

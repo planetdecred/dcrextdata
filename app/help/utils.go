@@ -58,7 +58,7 @@ func printOptions(tabWriter io.Writer, optionDescription string, options []*flag
 				optionUsage = parseOptionUsageText(option, hasOptionsWithShortName)
 			}
 			description := parseOptionDescription(option)
-			fmt.Fprintln(tabWriter, fmt.Sprintf("  %s \t %s", optionUsage, description))
+			fmt.Fprintf(tabWriter, "  %s \t %s\n", optionUsage, description)
 		}
 
 		fmt.Fprintln(tabWriter)
