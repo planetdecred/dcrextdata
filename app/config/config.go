@@ -217,11 +217,10 @@ func LoadConfig() (*Config, []string, error) {
 	parser := flags.NewParser(&cfg, flags.IgnoreUnknown)
 	err := flags.NewIniParser(parser).ParseFile(preCfg.ConfigFile)
 	if err != nil {
-		if _, ok := err.(*os.PathError); ok {
-			fmt.Printf("Missing Config file %s in current directory\n", preCfg.ConfigFile)
-		} else {
+		if _, ok := err.(*os.PathError); !ok {
 			return nil, nil, err
 		}
+		fmt.Printf("Missing Config file %s in current directory\n", preCfg.ConfigFile)
 	}
 
 	unknownArg, err := parser.Parse()

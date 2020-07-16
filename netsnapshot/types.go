@@ -4,7 +4,6 @@ import (
 	"context"
 	"net"
 
-	"github.com/decred/dcrd/rpcclient"
 	"github.com/raedahgroup/dcrextdata/app/config"
 )
 
@@ -89,7 +88,6 @@ type DataStore interface {
 }
 
 type taker struct {
-	dcrClient *rpcclient.Client
 	dataStore DataStore
 	cfg       config.NetworkSnapshotOptions
 }

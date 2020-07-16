@@ -167,7 +167,7 @@ func (pg *PgDb) FetchExchangeForSync(ctx context.Context, lastID int, skip, take
 
 	totalCount, err := models.Exchanges(models.ExchangeWhere.ID.GT(lastID)).Count(ctx, pg.db)
 
-	return exchanges, totalCount, nil
+	return exchanges, totalCount, err
 }
 
 func (pg *PgDb) ExchangeTickCount(ctx context.Context) (int64, error) {
@@ -232,7 +232,6 @@ func (pg *PgDb) FetchExchangeTicks(ctx context.Context, currencyPair, name strin
 }
 
 // FetchExchangeTicks fetches a slice exchange ticks of the supplied exchange name
-// todo impliment sorting for Exchange ticks as it is currently been sorted by time
 func (pg *PgDb) AllExchangeTicks(ctx context.Context, currencyPair string, interval, offset, limit int) ([]ticks.TickDto, int64, error) {
 	var exchangeTickSlice models.ExchangeTickSlice
 	var exchangeTickSliceCount int64
@@ -288,7 +287,7 @@ func (pg *PgDb) AllExchangeTicksCurrencyPair(ctx context.Context) ([]ticks.TickD
 
 	var currencyPairs []ticks.TickDtoCP
 	for _, cp := range exchangeTickCPSlice {
-		currencyPairs = append(currencyPairs, ticks.TickDtoCP{cp.CurrencyPair})
+		currencyPairs = append(currencyPairs, ticks.TickDtoCP{CurrencyPair: cp.CurrencyPair})
 	}
 
 	return currencyPairs, err
@@ -562,16 +561,12 @@ func (pg *PgDb) fetchEncodeExchangeChart(ctx context.Context, charts *cache.Char
 		switch strings.ToLower(dataType) {
 		case string(cache.ExchangeOpenAxis):
 			yAxis = append(yAxis, t.Open)
-			break
 		case string(cache.ExchangeCloseAxis):
 			yAxis = append(yAxis, t.Close)
-			break
 		case string(cache.ExchangeHighAxis):
 			yAxis = append(yAxis, t.High)
-			break
 		case string(cache.ExchangeLowAxis):
 			yAxis = append(yAxis, t.Low)
-			break
 		}
 	}
 

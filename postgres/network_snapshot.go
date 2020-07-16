@@ -345,10 +345,8 @@ func (pg PgDb) UpdateNode(ctx context.Context, peer netsnapshot.NetworkPeer) err
 
 func (pg PgDb) NetworkPeers(ctx context.Context, timestamp int64, q string, offset int, limit int) ([]netsnapshot.NetworkPeer, int64, error) {
 	where := fmt.Sprintf("heartbeat.timestamp = %d", timestamp)
-	args := []interface{}{timestamp}
 	if q != "" {
 		where += fmt.Sprintf(" AND (node.address = '%s' OR node.user_agent = '%s' OR node.country = '%s')", q, q, q)
-		args = append(args, q, q, q)
 	}
 
 	sql := `SELECT node.address, node.country, node.last_seen, node.connection_time, node.protocol_version,
@@ -645,7 +643,7 @@ func (pg PgDb) PeerCountByCountries(ctx context.Context, sources string, offset,
 			country = "Unknown"
 		}
 		countries[i] = netsnapshot.CountryInfo{
-			Country:   item.Country,
+			Country:   country,
 			Nodes:     item.Number,
 			Timestamp: item.Timestamp,
 		}
@@ -808,7 +806,7 @@ func (pg *PgDb) fetchNetworkSnapshotChart(ctx context.Context, charts *cache.Cha
 
 	for _, d := range allDates {
 		for _, c := range allCountries {
-			rec := dateCountryCount[int64(d)][c]
+			rec := dateCountryCount[d][c]
 			if record, found := set.locations[c]; found {
 				set.locations[c] = append(record, uint64(rec))
 			} else {
@@ -855,7 +853,7 @@ func (pg *PgDb) fetchNetworkSnapshotChart(ctx context.Context, charts *cache.Cha
 
 	for _, d := range allDates {
 		for _, c := range allUserAgents {
-			rec := dateUserAgentCount[int64(d)][c]
+			rec := dateUserAgentCount[d][c]
 			if record, found := set.versions[c]; found {
 				set.versions[c] = append(record, uint64(rec))
 			} else {

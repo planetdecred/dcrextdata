@@ -211,17 +211,10 @@ func (in *CoinminePow) Collect(ctx context.Context) ([]PowData, error) {
 		return nil, err
 	}
 
-	result := in.fetch(res, in.lastUpdate)
-	in.lastUpdate = result[len(result)-1].Time
-
-	return result, nil
-}
-
-func (CoinminePow) fetch(res *coinmineAPIResponse, start int64) []PowData {
-	data := make([]PowData, 0, 1)
+	result := make([]PowData, 0, 1)
 	t := helpers.NowUTC().Unix()
 
-	data = append(data, PowData{
+	result = append(result, PowData{
 		Time:         t,
 		PoolHashrate: res.PoolHashrate,
 		Workers:      res.Workers,
@@ -229,7 +222,10 @@ func (CoinminePow) fetch(res *coinmineAPIResponse, start int64) []PowData {
 		BtcPrice:     0,
 		Source:       "coinmine",
 	})
-	return data
+
+	in.lastUpdate = result[len(result)-1].Time
+
+	return result, nil
 }
 
 func (*CoinminePow) Name() string { return Coinmine }
@@ -259,19 +255,10 @@ func (in *UupoolPow) Collect(ctx context.Context) ([]PowData, error) {
 		return nil, err
 	}
 
-	result := in.fetch(res, in.lastUpdate)
-	if len(result) > 0 {
-		in.lastUpdate = result[len(result)-1].Time
-	}
-
-	return result, nil
-}
-
-func (UupoolPow) fetch(res *uupoolAPIResponse, start int64) []PowData {
-	data := make([]PowData, 0, 1)
+	result := make([]PowData, 0, 1)
 	t := helpers.NowUTC().Unix()
 
-	data = append(data, PowData{
+	result = append(result, PowData{
 		Time:         t,
 		PoolHashrate: res.Pool.PoolHashrate,
 		Workers:      res.Pool.OnlineWorkers,
@@ -280,7 +267,11 @@ func (UupoolPow) fetch(res *uupoolAPIResponse, start int64) []PowData {
 		Source:       "uupool",
 	})
 
-	return data
+	if len(result) > 0 {
+		in.lastUpdate = result[len(result)-1].Time
+	}
+
+	return result, nil
 }
 
 func (*UupoolPow) Name() string { return Uupool }

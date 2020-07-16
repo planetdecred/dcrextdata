@@ -61,6 +61,6 @@ type uunetworkData struct {
 }
 
 type uupoolAPIResponse struct {
-	Pool    uupoolData    `json: "pool"`
-	Network uunetworkData `json: "network"`
+	Pool    uupoolData    `json:"pool"`
+	Network uunetworkData `json:"network"`
 }

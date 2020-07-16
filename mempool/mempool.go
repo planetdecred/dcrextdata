@@ -44,10 +44,8 @@ func (c *Collector) SetExplorerBestBlock(ctx context.Context) error {
 	switch c.activeChain.Name {
 	case chaincfg.MainNetParams.Name:
 		explorerUrl = "https://explorer.dcrdata.org/api/block/best"
-		break
 	case chaincfg.TestNet3Params.Name:
 		explorerUrl = "https://testnet.dcrdata.org/api/block/best"
-		break
 	}
 
 	var bestBlock = struct {
@@ -384,7 +382,7 @@ func (c *Collector) registerBlockSyncer(syncCoordinator *datasync.SyncCoordinato
 			return
 		},
 		Retrieve: func(ctx context.Context, last string, skip, take int) (result *datasync.Result, err error) {
-			blockHeight, err := strconv.ParseInt(last, 10, 64)
+			blockHeight, _ := strconv.ParseInt(last, 10, 64)
 			result = new(datasync.Result)
 			blocks, totalCount, err := c.dataStore.FetchBlockForSync(ctx, blockHeight, skip, take)
 			if err != nil {
@@ -436,7 +434,7 @@ func (c *Collector) registerVoteSyncer(syncCoordinator *datasync.SyncCoordinator
 			return
 		},
 		Retrieve: func(ctx context.Context, last string, skip, take int) (result *datasync.Result, err error) {
-			unixDate, err := strconv.ParseInt(last, 10, 64)
+			unixDate, _ := strconv.ParseInt(last, 10, 64)
 			result = new(datasync.Result)
 			votes, totalCount, err := c.dataStore.FetchVoteForSync(ctx, helpers.UnixTime(unixDate), skip, take)
 			if err != nil {

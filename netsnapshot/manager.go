@@ -54,7 +54,6 @@ type Manager struct {
 	attemptNtfn     chan attemptedPeer
 	connFailNtfn    chan net.IP
 	showDetailedLog bool
-	wg              sync.WaitGroup
 	quit            chan struct{}
 	peersFile       string
 }

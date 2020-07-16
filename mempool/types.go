@@ -6,11 +6,11 @@ package mempool
 
 import (
 	"context"
-	"github.com/raedahgroup/dcrextdata/datasync"
 	"time"
 
 	"github.com/decred/dcrd/chaincfg"
 	"github.com/decred/dcrd/rpcclient"
+	"github.com/raedahgroup/dcrextdata/datasync"
 )
 
 type Mempool struct {

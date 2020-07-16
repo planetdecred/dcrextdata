@@ -47,12 +47,9 @@ func (pg *PgDb) AddPowData(ctx context.Context, data []pow.PowData) error {
 
 	added := 0
 	for _, d := range data {
-		powModel, err := responseToPowModel(d)
-		if err != nil {
-			return err
-		}
+		powModel := responseToPowModel(d)
 
-		err = powModel.Insert(ctx, pg.db, boil.Infer())
+		err := powModel.Insert(ctx, pg.db, boil.Infer())
 		if err != nil {
 			if !strings.Contains(err.Error(), "unique constraint") { // Ignore duplicate entries
 				return err
@@ -72,12 +69,9 @@ func (pg *PgDb) AddPowData(ctx context.Context, data []pow.PowData) error {
 }
 
 func (pg *PgDb) AddPowDataFromSync(ctx context.Context, data interface{}) error {
-	powModel, err := responseToPowModel(data.(pow.PowData))
-	if err != nil {
-		return err
-	}
+	powModel := responseToPowModel(data.(pow.PowData))
 
-	err = powModel.Insert(ctx, pg.db, boil.Infer())
+	err := powModel.Insert(ctx, pg.db, boil.Infer())
 	if isUniqueConstraint(err) {
 		return nil
 	}
@@ -85,7 +79,7 @@ func (pg *PgDb) AddPowDataFromSync(ctx context.Context, data interface{}) error 
 	return err
 }
 
-func responseToPowModel(data pow.PowData) (models.PowDatum, error) {
+func responseToPowModel(data pow.PowData) models.PowDatum {
 	return models.PowDatum{
 		BTCPrice:     null.StringFrom(fmt.Sprint(data.BtcPrice)),
 		CoinPrice:    null.StringFrom(fmt.Sprint(data.CoinPrice)),
@@ -93,7 +87,7 @@ func responseToPowModel(data pow.PowData) (models.PowDatum, error) {
 		Source:       data.Source,
 		Time:         int(data.Time),
 		Workers:      null.IntFrom(int(data.Workers)),
-	}, nil
+	}
 }
 
 func (pg *PgDb) PowCount(ctx context.Context) (int64, error) {
@@ -393,6 +387,9 @@ func (pg *PgDb) fetchPowChart(ctx context.Context, startDate uint64) (*powSet, e
 	}
 
 	dates, err := pg.powDistinctDates(ctx, poolSources, int64(startDate))
+	if err != nil {
+		return nil, err
+	}
 	for _, date := range dates {
 		powDataSet.time = append(powDataSet.time, uint64(date))
 	}

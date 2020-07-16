@@ -6,13 +6,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/raedahgroup/dcrextdata/cache"
 	"os"
 	"sort"
 	"strings"
 
 	"github.com/decred/slog"
 	"github.com/jrick/logrotate/rotator"
+	"github.com/raedahgroup/dcrextdata/cache"
 	"github.com/raedahgroup/dcrextdata/commstats"
 	"github.com/raedahgroup/dcrextdata/datasync"
 	"github.com/raedahgroup/dcrextdata/exchanges"

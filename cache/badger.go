@@ -790,13 +790,11 @@ func (charts *ChartData) snipPropagationChart(length int, axis axisType, txn *ba
 		for _, source := range charts.syncSource {
 			keys = append(keys, Propagation+"-"+string(BlockPropagation)+"-"+source)
 		}
-		break
 	case BlockTimestamp:
 		keys = []string{
 			Propagation + "-" + string(BlockTimestamp),
 			Propagation + "-" + string(VotesReceiveTime),
 		}
-		break
 	}
 
 	for _, key := range keys {
@@ -913,19 +911,16 @@ func (charts *ChartData) snipSnapshotChart(length int, axis axisType, txn *badge
 			Snapshot + "-" + string(SnapshotNodes),
 			Snapshot + "-" + string(SnapshotReachableNodes),
 		}
-		break
 	case SnapshotLocations:
 		keys = append(keys, Snapshot+"-"+string(SnapshotLocations)+"-"+string(TimeAxis))
 		for _, country := range charts.NodeLocations {
 			keys = append(keys, Snapshot+"-"+string(SnapshotLocations)+"-"+country)
 		}
-		break
 	case SnapshotNodeVersions:
 		keys = append(keys, Snapshot+"-"+string(SnapshotNodeVersions)+"-"+string(TimeAxis))
 		for _, userAgent := range charts.NodeVersion {
 			keys = append(keys, Snapshot+"-"+string(SnapshotNodeVersions)+"-"+userAgent)
 		}
-		break
 	}
 
 	for _, key := range keys {

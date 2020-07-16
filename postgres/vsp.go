@@ -215,10 +215,13 @@ func (pg *PgDb) FetchVspTicksForSync(ctx context.Context, lastID int64, skip, ta
 	}
 
 	vspTickCount, err := models.VSPTicks(vspIdQuery).Count(ctx, pg.db)
+	if err != nil {
+		return nil, 0, err
+	}
 
-	var vspTicks []datasync.VSPTickSyncDto
-	for _, tick := range vspTickSlice {
-		vspTicks = append(vspTicks, pg.vspTickModelToSyncDto(tick))
+	var vspTicks = make([]datasync.VSPTickSyncDto, len(vspTickSlice))
+	for i, tick := range vspTickSlice {
+		vspTicks[i] = pg.vspTickModelToSyncDto(tick)
 	}
 
 	return vspTicks, vspTickCount, nil
@@ -260,6 +263,9 @@ func (pg *PgDb) FiltredVSPTicks(ctx context.Context, vspName string, offset, lim
 	}
 
 	vspTickCount, err := models.VSPTicks(qm.Load(models.VSPTickRels.VSP), vspIdQuery).Count(ctx, pg.db)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	vspTicks := []vsp.VSPTickDto{}
 	for _, tick := range vspTickSlice {
@@ -270,7 +276,6 @@ func (pg *PgDb) FiltredVSPTicks(ctx context.Context, vspName string, offset, lim
 }
 
 // VSPTicks
-// todo impliment sorting for VSP ticks as it is currently been sorted by time
 func (pg *PgDb) AllVSPTicks(ctx context.Context, offset, limit int) ([]vsp.VSPTickDto, int64, error) {
 	vspTickSlice, err := models.VSPTicks(qm.Load(models.VSPTickRels.VSP), qm.Limit(limit), qm.Offset(offset), qm.OrderBy(fmt.Sprintf("%s DESC", models.VSPTickColumns.Time))).All(ctx, pg.db)
 	if err != nil {
@@ -345,39 +350,30 @@ func (pg *PgDb) fetchVSPChartData(ctx context.Context, vspName string, start tim
 		switch strings.ToLower(axisString) {
 		case string(cache.ImmatureAxis):
 			col = models.VSPTickColumns.Immature
-			break
 
 		case string(cache.LiveAxis):
 			col = models.VSPTickColumns.Live
-			break
 
 		case string(cache.VotedAxis):
 			col = models.VSPTickColumns.Voted
-			break
 
 		case string(cache.MissedAxis):
 			col = models.VSPTickColumns.Missed
-			break
 
 		case string(cache.PoolFeesAxis):
 			col = models.VSPTickColumns.PoolFees
-			break
 
 		case string(cache.ProportionLiveAxis):
 			col = models.VSPTickColumns.ProportionLive
-			break
 
 		case string(cache.ProportionMissedAxis):
 			col = models.VSPTickColumns.ProportionMissed
-			break
 
 		case string(cache.UserCountAxis):
 			col = models.VSPTickColumns.UserCount
-			break
 
 		case string(cache.UsersActiveAxis):
 			col = models.VSPTickColumns.UsersActive
-			break
 		}
 		queries = append(queries, qm.Select(models.VSPTickColumns.Time, col))
 	}
@@ -592,7 +588,6 @@ func (pg *PgDb) fetchAndAppendVspChartAxis(ctx context.Context, charts *cache.Ch
 	}
 
 	for _, source := range charts.VSPSources {
-		time.Sleep(2)
 		points, err := pg.fetchVSPChartData(ctx, source, helpers.UnixTime(int64(startDate)), 0, dataType)
 		if err != nil {
 			if err.Error() == sql.ErrNoRows.Error() {

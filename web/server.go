@@ -198,10 +198,8 @@ func (s *Server) getExplorerBestBlock(ctx context.Context) (uint32, error) {
 	switch s.activeChain.Name {
 	case chaincfg.MainNetParams.Name:
 		explorerUrl = "https://explorer.dcrdata.org/api/block/best"
-		break
 	case chaincfg.TestNet3Params.Name:
 		explorerUrl = "https://testnet.dcrdata.org/api/block/best"
-		break
 	}
 
 	var bestBlock = struct {

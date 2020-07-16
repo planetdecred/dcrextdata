@@ -73,7 +73,6 @@ func (c *Collector) collectAndStoreRedditStat(ctx context.Context) {
 
 	for _, subreddit := range c.options.Subreddit {
 		// reddit
-		resp := new(RedditResponse)
 		resp, err := c.fetchRedditStat(ctx, subreddit)
 		for retry := 0; err != nil; retry++ {
 			if retry == retryLimit {

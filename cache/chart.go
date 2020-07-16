@@ -236,7 +236,7 @@ func (data ChartFloats) Avg(s, e int) float64 {
 
 // A constructor for a sized ChartFloats.
 func newChartFloats() ChartFloats {
-	return make([]float64, 0, 0)
+	return make([]float64, 0)
 }
 
 type ChartNullData interface {
@@ -919,10 +919,10 @@ func (charts *ChartData) Update(ctx context.Context, tags ...string) error {
 				}
 				charts.mtx.Unlock()
 			}
+			completed = done
 			if updater.Tag != VSP {
 				completed = true
 			}
-			completed = done
 			cancel()
 			if err != nil {
 				return err
@@ -984,7 +984,7 @@ func (charts *ChartData) cacheID(chartID string) uint64 {
 	case BlockPropagation:
 	case BlockTimestamp:
 	case VotesReceiveTime:
-		return uint64(charts.PropagationHeightTip())
+		return charts.PropagationHeightTip()
 	case PowChart:
 		return charts.PowTimeTip()
 	case VSP:

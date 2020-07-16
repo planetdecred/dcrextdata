@@ -1116,7 +1116,6 @@ func (s *Server) getCommunityStat(resp http.ResponseWriter, req *http.Request) {
 		}
 
 		columnHeaders = append(columnHeaders, "Date", "Subscribers", "Accounts Active")
-		break
 	case twitterPlatform:
 		handle := req.FormValue("twitter-handle")
 		stats, err = s.db.TwitterStats(req.Context(), handle, offset, pageSize)
@@ -1132,7 +1131,6 @@ func (s *Server) getCommunityStat(resp http.ResponseWriter, req *http.Request) {
 		}
 
 		columnHeaders = append(columnHeaders, "Date", "Followers")
-		break
 	case githubPlatform:
 		repository := req.FormValue("repository")
 		stats, err = s.db.GithubStat(req.Context(), repository, offset, pageSize)
@@ -1148,7 +1146,6 @@ func (s *Server) getCommunityStat(resp http.ResponseWriter, req *http.Request) {
 		}
 
 		columnHeaders = append(columnHeaders, "Date", "Stars", "Forks")
-		break
 	case youtubePlatform:
 		channel := req.FormValue("channel")
 		stats, err = s.db.YoutubeStat(req.Context(), channel, offset, pageSize)
@@ -1164,7 +1161,6 @@ func (s *Server) getCommunityStat(resp http.ResponseWriter, req *http.Request) {
 		}
 
 		columnHeaders = append(columnHeaders, "Date", "Subscribers", "View Count")
-		break
 	}
 
 	totalPages := totalCount / int64(pageSize)
@@ -1198,12 +1194,10 @@ func (s *Server) communityChat(resp http.ResponseWriter, req *http.Request) {
 		}
 		plarform = models.TableNames.Github
 		filters[models.GithubColumns.Repository] = fmt.Sprintf("'%s'", req.FormValue("repository"))
-		break
 	case twitterPlatform:
 		yLabel = "Followers"
 		dataType = models.TwitterColumns.Followers
 		plarform = models.TableNames.Twitter
-		break
 	case redditPlatform:
 		if dataType == models.RedditColumns.ActiveAccounts {
 			yLabel = "Active Accounts"
@@ -1220,7 +1214,6 @@ func (s *Server) communityChat(resp http.ResponseWriter, req *http.Request) {
 			yLabel = "Subscribers"
 		}
 		filters[models.YoutubeColumns.Channel] = fmt.Sprintf("'%s'", req.FormValue("channel"))
-		break
 	}
 
 	if dataType == "" {
@@ -1492,9 +1485,7 @@ func (s *Server) nodesCountUserAgentsChart(w http.ResponseWriter, r *http.Reques
 	}
 
 	var row = []string{"Date (UTC)"}
-	for _, userAgent := range allUserAgents {
-		row = append(row, userAgent)
-	}
+	row = append(row, allUserAgents...)
 	csv := strings.Join(row, ",") + "\n"
 
 	var minDate, maxDate int64
@@ -1600,9 +1591,7 @@ func (s *Server) nodesCountByCountriesChart(w http.ResponseWriter, r *http.Reque
 	}
 
 	var row = []string{"Date (UTC)"}
-	for _, country := range allCountries {
-		row = append(row, country)
-	}
+	row = append(row, allCountries...)
 	csv := strings.Join(row, ",") + "\n"
 
 	var minDate, maxDate int64
@@ -1655,9 +1644,7 @@ func (s *Server) nodes(w http.ResponseWriter, r *http.Request) {
 	offset := (page - 1) * pageSize
 	query := r.FormValue("q")
 
-	var timestamp int64
-
-	timestamp = getTitmestampCtx(r)
+	timestamp := getTitmestampCtx(r)
 	if timestamp == 0 {
 		s.renderErrorJSON("timestamp is required and cannot be zero", w)
 		return
@@ -1757,8 +1744,6 @@ func (s *Server) sync(res http.ResponseWriter, req *http.Request) {
 	result.Success = response.Success
 	result.Records = response.Records
 	result.TotalCount = response.TotalCount
-
-	return
 }
 
 // api/charts/{chartType}/{dataType}

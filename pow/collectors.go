@@ -177,7 +177,7 @@ func (pc *Collector) RegisterSyncer(syncCoordinator *datasync.SyncCoordinator) {
 			return
 		},
 		Retrieve: func(ctx context.Context, last string, skip, take int) (result *datasync.Result, err error) {
-			dateUnix, err := strconv.ParseInt(last, 10, 64)
+			dateUnix, _ := strconv.ParseInt(last, 10, 64)
 			result = new(datasync.Result)
 			powDatum, totalCount, err := pc.store.FetchPowDataForSync(ctx, dateUnix, skip, take)
 			if err != nil {

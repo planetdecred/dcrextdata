@@ -130,7 +130,7 @@ func (pg *PgDb) FetchMempoolForSync(ctx context.Context, date time.Time, offtset
 	}
 	totalCount, err := models.Mempools(models.MempoolWhere.Time.GTE(date)).Count(ctx, pg.db)
 
-	return result, totalCount, nil
+	return result, totalCount, err
 }
 
 func (pg *PgDb) SaveBlock(ctx context.Context, block mempool.Block) error {
@@ -268,7 +268,7 @@ func (pg *PgDb) FetchBlockForSync(ctx context.Context, blockHeight int64, offtse
 	}
 	totalCount, err := models.Blocks(models.BlockWhere.Height.GT(int(blockHeight))).Count(ctx, pg.db)
 
-	return result, totalCount, nil
+	return result, totalCount, err
 }
 
 func (pg *PgDb) SaveVote(ctx context.Context, vote mempool.Vote) error {
@@ -399,6 +399,9 @@ func (pg *PgDb) FetchVoteForSync(ctx context.Context, date time.Time, offtset in
 		})
 	}
 	totalCount, err := models.Votes(models.VoteWhere.ReceiveTime.GTE(null.TimeFrom(date))).Count(ctx, pg.db)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	return result, totalCount, nil
 }
@@ -581,12 +584,11 @@ func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.C
 		return nil, err
 	}
 
-	var heights, dates cache.ChartUints
+	var heights cache.ChartUints
 	var blockDelay cache.ChartFloats
 	localBlockReceiveTime := make(map[uint64]float64)
 	for _, record := range blockDelays {
 		heights = append(heights, uint64(record.BlockHeight))
-		dates = append(dates, uint64(record.BlockTime.Unix()))
 		timeDifference, _ := strconv.ParseFloat(fmt.Sprintf("%04.2f", record.TimeDifference), 64)
 		blockDelay = append(blockDelay, timeDifference)
 

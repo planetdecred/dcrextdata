@@ -34,12 +34,12 @@ func printOptionGroups(output io.Writer, groups []*flags.Group) {
 // printOptions adds 2 trailing whitespace for options with short name and 6 for those without
 // This is an attempt to stay consistent with the output of parser.WriteHelp
 func printOptions(tabWriter io.Writer, optionDescription string, options []*flags.Option) {
-	if options != nil && len(options) > 0 {
+	if len(options) > 0 {
 		fmt.Fprintln(tabWriter, optionDescription)
 		// check if there's any option in this group with short and long name
 		// this will help to decide whether or not to pad options without short name to maintain readability
 		if optionDescription == "Command-Line options:" {
-			fmt.Fprintf(tabWriter, fmt.Sprintf("   %s [command] \n\n", app.AppName))
+			fmt.Fprintf(tabWriter, "   %s [command] \n\n", app.AppName)
 		}
 
 		var hasOptionsWithShortName bool
