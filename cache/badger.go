@@ -18,7 +18,7 @@ const (
 
 // chart version
 func (charts *ChartData) SaveVersion() error {
-	return charts.SaveVal(cacheVersion, versionKey)
+	return charts.SaveVal(versionKey, cacheVersion)
 }
 
 func (charts *ChartData) getVersion() (semver Semver, err error) {
@@ -29,7 +29,7 @@ func (charts *ChartData) getVersion() (semver Semver, err error) {
 	return
 }
 
-func (charts *ChartData) SaveVal(val interface{}, key string) error {
+func (charts *ChartData) SaveVal(key string, val interface{}) error {
 	var b bytes.Buffer
 	e := gob.NewEncoder(&b)
 	if err := e.Encode(val); err != nil {
@@ -42,7 +42,7 @@ func (charts *ChartData) SaveVal(val interface{}, key string) error {
 	return err
 }
 
-func (charts *ChartData) SaveValTx(val interface{}, key string, txn *badger.Txn) error {
+func (charts *ChartData) SaveValTx(key string, val interface{}, txn *badger.Txn) error {
 	var b bytes.Buffer
 	e := gob.NewEncoder(&b)
 	if err := e.Encode(val); err != nil {
@@ -102,7 +102,7 @@ func (charts *ChartData) AppendChartUintsAxis(key string, set ChartUints) error 
 		}
 	}
 	data = append(data, set...)
-	return charts.SaveVal(data, key)
+	return charts.SaveVal(key, data)
 }
 
 func (charts *ChartData) AppendChartNullUintsAxis(key string, set ChartNullUints) error {
@@ -114,7 +114,7 @@ func (charts *ChartData) AppendChartNullUintsAxis(key string, set ChartNullUints
 		}
 	}
 	data = data.Append(set)
-	return charts.SaveVal(data, key)
+	return charts.SaveVal(key, data)
 }
 
 func (charts *ChartData) AppendChartNullUintsAxisTx(key string, set ChartNullUints, txn *badger.Txn) error {
@@ -126,7 +126,7 @@ func (charts *ChartData) AppendChartNullUintsAxisTx(key string, set ChartNullUin
 		}
 	}
 	data = data.Append(set)
-	return charts.SaveValTx(data, key, txn)
+	return charts.SaveValTx(key, data, txn)
 }
 
 func (charts *ChartData) AppendChartFloatsAxis(key string, set ChartFloats) error {
@@ -138,7 +138,7 @@ func (charts *ChartData) AppendChartFloatsAxis(key string, set ChartFloats) erro
 		}
 	}
 	data = append(data, set...)
-	return charts.SaveVal(data, key)
+	return charts.SaveVal(key, data)
 }
 
 func (charts *ChartData) AppendChartNullFloatsAxis(key string, set ChartNullFloats) error {
@@ -150,7 +150,7 @@ func (charts *ChartData) AppendChartNullFloatsAxis(key string, set ChartNullFloa
 		}
 	}
 	data = data.Append(set)
-	return charts.SaveVal(data, key)
+	return charts.SaveVal(key, data)
 }
 
 func (charts *ChartData) AppendChartNullFloatsAxisTx(key string, set ChartNullFloats, txn *badger.Txn) error {
@@ -162,7 +162,7 @@ func (charts *ChartData) AppendChartNullFloatsAxisTx(key string, set ChartNullFl
 		}
 	}
 	data = data.Append(set)
-	return charts.SaveValTx(data, key, txn)
+	return charts.SaveValTx(key, data, txn)
 }
 
 func (charts *ChartData) NormalizeLength(tags ...string) error {
@@ -946,7 +946,7 @@ func (charts *ChartData) snipChartUintsAxis(key string, length int, txn *badger.
 		}
 	}
 	data = data.snip(length)
-	return charts.SaveValTx(data, key, txn)
+	return charts.SaveValTx(key, data, txn)
 }
 
 func (charts *ChartData) snipChartNullUintsAxis(key string, length int, txn *badger.Txn) error {
@@ -958,7 +958,7 @@ func (charts *ChartData) snipChartNullUintsAxis(key string, length int, txn *bad
 		}
 	}
 	data = data.snip(length)
-	return charts.SaveValTx(data, key, txn)
+	return charts.SaveValTx(key, data, txn)
 }
 
 func (charts *ChartData) snipChartNullFloatsAxis(key string, length int, txn *badger.Txn) error {
@@ -970,7 +970,7 @@ func (charts *ChartData) snipChartNullFloatsAxis(key string, length int, txn *ba
 		}
 	}
 	data = data.snip(length)
-	return charts.SaveValTx(data, key, txn)
+	return charts.SaveValTx(key, data, txn)
 }
 
 func (charts *ChartData) snipChartFloatsAxis(key string, length int, txn *badger.Txn) error {
@@ -982,7 +982,7 @@ func (charts *ChartData) snipChartFloatsAxis(key string, length int, txn *badger
 		}
 	}
 	data = data.snip(length)
-	return charts.SaveValTx(data, key, txn)
+	return charts.SaveValTx(key, data, txn)
 }
 
 func (charts *ChartData) MempoolTimeTip() uint64 {
@@ -1238,7 +1238,7 @@ func (charts *ChartData) lengthenTime(key string, txn *badger.Txn) (dayIntervals
 		}
 	}
 
-	if err = charts.SaveValTx(days, fmt.Sprintf("%s-%s", key, dayBin), txn); err != nil {
+	if err = charts.SaveValTx(fmt.Sprintf("%s-%s", key, dayBin), days, txn); err != nil {
 		return
 	}
 
@@ -1273,7 +1273,7 @@ func (charts *ChartData) lengthenTime(key string, txn *badger.Txn) (dayIntervals
 		}
 	}
 
-	if err = charts.SaveValTx(hours, fmt.Sprintf("%s-%s", key, hourBin), txn); err != nil {
+	if err = charts.SaveValTx(fmt.Sprintf("%s-%s", key, hourBin), hours, txn); err != nil {
 		return
 	}
 
@@ -1296,7 +1296,7 @@ func (charts *ChartData) lengthenChartUints(key string, dayIntervals [][2]int, h
 		dayData = append(dayData, data.Avg(interval[0], interval[1]))
 	}
 
-	if err := charts.SaveValTx(dayData, fmt.Sprintf("%s-%s", key, dayBin), txn); err != nil {
+	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, dayBin), dayData, txn); err != nil {
 		return err
 	}
 
@@ -1306,7 +1306,7 @@ func (charts *ChartData) lengthenChartUints(key string, dayIntervals [][2]int, h
 		hourData = append(hourData, data.Avg(interval[0], interval[1]))
 	}
 
-	if err := charts.SaveValTx(hourData, fmt.Sprintf("%s-%s", key, hourBin), txn); err != nil {
+	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, hourBin), hourData, txn); err != nil {
 		return err
 	}
 
@@ -1329,7 +1329,7 @@ func (charts *ChartData) lengthenChartNullUints(key string, dayIntervals [][2]in
 		dayData.Items = append(dayData.Items, data.Avg(interval[0], interval[1]))
 	}
 
-	if err := charts.SaveValTx(dayData, fmt.Sprintf("%s-%s", key, dayBin), txn); err != nil {
+	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, dayBin), dayData, txn); err != nil {
 		return err
 	}
 
@@ -1339,7 +1339,7 @@ func (charts *ChartData) lengthenChartNullUints(key string, dayIntervals [][2]in
 		hourData.Items = append(hourData.Items, data.Avg(interval[0], interval[1]))
 	}
 
-	if err := charts.SaveValTx(hourData, fmt.Sprintf("%s-%s", key, hourBin), txn); err != nil {
+	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, hourBin), hourData, txn); err != nil {
 		return err
 	}
 
@@ -1362,7 +1362,7 @@ func (charts *ChartData) lengthenChartFloats(key string, dayIntervals [][2]int, 
 		dayData = append(dayData, data.Avg(interval[0], interval[1]))
 	}
 
-	if err := charts.SaveValTx(dayData, fmt.Sprintf("%s-%s", key, dayBin), txn); err != nil {
+	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, dayBin), dayData, txn); err != nil {
 		return err
 	}
 
@@ -1372,7 +1372,7 @@ func (charts *ChartData) lengthenChartFloats(key string, dayIntervals [][2]int, 
 		hourData = append(hourData, data.Avg(interval[0], interval[1]))
 	}
 
-	if err := charts.SaveValTx(hourData, fmt.Sprintf("%s-%s", key, hourBin), txn); err != nil {
+	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, hourBin), hourData, txn); err != nil {
 		return err
 	}
 
@@ -1395,7 +1395,7 @@ func (charts *ChartData) lengthenChartNullFloats(key string, dayIntervals [][2]i
 		dayData.Items = append(dayData.Items, data.Avg(interval[0], interval[1]))
 	}
 
-	if err := charts.SaveValTx(dayData, fmt.Sprintf("%s-%s", key, dayBin), txn); err != nil {
+	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, dayBin), dayData, txn); err != nil {
 		return err
 	}
 
@@ -1405,7 +1405,7 @@ func (charts *ChartData) lengthenChartNullFloats(key string, dayIntervals [][2]i
 		hourData.Items = append(hourData.Items, data.Avg(interval[0], interval[1]))
 	}
 
-	if err := charts.SaveValTx(hourData, fmt.Sprintf("%s-%s", key, hourBin), txn); err != nil {
+	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, hourBin), hourData, txn); err != nil {
 		return err
 	}
 

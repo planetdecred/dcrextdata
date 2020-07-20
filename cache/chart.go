@@ -1484,7 +1484,7 @@ func networkSnapshorChart(ctx context.Context, charts *ChartData, dataType, _ ax
 func networkSnapshotNodesChart(charts *ChartData, bin binLevel) ([]byte, error) {
 	var dates, nodes, reachableNodes ChartUints
 
-	var key = fmt.Sprintf("%s-%s", Mempool, TimeAxis)
+	var key = fmt.Sprintf("%s-%s", Snapshot, TimeAxis)
 	if bin != defaultBin {
 		key = fmt.Sprintf("%s-%s", key, bin)
 	}
