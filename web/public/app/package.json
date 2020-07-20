@@ -14,7 +14,7 @@
   "dependencies": {
     "axios": "^0.19.0",
     "bootstrap4-toggle": "^3.4.0",
-    "dompurify": "~1.0.10",
+    "dompurify": "~2.0.3",
     "moment": "^2.24.0",
     "lodash-es": "^4.17.15",
     "stimulus": "^1.1.1"
