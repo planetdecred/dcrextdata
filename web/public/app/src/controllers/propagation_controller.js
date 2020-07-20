@@ -81,6 +81,7 @@ export default class extends Controller {
     show(this.numPageWrapperTarget)
     hide(this.chartWrapperTarget)
     hide(this.graphIntervalWrapperTarget)
+    hide(this.zoomSelectorTarget)
     show(this.tablesWrapperTarget)
     setActiveRecordSetBtn(this.selectedRecordSet, this.selectedRecordSetTargets)
     displayPillBtnOption(this.selectedViewOption, this.selectedRecordSetTargets)

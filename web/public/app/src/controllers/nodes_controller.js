@@ -81,6 +81,7 @@ export default class extends Controller {
     this.selectedViewOption = 'table'
     setActiveOptionBtn(this.selectedViewOption, this.viewOptionTargets)
     hide(this.chartWrapperTarget)
+    hide(this.zoomSelectorTarget)
     hide(this.messageViewTarget)
     hide(this.graphIntervalWrapperTarget)
     show(this.tableWrapperTarget)
