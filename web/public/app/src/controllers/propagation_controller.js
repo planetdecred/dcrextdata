@@ -439,10 +439,7 @@ export default class extends Controller {
     showLoading(this.loadingDataTarget, elementsToToggle)
 
     const _this = this
-    let url = `/api/charts/propagation/${this.chartType}?extras=${this.syncSources.join('|')}&axis=${this.selectedAxis()}`
-    if (this.selectedAxis() === 'time') {
-      url += `&bin=${this.selectedInterval()}`
-    }
+    const url = `/api/charts/propagation/${this.chartType}?extras=${this.syncSources.join('|')}&axis=${this.selectedAxis()}&bin=${this.selectedInterval()}`
     axios.get(url).then(function (response) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       if (!response.data.x || response.data.x.length === 0) {
