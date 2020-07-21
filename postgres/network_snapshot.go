@@ -863,6 +863,7 @@ func (pg *PgDb) fetchNetworkSnapshotChart(ctx context.Context, charts *cache.Cha
 		set.versionDates = append(set.versionDates, uint64(d))
 	}
 
+	fmt.Println(done)
 	return set, func() {}, true, nil
 }
 
