@@ -1001,6 +1001,11 @@ func (charts *ChartData) lengthenMempool() error {
 	txn := charts.DB.NewTransaction(true)
 	defer txn.Discard()
 
+	if err := charts.updateMempoolHeights(txn); err != nil {
+		log.Errorf("Unable to update mempool heights, %s", err.Error())
+		return err
+	}
+
 	dayIntervals, hourIntervals, err := charts.lengthenTime(fmt.Sprintf("%s-%s", Mempool, TimeAxis), txn)
 	if err != nil {
 		return err
@@ -1026,6 +1031,62 @@ func (charts *ChartData) lengthenMempool() error {
 		return err
 	}
 	return nil
+}
+
+func (charts *ChartData) updateMempoolHeights(txn *badger.Txn) error {
+    var mempoolDates, propagationDates, mempoolHeights, propagationHeights ChartUints
+    if err := charts.ReadValTx(fmt.Sprintf("%s-%s", Mempool, TimeAxis), &mempoolDates, txn); err != nil {
+        if err == badger.ErrKeyNotFound {
+            log.Warn("Mempool height not updated, mempool dates has no value")
+            return nil
+        }
+        return err
+    }
+
+    if mempoolDates.Length() == 0 {
+        log.Warn("Mempool height not updated, mempool dates has no value")
+        return nil
+    }
+
+    if err := charts.ReadValTx(fmt.Sprintf("%s-%s", Propagation, TimeAxis), &propagationDates, txn); err != nil {
+        if err == badger.ErrKeyNotFound {
+            log.Warn("Mempool height not updated, propagation dates has no value")
+            return nil
+        }
+        return err
+    }
+
+    if propagationDates.Length() == 0 {
+        log.Warn("Mempool height not updated, propagation dates has no value")
+        return nil
+    }
+
+    if err := charts.ReadValTx(fmt.Sprintf("%s-%s", Propagation, HeightAxis), &propagationHeights, txn); err != nil {
+        if err == badger.ErrKeyNotFound {
+            log.Warn("Mempool height not updated, propagation heights has no value")
+            return nil
+        }
+        return err
+    }
+
+    if propagationHeights.Length() == 0 {
+        log.Warn("Mempool height not updated, propagation heights has no value")
+        return nil
+    }
+
+    pIndex := 0
+    for _, date := range mempoolDates {
+        if pIndex+1 < propagationDates.Length() && date >= propagationDates[pIndex+1] {
+            pIndex += 1
+        }
+        mempoolHeights = append(mempoolHeights, propagationHeights[pIndex])
+    }
+
+    if err := charts.SaveValTx(fmt.Sprintf("%s-%s", Mempool, HeightAxis), mempoolHeights, txn); err != nil {
+        return err
+    }
+
+    return nil
 }
 
 func (charts *ChartData) lengthenPropagation() error {

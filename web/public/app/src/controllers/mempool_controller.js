@@ -24,7 +24,7 @@ export default class extends Controller {
       'chartWrapper', 'viewOption', 'labels', 'viewOptionControl', 'messageView',
       'chartDataTypeSelector', 'chartDataType', 'chartOptions', 'labels', 'selectedMempoolOpt',
       'selectedNumberOfRows', 'numPageWrapper', 'loadingData',
-      'zoomSelector', 'zoomOption', 'interval', 'graphIntervalWrapper'
+      'zoomSelector', 'zoomOption', 'interval', 'graphIntervalWrapper', 'axisOption'
     ]
   }
 
@@ -124,7 +124,10 @@ export default class extends Controller {
       this.selectedNumberOfRowsberOfRows = this.selectedNumberOfRowsTarget.value
       url = `/getmempool?page=${this.nextPage}&records-per-page=${this.selectedNumberOfRowsberOfRows}&view-option=${this.selectedViewOption}`
     } else {
-      url = `/api/charts/mempool/${this.dataType}?bin=${this.selectedInterval()}`
+      url = `/api/charts/mempool/${this.dataType}?axis=${this.selectedAxis()}`
+    }
+    if (this.selectedAxis() === 'time') {
+      url += `&bin=${this.selectedInterval()}`
     }
 
     const _this = this
@@ -215,6 +218,29 @@ export default class extends Controller {
     this.fetchData(this.selectedViewOption)
   }
 
+  selectedAxis () {
+    let axis = selectedOption(this.axisOptionTargets)
+    if (!axis) {
+      axis = 'time'
+    }
+    return axis
+  }
+
+  isHeightAxis () {
+    return this.selectedAxis() === 'height'
+  }
+
+  setAxis (e) {
+    const option = e.currentTarget.dataset.option
+    if (option === 'time') {
+      show(this.graphIntervalWrapperTarget)
+    } else {
+      hide(this.graphIntervalWrapperTarget)
+    }
+    setActiveOptionBtn(option, this.axisOptionTargets)
+    this.fetchData(this.selectedViewOption)
+  }
+
   async validateZoom () {
     await animationFrame()
     await animationFrame()
@@ -276,32 +302,35 @@ export default class extends Controller {
           this.title = '# of Transactions'
           break
       }
-      let minDate, maxDate
+      let minVal, maxVal
 
-      data.x.forEach(unixTime => {
-        let date = new Date(unixTime * 1000)
-        if (minDate === undefined || date < minDate) {
-          minDate = date
+      data.x.forEach(record => {
+        let val = record
+        if (!this.isHeightAxis()) {
+          val = new Date(record * 1000)
+        }
+        if (minVal === undefined || val < minVal) {
+          minVal = val
         }
 
-        if (maxDate === undefined || date > maxDate) {
-          maxDate = date
+        if (maxVal === undefined || val > maxVal) {
+          maxVal = val
         }
       })
 
-      const chartData = zipXYZData(data)
-
+      const chartData = zipXYZData(data, this.isHeightAxis())
+      let xLabel = this.isHeightAxis() ? 'Height' : 'Time'
       _this.chartsView = new Dygraph(_this.chartsViewTarget, chartData,
         {
           legend: 'always',
           includeZero: true,
-          dateWindow: [minDate, maxDate],
+          dateWindow: [minVal, maxVal],
           legendFormatter: legendFormatter,
           digitsAfterDecimal: 8,
           labelsDiv: _this.labelsTarget,
           ylabel: _this.title,
-          xlabel: 'Date',
-          labels: ['Date', _this.title],
+          xlabel: xLabel,
+          labels: [xLabel, _this.title],
           labelsUTC: true,
           labelsKMB: true,
           maxNumberWidth: 10,
@@ -318,7 +347,7 @@ export default class extends Controller {
       )
 
       _this.validateZoom()
-      updateZoomSelector(_this.zoomOptionTargets, minDate, maxDate)
+      updateZoomSelector(_this.zoomOptionTargets, minVal, maxVal)
       show(this.zoomSelectorTarget)
     }
   }

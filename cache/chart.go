@@ -1198,22 +1198,25 @@ func (charts *ChartData) trim(sets ...Lengther) []Lengther {
 	return sets
 }
 
-func mempool(ctx context.Context, charts *ChartData, dataType, _ axisType, bin binLevel, _ ...string) ([]byte, error) {
+func mempool(ctx context.Context, charts *ChartData, dataType, axis axisType, bin binLevel, _ ...string) ([]byte, error) {
 	switch dataType {
 	case MempoolSize:
-		return mempoolSize(charts, bin)
+		return mempoolSize(charts, axis, bin)
 	case MempoolTxCount:
-		return mempoolTxCount(charts, bin)
+		return mempoolTxCount(charts, axis, bin)
 	case MempoolFees:
-		return mempoolFees(charts, bin)
+		return mempoolFees(charts, axis, bin)
 	}
 	return nil, UnknownChartErr
 }
 
-func mempoolSize(charts *ChartData, bin binLevel) ([]byte, error) {
+func mempoolSize(charts *ChartData, axis axisType, bin binLevel) ([]byte, error) {
 	var dates, sizes ChartUints
 
-	var key = fmt.Sprintf("%s-%s", Mempool, TimeAxis)
+	key := fmt.Sprintf("%s-%s", Mempool, HeightAxis)
+	if axis == TimeAxis {
+		key = fmt.Sprintf("%s-%s", Mempool, TimeAxis)
+	}
 	if bin != defaultBin {
 		key = fmt.Sprintf("%s-%s", key, bin)
 	}
@@ -1233,10 +1236,13 @@ func mempoolSize(charts *ChartData, bin binLevel) ([]byte, error) {
 	return charts.Encode(nil, dates, sizes)
 }
 
-func mempoolTxCount(charts *ChartData, bin binLevel) ([]byte, error) {
+func mempoolTxCount(charts *ChartData, axis axisType, bin binLevel) ([]byte, error) {
 	var dates, txCounts ChartUints
 
-	var key = fmt.Sprintf("%s-%s", Mempool, TimeAxis)
+	key := fmt.Sprintf("%s-%s", Mempool, HeightAxis)
+	if axis == TimeAxis {
+		key = fmt.Sprintf("%s-%s", Mempool, TimeAxis)
+	}
 	if bin != defaultBin {
 		key = fmt.Sprintf("%s-%s", key, bin)
 	}
@@ -1257,11 +1263,14 @@ func mempoolTxCount(charts *ChartData, bin binLevel) ([]byte, error) {
 	return charts.Encode(nil, dates, txCounts)
 }
 
-func mempoolFees(charts *ChartData, bin binLevel) ([]byte, error) {
+func mempoolFees(charts *ChartData, axis axisType, bin binLevel) ([]byte, error) {
 	var dates ChartUints
 	var fees ChartFloats
 
-	var key = fmt.Sprintf("%s-%s", Mempool, TimeAxis)
+	key := fmt.Sprintf("%s-%s", Mempool, HeightAxis)
+	if axis == TimeAxis {
+		key = fmt.Sprintf("%s-%s", Mempool, TimeAxis)
+	}
 	if bin != defaultBin {
 		key = fmt.Sprintf("%s-%s", key, bin)
 	}
