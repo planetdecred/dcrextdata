@@ -617,7 +617,7 @@ export default class extends Controller {
     this.lastZoom = Zoom.object(start, end)
     this.settings.zoom = Zoom.encode(this.lastZoom)
     let ex = this.chartsView.xAxisExtremes()
-    let option = Zoom.mapKey(this.settings.zoom, ex, 1)
+    let option = Zoom.mapKey(this.settings.zoom, ex, this.isHeightAxis() ? this.avgBlockTime : 1)
     setActiveOptionBtn(option, this.zoomOptionTargets)
   }
 
