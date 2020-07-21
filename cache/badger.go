@@ -1036,59 +1036,59 @@ func (charts *ChartData) lengthenMempool() error {
 }
 
 func (charts *ChartData) updateMempoolHeights(txn *badger.Txn) error {
-    var mempoolDates, propagationDates, mempoolHeights, propagationHeights ChartUints
-    if err := charts.ReadValTx(fmt.Sprintf("%s-%s", Mempool, TimeAxis), &mempoolDates, txn); err != nil {
-        if err == badger.ErrKeyNotFound {
-            log.Warn("Mempool height not updated, mempool dates has no value")
-            return nil
-        }
-        return err
-    }
+	var mempoolDates, propagationDates, mempoolHeights, propagationHeights ChartUints
+	if err := charts.ReadValTx(fmt.Sprintf("%s-%s", Mempool, TimeAxis), &mempoolDates, txn); err != nil {
+		if err == badger.ErrKeyNotFound {
+			log.Warn("Mempool height not updated, mempool dates has no value")
+			return nil
+		}
+		return err
+	}
 
-    if mempoolDates.Length() == 0 {
-        log.Warn("Mempool height not updated, mempool dates has no value")
-        return nil
-    }
+	if mempoolDates.Length() == 0 {
+		log.Warn("Mempool height not updated, mempool dates has no value")
+		return nil
+	}
 
-    if err := charts.ReadValTx(fmt.Sprintf("%s-%s", Propagation, TimeAxis), &propagationDates, txn); err != nil {
-        if err == badger.ErrKeyNotFound {
-            log.Warn("Mempool height not updated, propagation dates has no value")
-            return nil
-        }
-        return err
-    }
+	if err := charts.ReadValTx(fmt.Sprintf("%s-%s", Propagation, TimeAxis), &propagationDates, txn); err != nil {
+		if err == badger.ErrKeyNotFound {
+			log.Warn("Mempool height not updated, propagation dates has no value")
+			return nil
+		}
+		return err
+	}
 
-    if propagationDates.Length() == 0 {
-        log.Warn("Mempool height not updated, propagation dates has no value")
-        return nil
-    }
+	if propagationDates.Length() == 0 {
+		log.Warn("Mempool height not updated, propagation dates has no value")
+		return nil
+	}
 
-    if err := charts.ReadValTx(fmt.Sprintf("%s-%s", Propagation, HeightAxis), &propagationHeights, txn); err != nil {
-        if err == badger.ErrKeyNotFound {
-            log.Warn("Mempool height not updated, propagation heights has no value")
-            return nil
-        }
-        return err
-    }
+	if err := charts.ReadValTx(fmt.Sprintf("%s-%s", Propagation, HeightAxis), &propagationHeights, txn); err != nil {
+		if err == badger.ErrKeyNotFound {
+			log.Warn("Mempool height not updated, propagation heights has no value")
+			return nil
+		}
+		return err
+	}
 
-    if propagationHeights.Length() == 0 {
-        log.Warn("Mempool height not updated, propagation heights has no value")
-        return nil
-    }
+	if propagationHeights.Length() == 0 {
+		log.Warn("Mempool height not updated, propagation heights has no value")
+		return nil
+	}
 
-    pIndex := 0
-    for _, date := range mempoolDates {
-        if pIndex+1 < propagationDates.Length() && date >= propagationDates[pIndex+1] {
-            pIndex += 1
-        }
-        mempoolHeights = append(mempoolHeights, propagationHeights[pIndex])
-    }
+	pIndex := 0
+	for _, date := range mempoolDates {
+		if pIndex+1 < propagationDates.Length() && date >= propagationDates[pIndex+1] {
+			pIndex += 1
+		}
+		mempoolHeights = append(mempoolHeights, propagationHeights[pIndex])
+	}
 
-    if err := charts.SaveValTx(fmt.Sprintf("%s-%s", Mempool, HeightAxis), mempoolHeights, txn); err != nil {
-        return err
-    }
+	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", Mempool, HeightAxis), mempoolHeights, txn); err != nil {
+		return err
+	}
 
-    return nil
+	return nil
 }
 
 func (charts *ChartData) lengthenPropagation() error {
