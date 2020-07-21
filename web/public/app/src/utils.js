@@ -308,8 +308,9 @@ export function csv (dataSet, labelsCount) {
   return csv
 }
 
-export function updateZoomSelector (targets, minDate, maxDate) {
-  const duration = maxDate - minDate
+export function updateZoomSelector (targets, minVal, maxVal, scale) {
+  scale = scale || 1
+  const duration = scale * (maxVal - minVal)
   const days = duration / (1000 * 60 * 60 * 24)
   targets.forEach(el => {
     let showElement = false

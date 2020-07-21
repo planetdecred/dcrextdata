@@ -600,6 +600,7 @@ func (s *Server) mempoolPage(res http.ResponseWriter, req *http.Request) {
 	}
 
 	data["mempool"] = mempoolData
+	data["blockTime"] = s.activeChain.TargetTimePerBlock.Seconds()
 
 	s.render("mempool.html", data, res)
 }
@@ -701,6 +702,7 @@ func (s *Server) propagation(res http.ResponseWriter, req *http.Request) {
 	}
 
 	data["propagation"] = block
+	data["blockTime"] = s.activeChain.TargetTimePerBlock.Seconds()
 
 	s.render("propagation.html", data, res)
 }

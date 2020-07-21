@@ -3,7 +3,7 @@
 {{ template "html-head" }}
 
 <body data-controller="receive">
-<div class="body" data-controller="propagation">
+<div class="body" data-controller="propagation" data-propagation-block-time="{{.blockTime}}">
     {{ template "header" }}
     <div class="content">
         <div class="container-fluid">

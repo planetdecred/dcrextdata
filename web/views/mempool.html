@@ -3,7 +3,7 @@
 {{ template "html-head" }}
 
 <body data-controller="receive">
-<div class="body" data-controller="mempool">
+<div class="body" data-controller="mempool" data-mempool-block-time="{{.blockTime}}">
     {{ template "header" }}
     <div class="content">
         <div class="container-fluid">

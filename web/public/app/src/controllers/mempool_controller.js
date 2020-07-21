@@ -45,6 +45,7 @@ export default class extends Controller {
     this.drawCallback = this._drawCallback.bind(this)
 
     this.dataType = this.chartDataTypeTarget.getAttribute('data-initial-value')
+    this.avgBlockTime = parseInt(this.data.get('blockTime')) * 1000
 
     this.selectedViewOption = this.viewOptionControlTarget.getAttribute('data-initial-value')
     if (this.selectedViewOption === 'chart') {
@@ -248,7 +249,7 @@ export default class extends Controller {
     this.limits = this.chartsView.xAxisExtremes()
     var selected = this.selectedZoom()
     if (selected) {
-      this.lastZoom = Zoom.validate(selected, this.limits, 1, 1)
+      this.lastZoom = Zoom.validate(selected, this.limits, 1, this.isHeightAxis() ? this.avgBlockTime : 1)
     } else {
       this.lastZoom = Zoom.project(this.settings.zoom, oldLimits, this.limits)
     }
@@ -347,7 +348,7 @@ export default class extends Controller {
       )
 
       _this.validateZoom()
-      updateZoomSelector(_this.zoomOptionTargets, minVal, maxVal)
+      updateZoomSelector(_this.zoomOptionTargets, minVal, maxVal, this.isHeightAxis() ? this.avgBlockTime : 1)
       show(this.zoomSelectorTarget)
     }
   }

@@ -40,6 +40,7 @@ export default class extends Controller {
       this.currentPage = 1
     }
 
+    this.avgBlockTime = parseInt(this.data.get('blockTime')) * 1000
     this.selectedViewOption = this.viewOptionControlTarget.dataset.initialValue
     this.selectedRecordSet = this.tableRecordSetOptionsTarget.dataset.initialValue
     this.chartType = this.chartTypesWrapperTarget.dataset.initialValue
@@ -467,7 +468,7 @@ export default class extends Controller {
     const _this = this
 
     let yLabel = this.chartType === 'votes-receive-time' ? 'Time Difference (Milliseconds)' : 'Delay (s)'
-    let xLabel = this.selectedAxis() === 'height' ? 'Height' : 'Time'
+    let xLabel = this.isHeightAxis() ? 'Height' : 'Time'
     let options = {
       legend: 'always',
       includeZero: true,
@@ -481,30 +482,31 @@ export default class extends Controller {
       strokeWidth: 0.0,
       showRangeSelector: true
     }
-    const chartData = zipXYZData(data, this.selectedAxis() === 'height')
+    const chartData = zipXYZData(data, this.isHeightAxis())
     _this.chartsView = new Dygraph(_this.chartsViewTarget, chartData, options)
-    if (this.selectedAxis() === 'time') {
-      _this.validateZoom()
-      let minDate, maxDate
-      data.x.forEach(unixTime => {
-        let date = new Date(unixTime * 1000)
-        if (minDate === undefined || date < minDate) {
-          minDate = date
-        }
+    _this.validateZoom()
+    let minVal, maxVal
+    data.x.forEach(record => {
+      let val = record
+      if (!this.isHeightAxis()) {
+        val = new Date(record * 1000)
+      }
+      if (minVal === undefined || val < minVal) {
+        minVal = val
+      }
 
-        if (maxDate === undefined || date > maxDate) {
-          maxDate = date
-        }
-      })
-      updateZoomSelector(_this.zoomOptionTargets, minDate, maxDate)
-      show(this.zoomSelectorTarget)
-    }
+      if (maxVal === undefined || val > maxVal) {
+        maxVal = val
+      }
+    })
+    updateZoomSelector(_this.zoomOptionTargets, minVal, maxVal, this.isHeightAxis() ? this.avgBlockTime : 1)
+    show(this.zoomSelectorTarget)
   }
 
   plotExtDataGraph (data) {
     const _this = this
 
-    let xLabel = this.selectedAxis() === 'height' ? 'Height' : 'Time'
+    let xLabel = this.isHeightAxis() ? 'Height' : 'Time'
     const labels = [xLabel]
     this.syncSources.forEach(source => {
       labels.push(source)
@@ -528,7 +530,7 @@ export default class extends Controller {
       }
     }
 
-    const chartData = zipXYZData(data, this.selectedAxis() === 'height')
+    const chartData = zipXYZData(data, this.isHeightAxis())
     this.chartsView = new Dygraph(_this.chartsViewTarget, chartData, options)
     if (this.selectedAxis() === 'time') {
       this.validateZoom()
@@ -592,7 +594,7 @@ export default class extends Controller {
     this.limits = this.chartsView.xAxisExtremes()
     var selected = this.selectedZoom()
     if (selected) {
-      this.lastZoom = Zoom.validate(selected, this.limits, 1, 1)
+      this.lastZoom = Zoom.validate(selected, this.limits, 1, this.isHeightAxis() ? 300 * 1000 : 1)
     } else {
       this.lastZoom = Zoom.project(this.settings.zoom, oldLimits, this.limits)
     }
@@ -658,6 +660,10 @@ export default class extends Controller {
       axis = 'time'
     }
     return axis
+  }
+
+  isHeightAxis () {
+    return this.selectedAxis() === 'height'
   }
 
   setAxis (e) {
