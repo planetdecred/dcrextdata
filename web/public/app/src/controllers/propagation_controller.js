@@ -415,10 +415,7 @@ export default class extends Controller {
     showLoading(this.loadingDataTarget, elementsToToggle)
 
     const _this = this
-    let url = `/api/charts/propagation/${this.chartType}?axis=${this.selectedAxis()}`
-    if (this.selectedAxis() === 'time') {
-      url += `&bin=${this.selectedInterval()}`
-    }
+    let url = `/api/charts/propagation/${this.chartType}?axis=${this.selectedAxis()}&bin=${this.selectedInterval()}`
     axios.get(url).then(function (response) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       _this.plotGraph(response.data)
@@ -668,11 +665,6 @@ export default class extends Controller {
 
   setAxis (e) {
     const option = e.currentTarget.dataset.option
-    if (option === 'time') {
-      show(this.graphIntervalWrapperTarget)
-    } else {
-      hide(this.graphIntervalWrapperTarget)
-    }
     setActiveOptionBtn(option, this.axisOptionTargets)
     this.plotSelectedChart()
   }

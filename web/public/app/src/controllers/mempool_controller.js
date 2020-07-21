@@ -125,10 +125,7 @@ export default class extends Controller {
       this.selectedNumberOfRowsberOfRows = this.selectedNumberOfRowsTarget.value
       url = `/getmempool?page=${this.nextPage}&records-per-page=${this.selectedNumberOfRowsberOfRows}&view-option=${this.selectedViewOption}`
     } else {
-      url = `/api/charts/mempool/${this.dataType}?axis=${this.selectedAxis()}`
-    }
-    if (this.selectedAxis() === 'time') {
-      url += `&bin=${this.selectedInterval()}`
+      url = `/api/charts/mempool/${this.dataType}?axis=${this.selectedAxis()}&bin=${this.selectedInterval()}`
     }
 
     const _this = this
@@ -233,11 +230,6 @@ export default class extends Controller {
 
   setAxis (e) {
     const option = e.currentTarget.dataset.option
-    if (option === 'time') {
-      show(this.graphIntervalWrapperTarget)
-    } else {
-      hide(this.graphIntervalWrapperTarget)
-    }
     setActiveOptionBtn(option, this.axisOptionTargets)
     this.fetchData(this.selectedViewOption)
   }
