@@ -8,7 +8,7 @@ import {
   hideLoading,
   displayPillBtnOption,
   setActiveRecordSetBtn,
-  legendFormatter, insertOrUpdateQueryParam, updateQueryParam, trimUrl, zipXYZData, selectedOption, updateZoomSelector
+  legendFormatter, insertOrUpdateQueryParam, updateQueryParam, trimUrl, zipXYZData, selectedOption, updateZoomSelector, isInViewport
 } from '../utils'
 import TurboQuery from '../helpers/turbolinks_helper'
 import dompurify from 'dompurify'
@@ -197,16 +197,13 @@ export default class extends Controller {
     showLoading(this.loadingDataTarget, elementsToToggle)
 
     var numberOfRows = this.selectedNumTarget.value
-    let url = '/getpropagationdata'
+    let url = 'getpropagationdata'
     switch (this.selectedRecordSet) {
       case 'blocks':
         url = 'getblocks'
         break
       case 'votes':
         url = 'getvotes'
-        break
-      default:
-        url = 'getpropagationdata'
         break
     }
     axios.get(`/${url}?page=${page}&records-per-page=${numberOfRows}&view-option=${_this.selectedViewOption}`).then(function (response) {
@@ -337,6 +334,15 @@ export default class extends Controller {
         let votesHtml = ''
         let i = 0
         if (block.votes) {
+          votesHtml = `<tr style="white-space: nowrap;">
+              <td style="width: 120px;">Voting On</td>
+              <td style="width: 120px;">Block Hash</td>
+              <td style="width: 120px;">Validator ID</td>
+              <td style="width: 120px;">Validity</td>
+              <td style="width: 120px;">Received</td>
+              <td style="width: 120px;">Block Receive Time Diff</td>
+              <td style="width: 120px;">Hash</td>
+          </tr>`
           block.votes.forEach(vote => {
             votesHtml += `<tr>
                               <td><a target="_blank" href="https://explorer.dcrdata.org/block/${vote.voting_on}">${vote.voting_on}</a></td>
@@ -363,18 +369,7 @@ export default class extends Controller {
                               </td>
                           </tr>
                           </tbody>
-                          <tbody data-target="propagation.votesTbody" data-block-hash="${block.block_hash}">
-                          <tr style="white-space: nowrap;">
-                              <td style="width: 120px;">Voting On</td>
-                              <td style="width: 120px;">Block Hash</td>
-                              <td style="width: 120px;">Validator ID</td>
-                              <td style="width: 120px;">Validity</td>
-                              <td style="width: 120px;">Received</td>
-                              <td style="width: 120px;">Block Receive Time Diff</td>
-                              <td style="width: 120px;">Hash</td>
-                          </tr>
-                          ${votesHtml}
-                          </tbody>
+                          <tbody data-target="propagation.votesTbody" data-block-hash="${block.block_hash}">${votesHtml}</tbody>
                             <tr>
                                 <td colspan="7" height="15" style="border: none !important;"></td>
                             </tr>`
@@ -396,6 +391,36 @@ export default class extends Controller {
     show(this.tableTarget)
     hide(this.blocksTableTarget)
     hide(this.votesTableTarget)
+  }
+
+  onScroll (e) {
+    this.votesTbodyTargets.forEach(el => {
+      if (!(isInViewport(el) && el.innerHTML === '')) return
+      const hash = el.dataset.blockHash
+      axios.get('/getVoteByBlock?block_hash=' + hash).then(response => {
+        let votesHtml = `<tr style="white-space: nowrap;">
+              <td style="width: 120px;">Voting On</td>
+              <td style="width: 120px;">Block Hash</td>
+              <td style="width: 120px;">Validator ID</td>
+              <td style="width: 120px;">Validity</td>
+              <td style="width: 120px;">Received</td>
+              <td style="width: 120px;">Block Receive Time Diff</td>
+              <td style="width: 120px;">Hash</td>
+          </tr>`
+        response.data.forEach(vote => {
+          votesHtml += `<tr>
+                              <td><a target="_blank" href="https://explorer.dcrdata.org/block/${vote.voting_on}">${vote.voting_on}</a></td>
+                              <td><a target="_blank" href="https://explorer.dcrdata.org/block/${vote.block_hash}">...${vote.short_block_hash}</a></td>
+                              <td>${vote.validator_id}</td>
+                              <td>${vote.validity}</td>
+                              <td>${vote.receive_time}</td>
+                              <td>${vote.block_receive_time_diff}s</td>
+                              <td><a target="_blank" href="https://explorer.dcrdata.org/tx/${vote.hash}">${vote.hash}</a></td>
+                          </tr>`
+        })
+        el.innerHTML = votesHtml
+      })
+    })
   }
 
   plotSelectedChart () {

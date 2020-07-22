@@ -329,9 +329,26 @@ func (pg *PgDb) Votes(ctx context.Context, offset int, limit int) ([]mempool.Vot
 		return nil, err
 	}
 
-	var votes []mempool.VoteDto
-	for _, vote := range voteSlice {
-		votes = append(votes, pg.voteModelToDto(vote))
+	var votes = make([]mempool.VoteDto, len(voteSlice))
+	for i, vote := range voteSlice {
+		votes[i] = pg.voteModelToDto(vote)
+	}
+
+	return votes, nil
+}
+
+func (pg *PgDb) VotesByBlock(ctx context.Context, blockHash string) ([]mempool.VoteDto, error) {
+	voteSlice, err := models.Votes(
+		models.VoteWhere.BlockHash.EQ(null.StringFrom(blockHash)),
+		qm.OrderBy(fmt.Sprintf("%s DESC", models.BlockColumns.ReceiveTime)),
+	).All(ctx, pg.db)
+	if err != nil {
+		return nil, err
+	}
+
+	var votes = make([]mempool.VoteDto, len(voteSlice))
+	for i, vote := range voteSlice {
+		votes[i] = pg.voteModelToDto(vote)
 	}
 
 	return votes, nil

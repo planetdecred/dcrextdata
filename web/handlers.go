@@ -710,12 +710,11 @@ func (s *Server) propagation(res http.ResponseWriter, req *http.Request) {
 // /getPropagationData
 func (s *Server) getPropagationData(res http.ResponseWriter, req *http.Request) {
 	data, err := s.fetchPropagationData(req)
-	defer s.renderJSON(data, res)
-
 	if err != nil {
 		s.renderErrorJSON(err.Error(), res)
 		return
 	}
+	s.renderJSON(data, res)
 }
 
 func (s *Server) fetchPropagationData(req *http.Request) (map[string]interface{}, error) {
@@ -779,9 +778,17 @@ func (s *Server) fetchPropagationData(req *http.Request) (map[string]interface{}
 		return data, nil
 	}
 
-	blockSlice, err := s.db.Blocks(ctx, offset, pageSize)
+	blockSlice, err := s.db.BlocksWithoutVotes(ctx, offset, pageSize)
 	if err != nil {
 		return nil, err
+	}
+
+	for i := 0; i <= 1 && i <= len(blockSlice)-1; i++ {
+		votes, err := s.db.VotesByBlock(ctx, blockSlice[i].BlockHash)
+		if err != nil {
+			return nil, err
+		}
+		blockSlice[i].Votes = votes
 	}
 
 	totalCount, err := s.db.BlockCount(ctx)
@@ -905,12 +912,12 @@ func (s *Server) fetchBlockData(req *http.Request) (map[string]interface{}, erro
 // /getvotes
 func (s *Server) getVotes(res http.ResponseWriter, req *http.Request) {
 	data, err := s.fetchVoteData(req)
-	defer s.renderJSON(data, res)
 
 	if err != nil {
 		s.renderErrorJSON(err.Error(), res)
 		return
 	}
+	defer s.renderJSON(data, res)
 }
 
 func (s *Server) getVoteData(res http.ResponseWriter, req *http.Request) {
@@ -997,6 +1004,17 @@ func (s *Server) fetchVoteData(req *http.Request) (map[string]interface{}, error
 	}
 
 	return data, nil
+}
+
+func (s *Server) getVoteByBlock(res http.ResponseWriter, req *http.Request) {
+	req.ParseForm()
+	hash := req.FormValue("block_hash")
+	votes, err := s.db.VotesByBlock(req.Context(), hash)
+	if err != nil {
+		s.renderErrorJSON(err.Error(), res)
+		return
+	}
+	defer s.renderJSON(votes, res)
 }
 
 // /community

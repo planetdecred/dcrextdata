@@ -3,7 +3,8 @@
 {{ template "html-head" }}
 
 <body data-controller="receive">
-<div class="body" data-controller="propagation" data-propagation-block-time="{{.blockTime}}">
+<div class="body" data-controller="propagation" data-propagation-block-time="{{.blockTime}}" 
+    data-action="scroll@window->propagation#onScroll">
     {{ template "header" }}
     <div class="content">
         <div class="container-fluid">
