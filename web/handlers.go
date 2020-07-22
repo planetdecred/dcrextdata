@@ -510,11 +510,12 @@ func (s *Server) fetchPoWData(req *http.Request) (map[string]interface{}, error)
 
 	var pageSize int
 	numRows, err := strconv.Atoi(numberOfRows)
-	if err != nil || numRows <= 0 {
+	switch {
+	case err != nil || numRows <= 0:
 		pageSize = defaultPageSize
-	} else if numRows > maxPageSize {
+	case numRows > maxPageSize:
 		pageSize = maxPageSize
-	} else {
+	default:
 		pageSize = numRows
 	}
 
@@ -527,7 +528,7 @@ func (s *Server) fetchPoWData(req *http.Request) (map[string]interface{}, error)
 		selectedPow = "All"
 	}
 
-	offset := (pageToLoad - 1) * defaultPageSize
+	offset := (pageToLoad - 1) * pageSize
 
 	ctx := req.Context()
 
@@ -541,7 +542,6 @@ func (s *Server) fetchPoWData(req *http.Request) (map[string]interface{}, error)
 		"selectedNum":        pageSize,
 		"currentPage":        pageToLoad,
 		"previousPage":       pageToLoad - 1,
-		"totalPages":         pageToLoad,
 	}
 
 	powSource, err := s.db.FetchPowSourceData(ctx)
@@ -579,7 +579,7 @@ func (s *Server) fetchPoWData(req *http.Request) (map[string]interface{}, error)
 	}
 
 	data["powData"] = allPowDataSlice
-	data["totalPages"] = int(math.Ceil(float64(totalCount) / float64(defaultPageSize)))
+	data["totalPages"] = int(math.Ceil(float64(totalCount) / float64(pageSize)))
 
 	totalTxLoaded := offset + len(allPowDataSlice)
 	if int64(totalTxLoaded) < totalCount {
