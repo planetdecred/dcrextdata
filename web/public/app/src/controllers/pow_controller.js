@@ -248,15 +248,15 @@ export default class extends Controller {
     axios.get(`/api/charts/pow/${this.dataType}?extras=${this.selectedPools.join('|')}&bin=${this.selectedInterval()}`).then(function (response) {
       let result = response.data
       if (result.error) {
-        this.messageViewTarget.innerHTML = `<p class="text-danger">${result.error}</p>`
-        show(this.messageViewTarget)
+        _this.messageViewTarget.innerHTML = `<p class="text-danger">${result.error}</p>`
+        show(_this.messageViewTarget)
         hide(_this.loadingDataTarget)
         return
       }
 
       if (result.x.length === 0) {
-        this.messageViewTarget.innerHTML = '<p class="text-danger">No record found</p>'
-        show(this.messageViewTarget)
+        _this.messageViewTarget.innerHTML = '<p class="text-danger">No record found</p>'
+        show(_this.messageViewTarget)
         hide(_this.loadingDataTarget)
         return
       }
