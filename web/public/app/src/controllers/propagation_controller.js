@@ -16,6 +16,7 @@ import Zoom from '../helpers/zoom_helper'
 import { animationFrame } from '../helpers/animation_helper'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
+const voteLoadingHtml = '<tr><td colspan="7"><div class="h-loader">Loading...</div></td></tr>'
 
 export default class extends Controller {
   chartType
@@ -331,7 +332,7 @@ export default class extends Controller {
       show(this.paginationButtonsWrapperTarget)
 
       data.records.forEach(block => {
-        let votesHtml = ''
+        let votesHtml = voteLoadingHtml
         let i = 0
         if (block.votes) {
           votesHtml = `<tr style="white-space: nowrap;">
@@ -395,7 +396,7 @@ export default class extends Controller {
 
   onScroll (e) {
     this.votesTbodyTargets.forEach(el => {
-      if (!(isInViewport(el) && el.innerHTML === '')) return
+      if (!(isInViewport(el) && el.innerHTML === voteLoadingHtml)) return
       const hash = el.dataset.blockHash
       axios.get('/getVoteByBlock?block_hash=' + hash).then(response => {
         let votesHtml = `<tr style="white-space: nowrap;">
