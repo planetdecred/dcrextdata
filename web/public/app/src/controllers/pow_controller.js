@@ -232,6 +232,7 @@ export default class extends Controller {
   }
 
   fetchDataAndPlotGraph () {
+    hide(this.messageViewTarget)
     this.selectedPools = []
     this.poolTargets.forEach(el => {
       if (el.checked) {
@@ -245,14 +246,22 @@ export default class extends Controller {
     const _this = this
 
     axios.get(`/api/charts/pow/${this.dataType}?extras=${this.selectedPools.join('|')}&bin=${this.selectedInterval()}`).then(function (response) {
-      hideLoading(_this.loadingDataTarget, elementsToToggle)
       let result = response.data
       if (result.error) {
-        console.log(result.error) // todo show error page from front page
+        this.messageViewTarget.innerHTML = `<p class="text-danger">${result.error}</p>`
+        show(this.messageViewTarget)
+        hide(_this.loadingDataTarget)
         return
       }
 
+      if (result.x.length === 0) {
+        this.messageViewTarget.innerHTML = '<p class="text-danger">No record found</p>'
+        show(this.messageViewTarget)
+        hide(_this.loadingDataTarget)
+        return
+      }
       _this.plotGraph(result)
+      hideLoading(_this.loadingDataTarget, elementsToToggle)
     }).catch(function (e) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       console.log(e)
