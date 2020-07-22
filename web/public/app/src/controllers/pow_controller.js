@@ -260,8 +260,8 @@ export default class extends Controller {
         hide(_this.loadingDataTarget)
         return
       }
-      _this.plotGraph(result)
       hideLoading(_this.loadingDataTarget, elementsToToggle)
+      _this.plotGraph(result)
     }).catch(function (e) {
       hideLoading(_this.loadingDataTarget, elementsToToggle)
       console.log(e)
