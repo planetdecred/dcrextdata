@@ -498,8 +498,11 @@ export default class extends Controller {
         maxDate = date
       }
     })
-    updateZoomSelector(this.zoomOptionTargets, minDate, maxDate)
-    show(this.zoomSelectorTarget)
+    if (updateZoomSelector(this.zoomOptionTargets, minDate, maxDate)) {
+      show(this.zoomSelectorTarget)
+    } else {
+      hide(this.zoomSelectorTarget)
+    }
   }
 
   drawUserAgentsChart (result) {
@@ -539,8 +542,11 @@ export default class extends Controller {
         maxDate = date
       }
     })
-    updateZoomSelector(this.zoomOptionTargets, minDate, maxDate)
-    show(this.zoomSelectorTarget)
+    if (updateZoomSelector(this.zoomOptionTargets, minDate, maxDate)) {
+      show(this.zoomSelectorTarget)
+    } else {
+      hide(this.zoomSelectorTarget)
+    }
   }
 
   drawCountriesChart (result) {
@@ -581,8 +587,11 @@ export default class extends Controller {
         maxDate = date
       }
     })
-    updateZoomSelector(this.zoomOptionTargets, minDate, maxDate)
-    show(this.zoomSelectorTarget)
+    if (updateZoomSelector(this.zoomOptionTargets, minDate, maxDate)) {
+      show(this.zoomSelectorTarget)
+    } else {
+      hide(this.zoomSelectorTarget)
+    }
   }
 
   drawInitialGraph () {

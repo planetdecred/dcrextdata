@@ -519,8 +519,11 @@ export default class extends Controller {
         maxVal = val
       }
     })
-    updateZoomSelector(_this.zoomOptionTargets, minVal, maxVal, this.isHeightAxis() ? this.avgBlockTime : 1)
-    show(this.zoomSelectorTarget)
+    if (updateZoomSelector(_this.zoomOptionTargets, minVal, maxVal, this.isHeightAxis() ? this.avgBlockTime : 1)) {
+      show(this.zoomSelectorTarget)
+    } else {
+      hide(this.zoomSelectorTarget)
+    }
   }
 
   plotExtDataGraph (data) {
@@ -552,21 +555,25 @@ export default class extends Controller {
 
     const chartData = zipXYZData(data, this.isHeightAxis())
     this.chartsView = new Dygraph(_this.chartsViewTarget, chartData, options)
-    if (this.selectedAxis() === 'time') {
-      this.validateZoom()
-      let minDate, maxDate
-      data.x.forEach(unixTime => {
-        let date = new Date(unixTime * 1000)
-        if (minDate === undefined || date < minDate) {
-          minDate = date
-        }
+    this.validateZoom()
+    let minVal, maxVal
+    data.x.forEach(record => {
+      let val = record
+      if (!this.isHeightAxis()) {
+        val = new Date(record * 1000)
+      }
+      if (minVal === undefined || val < minVal) {
+        minVal = val
+      }
 
-        if (maxDate === undefined || date > maxDate) {
-          maxDate = date
-        }
-      })
-      updateZoomSelector(this.zoomOptionTargets, minDate, maxDate)
+      if (maxVal === undefined || val > maxVal) {
+        maxVal = val
+      }
+    })
+    if (updateZoomSelector(_this.zoomOptionTargets, minVal, maxVal, this.isHeightAxis() ? this.avgBlockTime : 1)) {
       show(this.zoomSelectorTarget)
+    } else {
+      hide(this.zoomSelectorTarget)
     }
   }
 

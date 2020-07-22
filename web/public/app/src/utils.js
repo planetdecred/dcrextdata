@@ -346,6 +346,7 @@ export function updateZoomSelector (targets, minVal, maxVal, scale) {
       hide(el)
     }
   })
+  return days >= 1
 }
 
 export function formatDate (date, format) {

@@ -445,7 +445,11 @@ export default class extends Controller {
 
     _this.validateZoom()
 
-    updateZoomSelector(_this.zoomOptionTargets, minDate, maxDate)
+    if (updateZoomSelector(_this.zoomOptionTargets, minDate, maxDate)) {
+      show(this.zoomSelectorTarget)
+    } else {
+      hide(this.zoomSelectorTarget)
+    }
   }
 
   drawInitialGraph () {

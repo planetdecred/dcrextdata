@@ -340,8 +340,11 @@ export default class extends Controller {
       )
 
       _this.validateZoom()
-      updateZoomSelector(_this.zoomOptionTargets, minVal, maxVal, this.isHeightAxis() ? this.avgBlockTime : 1)
-      show(this.zoomSelectorTarget)
+      if (updateZoomSelector(_this.zoomOptionTargets, minVal, maxVal, this.isHeightAxis() ? this.avgBlockTime : 1)) {
+        show(this.zoomSelectorTarget)
+      } else {
+        hide(this.zoomSelectorTarget)
+      }
     }
   }
 

@@ -377,7 +377,10 @@ export default class extends Controller {
     _this.chartsView = new Dygraph(_this.chartsViewTarget, csv(data, this.selectedPools.length), options)
     _this.validateZoom()
 
-    updateZoomSelector(_this.zoomOptionTargets, minDate, maxDate)
-    show(this.zoomSelectorTarget)
+    if (updateZoomSelector(_this.zoomOptionTargets, minDate, maxDate)) {
+      show(this.zoomSelectorTarget)
+    } else {
+      hide(this.zoomSelectorTarget)
+    }
   }
 }
