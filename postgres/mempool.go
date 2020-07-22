@@ -470,7 +470,7 @@ func (pg *PgDb) fetchBlockReceiveTimeByHeight(ctx context.Context, height int32)
 
 // *****CHARTS******* //
 
-func (pg *PgDb) fetchEncodeMempoolChart(ctx context.Context, charts *cache.ChartData, dataType, _ string, binString string, extras ...string) ([]byte, error) {
+func (pg *PgDb) fetchEncodeMempoolChart(ctx context.Context, charts *cache.Manager, dataType, _ string, binString string, extras ...string) ([]byte, error) {
 
 	switch dataType {
 	case cache.MempoolSize:
@@ -524,7 +524,7 @@ func (pg *PgDb) fetchEncodeMempoolChart(ctx context.Context, charts *cache.Chart
 	return nil, cache.UnknownChartErr
 }
 
-func (pg *PgDb) retrieveChartMempool(ctx context.Context, charts *cache.ChartData, _ int) (interface{}, func(), bool, error) {
+func (pg *PgDb) retrieveChartMempool(ctx context.Context, charts *cache.Manager, _ int) (interface{}, func(), bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, pg.queryTimeout)
 
 	mempoolSlice, err := models.Mempools(models.MempoolWhere.Time.GT(helpers.UnixTime(int64(charts.MempoolTimeTip())))).All(ctx, pg.db)
@@ -536,7 +536,7 @@ func (pg *PgDb) retrieveChartMempool(ctx context.Context, charts *cache.ChartDat
 
 // Append the results from retrieveChartMempool to the provided ChartData.
 // This is the Appender half of a pair that make up a cache.ChartUpdater.
-func appendChartMempool(charts *cache.ChartData, mempoolSliceInt interface{}) error {
+func appendChartMempool(charts *cache.Manager, mempoolSliceInt interface{}) error {
 	mempoolSlice := mempoolSliceInt.(models.MempoolSlice)
 	if len(mempoolSlice) == 0 {
 		return nil
@@ -578,7 +578,7 @@ type propagationSet struct {
 	blockPropagation          map[string]cache.ChartFloats
 }
 
-func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.ChartData, dataType, _ string, binString string, extras ...string) ([]byte, error) {
+func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.Manager, dataType, _ string, binString string, extras ...string) ([]byte, error) {
 	blockDelays, err := pg.propagationBlockChartData(ctx, 0)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err
@@ -661,7 +661,7 @@ func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.C
 	return nil, cache.UnknownChartErr
 }
 
-func (pg *PgDb) fetchBlockPropagationChart(ctx context.Context, charts *cache.ChartData, _ int) (interface{}, func(), bool, error) {
+func (pg *PgDb) fetchBlockPropagationChart(ctx context.Context, charts *cache.Manager, _ int) (interface{}, func(), bool, error) {
 	emptyCancelFunc := func() {}
 	var propagationSet propagationSet
 
@@ -734,7 +734,7 @@ func (pg *PgDb) fetchBlockPropagationChart(ctx context.Context, charts *cache.Ch
 	return propagationSet, emptyCancelFunc, true, nil
 }
 
-func appendBlockPropagationChart(charts *cache.ChartData, data interface{}) error {
+func appendBlockPropagationChart(charts *cache.Manager, data interface{}) error {
 	propagationSet := data.(propagationSet)
 
 	if len(propagationSet.height) == 0 {

@@ -341,7 +341,7 @@ type powSet struct {
 	hashrate map[string]cache.ChartNullUints
 }
 
-func (pg *PgDb) fetchEncodePowChart(ctx context.Context, charts *cache.ChartData, dataType, _ string, binString string, pools ...string) ([]byte, error) {
+func (pg *PgDb) fetchEncodePowChart(ctx context.Context, charts *cache.Manager, dataType, _ string, binString string, pools ...string) ([]byte, error) {
 	data, err := pg.fetchPowChart(ctx, 0)
 	if err != nil {
 		return nil, err
@@ -363,7 +363,7 @@ func (pg *PgDb) fetchEncodePowChart(ctx context.Context, charts *cache.ChartData
 	return nil, cache.UnknownChartErr
 }
 
-func (pg *PgDb) fetchCachePowChart(ctx context.Context, charts *cache.ChartData, _ int) (interface{}, func(), bool, error) {
+func (pg *PgDb) fetchCachePowChart(ctx context.Context, charts *cache.Manager, _ int) (interface{}, func(), bool, error) {
 	data, err := pg.fetchPowChart(ctx, charts.PowTimeTip())
 	return data, func() {}, true, err
 }
@@ -430,7 +430,7 @@ func (pg *PgDb) fetchPowChart(ctx context.Context, startDate uint64) (*powSet, e
 	return &powDataSet, nil
 }
 
-func appendPowChart(charts *cache.ChartData, data interface{}) error {
+func appendPowChart(charts *cache.Manager, data interface{}) error {
 	powDataSet := data.(*powSet)
 
 	if len(powDataSet.time) == 0 {

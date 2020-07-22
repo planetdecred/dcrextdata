@@ -181,7 +181,7 @@ func (c *Collector) DcrdHandlers(ctx context.Context) *rpcclient.NotificationHan
 	}
 }
 
-func (c *Collector) StartMonitoring(ctx context.Context, charts *cache.ChartData) {
+func (c *Collector) StartMonitoring(ctx context.Context, charts *cache.Manager) {
 	var mu sync.Mutex
 
 	collectMempool := func() {

@@ -1252,7 +1252,7 @@ func (s *Server) communityChat(resp http.ResponseWriter, req *http.Request) {
 	}, resp)
 }
 
-// /snapshot
+// /nodes
 func (s *Server) snapshot(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	page, _ := strconv.Atoi(r.FormValue("page"))
@@ -1422,30 +1422,31 @@ func (s *Server) nodesCountUserAgents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	page, _ := strconv.Atoi(r.FormValue("page"))
-	limit := -1
 	var offset int
-	if r.FormValue("chart") != "1" {
-		if page < 1 {
-			page = 1
-		}
-		offset = (page - 1) * pageSize
-		limit = pageSize
+	if page < 1 {
+		page = 1
 	}
+	offset = (page - 1) * pageSize
 
-	userAgents, total, err := s.db.PeerCountByUserAgents(r.Context(), r.FormValue("sources"), offset, limit)
-	if err != nil {
+	var userAgents []netsnapshot.UserAgentInfo
+	if err = s.charts.ReadVal(fmt.Sprintf("%s-%s-*", cache.Snapshot, cache.SnapshotNodeVersions), &userAgents); err != nil {
 		s.renderErrorfJSON("Cannot fetch data: %s", w, err.Error())
 		return
 	}
 
-	var totalPages int64
-	if total%int64(pageSize) == 0 {
-		totalPages = total / int64(pageSize)
+	total := len(userAgents)
+	var totalPages int
+	if total%(pageSize) == 0 {
+		totalPages = total / (pageSize)
 	} else {
-		totalPages = 1 + (total-total%int64(pageSize))/int64(pageSize)
+		totalPages = 1 + (total-total%(pageSize))/(pageSize)
 	}
 
-	s.renderJSON(map[string]interface{}{"userAgents": userAgents, "totalPages": totalPages}, w)
+	end := offset + pageSize
+	if end >= total {
+		end = total - 1
+	}
+	s.renderJSON(map[string]interface{}{"userAgents": userAgents[offset:end], "totalPages": totalPages}, w)
 }
 
 // /api/snapshots/user-agents/chart
@@ -1522,36 +1523,32 @@ func (s *Server) nodesCountByCountries(w http.ResponseWriter, r *http.Request) {
 	}
 
 	page, _ := strconv.Atoi(r.FormValue("page"))
-	limit := -1
 	var offset int
-	if r.FormValue("chart") != "1" {
-		if page < 1 {
-			page = 1
-		}
-		offset = (page - 1) * pageSize
-		limit = pageSize
+	if page < 1 {
+		page = 1
 	}
+	offset = (page - 1) * pageSize
 
-	countries, total, err := s.db.PeerCountByCountries(r.Context(), r.FormValue("sources"), offset, limit)
-	if err != nil {
-		s.renderErrorJSON(fmt.Sprintf("Cannot retrieve peer count by countries, %s", err.Error()), w)
+	var countries []netsnapshot.UserAgentInfo
+	if err = s.charts.ReadVal(fmt.Sprintf("%s-%s-*", cache.Snapshot, cache.SnapshotLocations), &countries); err != nil {
+		s.renderErrorfJSON("Cannot fetch data: %s", w, err.Error())
 		return
 	}
 
-	if r.FormValue("chart") != "1" {
-		sort.Slice(countries, func(i, j int) bool {
-			return countries[i].Nodes > countries[j].Nodes
-		})
-	}
-
-	var totalPages int64
-	if total%int64(pageSize) == 0 {
-		totalPages = total / int64(pageSize)
+	total := len(countries)
+	var totalPages int
+	if total%(pageSize) == 0 {
+		totalPages = total / (pageSize)
 	} else {
-		totalPages = 1 + (total-total%int64(pageSize))/int64(pageSize)
+		totalPages = 1 + (total-total%(pageSize))/(pageSize)
 	}
 
-	s.renderJSON(map[string]interface{}{"countries": countries, "totalPages": totalPages}, w)
+	end := offset + pageSize
+	if end >= total {
+		end = total - 1
+	}
+
+	s.renderJSON(map[string]interface{}{"countries": countries[offset:end], "totalPages": totalPages}, w)
 }
 
 // /api/snapshots/countries/chart

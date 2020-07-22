@@ -7,6 +7,7 @@ import (
 	"net"
 	"strings"
 
+	"github.com/dgraph-io/badger"
 	"github.com/raedahgroup/dcrextdata/cache"
 	"github.com/raedahgroup/dcrextdata/netsnapshot"
 	"github.com/raedahgroup/dcrextdata/postgres/models"
@@ -728,7 +729,12 @@ type snapshotSet struct {
 	versionDates   cache.ChartUints
 }
 
-func (pg *PgDb) fetchNetworkSnapshotChart(ctx context.Context, charts *cache.ChartData, page int) (interface{}, func(), bool, error) {
+type snapshotTableSet struct {
+	locations []netsnapshot.CountryInfo
+	versoins  []netsnapshot.UserAgentInfo
+}
+
+func (pg *PgDb) fetchNetworkSnapshotChart(ctx context.Context, charts *cache.Manager, page int) (interface{}, func(), bool, error) {
 	var set = snapshotSet{
 		locations: make(map[string]cache.ChartUints),
 		versions:  make(map[string]cache.ChartUints),
@@ -867,7 +873,7 @@ func (pg *PgDb) fetchNetworkSnapshotChart(ctx context.Context, charts *cache.Cha
 	return set, func() {}, true, nil
 }
 
-func appendSnapshotChart(charts *cache.ChartData, data interface{}) error {
+func appendSnapshotChart(charts *cache.Manager, data interface{}) error {
 	var tickSets = data.(snapshotSet)
 	if len(tickSets.time) == 0 {
 		return nil
@@ -938,7 +944,60 @@ func appendSnapshotChart(charts *cache.ChartData, data interface{}) error {
 	return nil
 }
 
-func (pg *PgDb) fetchEncodeSnapshotChart(ctx context.Context, charts *cache.ChartData, dataType, _ string, binString string, extras ...string) ([]byte, error) {
+func (pg *PgDb) fetchNetworkSnapshotTable(ctx context.Context, charts *cache.Manager, page int) (interface{}, func(), bool, error) {
+	var set snapshotTableSet
+
+	// Locations
+	locations, err := pg.peerCountByCountriesByTime(ctx, 0, 0)
+	if err != nil {
+		if err.Error() != sql.ErrNoRows.Error() {
+			return nil, func() {}, false, err
+		}
+	}
+	set.locations = locations
+
+	// versions
+	userAgents, err := pg.peerCountByUserAgentsByTime(ctx, 0, 0)
+	if err != nil {
+		if err.Error() != sql.ErrNoRows.Error() {
+			return nil, func() {}, false, err
+		}
+	}
+	set.versoins = userAgents
+	return set, func() {}, true, nil
+}
+
+func appendSnapshotTable(charts *cache.Manager, data interface{}) error {
+	set := data.(snapshotTableSet)
+
+	txn := charts.DB.NewTransaction(true)
+	defer txn.Discard()
+
+	var oldLocations []netsnapshot.CountryInfo
+	locationKey := fmt.Sprintf("%s-%s-*", cache.Snapshot, cache.SnapshotLocations)
+	if err := charts.ReadValTx(locationKey, &oldLocations, txn); err != nil && err != badger.ErrKeyNotFound {
+		return err
+	}
+	if err := charts.SaveValTx(locationKey, set.locations, txn); err != nil {
+		return err
+	}
+
+	var oldVersions []netsnapshot.UserAgentInfo
+	versionKey := fmt.Sprintf("%s-%s-*", cache.Snapshot, cache.SnapshotNodeVersions)
+	if err := charts.ReadValTx(versionKey, &oldVersions, txn); err != nil && err != badger.ErrKeyNotFound {
+		return err
+	}
+	if err := charts.SaveValTx(versionKey, set.versoins, txn); err != nil {
+		return err
+	}
+
+	if err := txn.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (pg *PgDb) fetchEncodeSnapshotChart(ctx context.Context, charts *cache.Manager, dataType, _ string, binString string, extras ...string) ([]byte, error) {
 	switch dataType {
 	case string(cache.SnapshotNodes):
 		return pg.fetchEncodeSnapshotNodesChart(ctx, charts)
@@ -951,7 +1010,7 @@ func (pg *PgDb) fetchEncodeSnapshotChart(ctx context.Context, charts *cache.Char
 	}
 }
 
-func (pg *PgDb) fetchEncodeSnapshotNodesChart(ctx context.Context, charts *cache.ChartData) ([]byte, error) {
+func (pg *PgDb) fetchEncodeSnapshotNodesChart(ctx context.Context, charts *cache.Manager) ([]byte, error) {
 	result, err := pg.SnapshotsByTime(ctx, 0, 0)
 	if err != nil {
 		return nil, err
@@ -967,7 +1026,7 @@ func (pg *PgDb) fetchEncodeSnapshotNodesChart(ctx context.Context, charts *cache
 	return charts.Encode(nil, time, nodes, reachableNodes)
 }
 
-func (pg *PgDb) fetchEncodeSnapshotNodeVersionsChart(ctx context.Context, charts *cache.ChartData, userAgentsArg ...string) ([]byte, error) {
+func (pg *PgDb) fetchEncodeSnapshotNodeVersionsChart(ctx context.Context, charts *cache.Manager, userAgentsArg ...string) ([]byte, error) {
 	datesMap := map[int64]struct{}{}
 	allDates := cache.ChartUints{}
 	var userAgentMap = map[string]struct{}{}
@@ -1019,7 +1078,7 @@ func (pg *PgDb) fetchEncodeSnapshotNodeVersionsChart(ctx context.Context, charts
 	return charts.Encode(nil, recs...)
 }
 
-func (pg *PgDb) fetchEncodeSnapshotLocationsChart(ctx context.Context, charts *cache.ChartData, countriesArg ...string) ([]byte, error) {
+func (pg *PgDb) fetchEncodeSnapshotLocationsChart(ctx context.Context, charts *cache.Manager, countriesArg ...string) ([]byte, error) {
 	var datesMap = map[int64]struct{}{}
 	var allDates cache.ChartUints
 	var countryMap = map[string]struct{}{}

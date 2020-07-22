@@ -545,7 +545,7 @@ type exchangeTickSet struct {
 	low   cache.ChartFloats
 }
 
-func (pg *PgDb) fetchEncodeExchangeChart(ctx context.Context, charts *cache.ChartData, dataType, _ string, binString string, setKey ...string) ([]byte, error) {
+func (pg *PgDb) fetchEncodeExchangeChart(ctx context.Context, charts *cache.Manager, dataType, _ string, binString string, setKey ...string) ([]byte, error) {
 	if len(setKey) < 1 {
 		return nil, errors.New("exchange set key is required for exchange chart")
 	}
@@ -573,7 +573,7 @@ func (pg *PgDb) fetchEncodeExchangeChart(ctx context.Context, charts *cache.Char
 	return charts.Encode(nil, dates, yAxis)
 }
 
-func (pg *PgDb) fetchExchangeChart(ctx context.Context, charts *cache.ChartData, _ int) (interface{}, func(), bool, error) {
+func (pg *PgDb) fetchExchangeChart(ctx context.Context, charts *cache.Manager, _ int) (interface{}, func(), bool, error) {
 	cancel := func() {}
 	exchanges, err := pg.AllExchange(ctx)
 	if err != nil {
@@ -620,7 +620,7 @@ func (pg *PgDb) fetchExchangeChart(ctx context.Context, charts *cache.ChartData,
 	return tickSets, cancel, true, nil
 }
 
-func appendExchangeChart(charts *cache.ChartData, data interface{}) error {
+func appendExchangeChart(charts *cache.Manager, data interface{}) error {
 	var tickSets = data.(map[string]exchangeTickSet)
 	keyExists := func(arr []string, key string) bool {
 		for _, s := range arr {

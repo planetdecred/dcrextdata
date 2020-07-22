@@ -749,16 +749,16 @@ type ChartUpdater struct {
 	// In addition to the sql.Rows and an error, the fetcher should return a
 	// context.CancelFunc if appropriate, else a dummy. A done value should be
 	// returned to tell if the result is the last page
-	Fetcher func(ctx context.Context, charts *ChartData, page int) (interface{}, func(), bool, error)
+	Fetcher func(ctx context.Context, charts *Manager, page int) (interface{}, func(), bool, error)
 	// The Appender will be run under mutex lock.
-	Appender func(charts *ChartData, recordSlice interface{}) error
+	Appender func(charts *Manager, recordSlice interface{}) error
 }
 
 // Retriver provides a function for directly getting a specific chart data from a store
-type Retriver func(ctx context.Context, charts *ChartData, dataType, axisString string, bin string, extras ...string) ([]byte, error)
+type Retriver func(ctx context.Context, charts *Manager, dataType, axisString string, bin string, extras ...string) ([]byte, error)
 
-// ChartData is the entry point chart cache
-type ChartData struct {
+// Manager is the entry point chart cache
+type Manager struct {
 	mtx         sync.RWMutex
 	ctx         context.Context
 	EnableCache bool
@@ -803,7 +803,7 @@ func ValidateLengths(lens ...Lengther) (int, error) {
 }
 
 // Lengthen performs data validation, the cacheID will be incremented.
-func (charts *ChartData) Lengthen(tags ...string) error {
+func (charts *Manager) Lengthen(tags ...string) error {
 	if len(tags) == 0 {
 		tags = []string{
 			Mempool, Propagation, PowChart, VSP, Exchange, Snapshot, Community,
@@ -833,7 +833,7 @@ func (charts *ChartData) Lengthen(tags ...string) error {
 
 // Load loads chart data from the gob file at the specified path and performs an
 // update.
-func (charts *ChartData) Load(ctx context.Context) error {
+func (charts *Manager) Load(ctx context.Context) error {
 	t := helpers.NowUTC()
 	defer func() {
 		log.Debugf("Completed the initial chart load and update in %f s",
@@ -855,7 +855,7 @@ func (charts *ChartData) Load(ctx context.Context) error {
 }
 
 // TriggerUpdate triggers (*ChartData).Update.
-func (charts *ChartData) TriggerUpdate(ctx context.Context, tag string) error {
+func (charts *Manager) TriggerUpdate(ctx context.Context, tag string) error {
 	if err := charts.Update(ctx, tag); err != nil {
 		// Only log errors from ChartsData.Update. TODO: make this more severe.
 		log.Errorf("(*ChartData).Update failed: %v", err)
@@ -865,20 +865,20 @@ func (charts *ChartData) TriggerUpdate(ctx context.Context, tag string) error {
 }
 
 // AddRetriever adds a Retriever to the Retrievers slice.
-func (charts *ChartData) AddRetriever(chartID string, retriever Retriver) {
+func (charts *Manager) AddRetriever(chartID string, retriever Retriver) {
 	charts.retrivers[chartID] = retriever
 }
 
 // AddUpdater adds a ChartUpdater to the Updaters slice. Updaters are run
 // sequentially during (*ChartData).Update.
-func (charts *ChartData) AddUpdater(updater ChartUpdater) {
+func (charts *Manager) AddUpdater(updater ChartUpdater) {
 	charts.updaters[updater.Tag] = updater
 }
 
 // Update refreshes chart data by calling the ChartUpdaters sequentially. The
 // Update is abandoned with a warning if stateID changes while running a Fetcher
 // (likely due to a new update starting during a query).
-func (charts *ChartData) Update(ctx context.Context, tags ...string) error {
+func (charts *Manager) Update(ctx context.Context, tags ...string) error {
 	// only run updater if caching is enabled
 	if !charts.EnableCache {
 		return nil
@@ -940,7 +940,7 @@ func (charts *ChartData) Update(ctx context.Context, tags ...string) error {
 
 // NewChartData constructs a new ChartData.
 func NewChartData(ctx context.Context, enableCache bool, syncSources,
-	poolSources, vsps, nodeLocations, nodeVersion []string, chainParams *chaincfg.Params, db *badger.DB) *ChartData {
+	poolSources, vsps, nodeLocations, nodeVersion []string, chainParams *chaincfg.Params, db *badger.DB) *Manager {
 
 	var locations, versions = make([]string, len(nodeLocations)), make([]string, len(nodeVersion))
 	for i, c := range nodeLocations {
@@ -955,7 +955,7 @@ func NewChartData(ctx context.Context, enableCache bool, syncSources,
 		}
 		versions[i] = v
 	}
-	return &ChartData{
+	return &Manager{
 		ctx:           ctx,
 		EnableCache:   enableCache,
 		DB:            db,
@@ -977,7 +977,7 @@ func cacheKey(chartID string, axis axisType) string {
 
 // Grabs the cacheID associated with the provided chartID. Should
 // be called under at least a (ChartData).cacheMtx.RLock.
-func (charts *ChartData) cacheID(chartID string) uint64 {
+func (charts *Manager) cacheID(chartID string) uint64 {
 	switch chartID {
 	case Mempool:
 		return charts.MempoolTimeTip()
@@ -1002,7 +1002,7 @@ func (charts *ChartData) cacheID(chartID string) uint64 {
 }
 
 // Grab the cached data, if it exists. The cacheID is returned as a convenience.
-func (charts *ChartData) getCache(chartID string, axis axisType) (data *cachedChart, found bool, cacheID uint64) {
+func (charts *Manager) getCache(chartID string, axis axisType) (data *cachedChart, found bool, cacheID uint64) {
 	// Ignore zero length since bestHeight would just be set to zero anyway.
 	ck := cacheKey(chartID, axis)
 	charts.cacheMtx.RLock()
@@ -1032,7 +1032,7 @@ func (charts *ChartData) getCache(chartID string, axis axisType) (data *cachedCh
 }
 
 // Store the chart associated with the provided type and BinLevel.
-func (charts *ChartData) cacheChart(chartID string, version uint64, axis axisType, data []byte) {
+func (charts *Manager) cacheChart(chartID string, version uint64, axis axisType, data []byte) {
 	ck := cacheKey(chartID, axis)
 
 	c := &cachedChart{
@@ -1055,7 +1055,7 @@ func (charts *ChartData) cacheChart(chartID string, version uint64, axis axisTyp
 
 }
 
-func (charts *ChartData) removeCache(chartID string, axis axisType) {
+func (charts *Manager) removeCache(chartID string, axis axisType) {
 	ck := cacheKey(chartID, axis)
 	err := charts.DB.Update(func(txn *badger.Txn) error {
 		err := txn.Delete([]byte(ck))
@@ -1068,7 +1068,7 @@ func (charts *ChartData) removeCache(chartID string, axis axisType) {
 
 // ChartMaker is a function that accepts a chart type and BinLevel, and returns
 // a JSON-encoded chartResponse.
-type ChartMaker func(ctx context.Context, charts *ChartData, dataType, axis axisType, bin binLevel, sources ...string) ([]byte, error)
+type ChartMaker func(ctx context.Context, charts *Manager, dataType, axis axisType, bin binLevel, sources ...string) ([]byte, error)
 
 var chartMakers = map[string]ChartMaker{
 	Mempool:     mempool,
@@ -1081,7 +1081,7 @@ var chartMakers = map[string]ChartMaker{
 
 // Chart will return a JSON-encoded chartResponse of the provided type
 // and BinLevel.
-func (charts *ChartData) Chart(ctx context.Context, chartID, dataType, axisString, binString string, extras ...string) ([]byte, error) {
+func (charts *Manager) Chart(ctx context.Context, chartID, dataType, axisString, binString string, extras ...string) ([]byte, error) {
 
 	dataTypeAxis := ParseAxis(dataType)
 	bin := ParseBin(binString)
@@ -1129,13 +1129,13 @@ var responseKeys = []string{"x", "y", "z"}
 
 // Encode the slices. The set lengths are truncated to the smallest of the
 // arguments.
-func (charts *ChartData) Encode(keys []string, sets ...Lengther) ([]byte, error) {
+func (charts *Manager) Encode(keys []string, sets ...Lengther) ([]byte, error) {
 	return charts.encodeArr(keys, sets)
 }
 
 // Encode the slices. The set lengths are truncated to the smallest of the
 // arguments.
-func (charts *ChartData) encodeArr(keys []string, sets []Lengther) ([]byte, error) {
+func (charts *Manager) encodeArr(keys []string, sets []Lengther) ([]byte, error) {
 	if keys == nil {
 		keys = responseKeys
 	}
@@ -1174,7 +1174,7 @@ func (charts *ChartData) encodeArr(keys []string, sets []Lengther) ([]byte, erro
 }
 
 // trim remove points that has 0s in all yAxis.
-func (charts *ChartData) trim(sets ...Lengther) []Lengther {
+func (charts *Manager) trim(sets ...Lengther) []Lengther {
 
 	dLen := sets[0].Length()
 	for i := dLen - 1; i >= 0; i-- {
@@ -1198,7 +1198,7 @@ func (charts *ChartData) trim(sets ...Lengther) []Lengther {
 	return sets
 }
 
-func mempool(ctx context.Context, charts *ChartData, dataType, axis axisType, bin binLevel, _ ...string) ([]byte, error) {
+func mempool(ctx context.Context, charts *Manager, dataType, axis axisType, bin binLevel, _ ...string) ([]byte, error) {
 	switch dataType {
 	case MempoolSize:
 		return mempoolSize(charts, axis, bin)
@@ -1210,7 +1210,7 @@ func mempool(ctx context.Context, charts *ChartData, dataType, axis axisType, bi
 	return nil, UnknownChartErr
 }
 
-func mempoolSize(charts *ChartData, axis axisType, bin binLevel) ([]byte, error) {
+func mempoolSize(charts *Manager, axis axisType, bin binLevel) ([]byte, error) {
 	var dates, sizes ChartUints
 
 	key := fmt.Sprintf("%s-%s", Mempool, HeightAxis)
@@ -1236,7 +1236,7 @@ func mempoolSize(charts *ChartData, axis axisType, bin binLevel) ([]byte, error)
 	return charts.Encode(nil, dates, sizes)
 }
 
-func mempoolTxCount(charts *ChartData, axis axisType, bin binLevel) ([]byte, error) {
+func mempoolTxCount(charts *Manager, axis axisType, bin binLevel) ([]byte, error) {
 	var dates, txCounts ChartUints
 
 	key := fmt.Sprintf("%s-%s", Mempool, HeightAxis)
@@ -1263,7 +1263,7 @@ func mempoolTxCount(charts *ChartData, axis axisType, bin binLevel) ([]byte, err
 	return charts.Encode(nil, dates, txCounts)
 }
 
-func mempoolFees(charts *ChartData, axis axisType, bin binLevel) ([]byte, error) {
+func mempoolFees(charts *Manager, axis axisType, bin binLevel) ([]byte, error) {
 	var dates ChartUints
 	var fees ChartFloats
 
@@ -1289,7 +1289,7 @@ func mempoolFees(charts *ChartData, axis axisType, bin binLevel) ([]byte, error)
 	return charts.Encode(nil, dates, fees)
 }
 
-func propagation(ctx context.Context, charts *ChartData, dataType, axis axisType, bin binLevel, syncSources ...string) ([]byte, error) {
+func propagation(ctx context.Context, charts *Manager, dataType, axis axisType, bin binLevel, syncSources ...string) ([]byte, error) {
 	switch dataType {
 	case BlockPropagation:
 		return blockPropagation(charts, axis, bin, syncSources...)
@@ -1301,7 +1301,7 @@ func propagation(ctx context.Context, charts *ChartData, dataType, axis axisType
 	return nil, UnknownChartErr
 }
 
-func blockPropagation(charts *ChartData, axis axisType, bin binLevel, syncSources ...string) ([]byte, error) {
+func blockPropagation(charts *Manager, axis axisType, bin binLevel, syncSources ...string) ([]byte, error) {
 	var xData ChartUints
 	key := fmt.Sprintf("%s-%s", Propagation, HeightAxis)
 	if axis == TimeAxis {
@@ -1331,7 +1331,7 @@ func blockPropagation(charts *ChartData, axis axisType, bin binLevel, syncSource
 	return charts.encodeArr(nil, deviations)
 }
 
-func blockTimestamp(charts *ChartData, axis axisType, bin binLevel) ([]byte, error) {
+func blockTimestamp(charts *Manager, axis axisType, bin binLevel) ([]byte, error) {
 	var xData ChartUints
 	key := fmt.Sprintf("%s-%s", Propagation, HeightAxis)
 	if axis == TimeAxis {
@@ -1354,7 +1354,7 @@ func blockTimestamp(charts *ChartData, axis axisType, bin binLevel) ([]byte, err
 	return charts.Encode(nil, xData, blockDelays)
 }
 
-func votesReceiveTime(charts *ChartData, axis axisType, bin binLevel) ([]byte, error) {
+func votesReceiveTime(charts *Manager, axis axisType, bin binLevel) ([]byte, error) {
 	var xData ChartUints
 	key := fmt.Sprintf("%s-%s", Propagation, HeightAxis)
 	if axis == TimeAxis {
@@ -1377,7 +1377,7 @@ func votesReceiveTime(charts *ChartData, axis axisType, bin binLevel) ([]byte, e
 	return charts.Encode(nil, xData, votesReceiveTime)
 }
 
-func powChart(ctx context.Context, charts *ChartData, dataType, axis axisType, bin binLevel, pools ...string) ([]byte, error) {
+func powChart(ctx context.Context, charts *Manager, dataType, axis axisType, bin binLevel, pools ...string) ([]byte, error) {
 	var dates ChartUints
 	key := PowChart + "-" + string(TimeAxis)
 	if bin != defaultBin {
@@ -1405,7 +1405,7 @@ func powChart(ctx context.Context, charts *ChartData, dataType, axis axisType, b
 	return MakePowChart(charts, dates, deviations, pools)
 }
 
-func powCharta(ctx context.Context, charts *ChartData, dataType, axis axisType, bin binLevel, pools ...string) ([]byte, error) {
+func powCharta(ctx context.Context, charts *Manager, dataType, axis axisType, bin binLevel, pools ...string) ([]byte, error) {
 	retriever, hasRetriever := charts.retrivers[PowChart]
 	if !hasRetriever {
 		return nil, UnknownChartErr
@@ -1413,7 +1413,7 @@ func powCharta(ctx context.Context, charts *ChartData, dataType, axis axisType, 
 	return retriever(ctx, charts, string(dataType), string(axis), string(bin), pools...)
 }
 
-func MakePowChart(charts *ChartData, dates ChartUints, deviations []ChartNullUints, pools []string) ([]byte, error) {
+func MakePowChart(charts *Manager, dates ChartUints, deviations []ChartNullUints, pools []string) ([]byte, error) {
 
 	var recs = []Lengther{dates}
 	for _, d := range deviations {
@@ -1423,7 +1423,7 @@ func MakePowChart(charts *ChartData, dates ChartUints, deviations []ChartNullUin
 	return charts.Encode(nil, recs...)
 }
 
-func makeVspChart(ctx context.Context, charts *ChartData, dataType, axis axisType, bin binLevel, vsps ...string) ([]byte, error) {
+func makeVspChart(ctx context.Context, charts *Manager, dataType, axis axisType, bin binLevel, vsps ...string) ([]byte, error) {
 	var dates ChartUints
 	key := VSP + "-" + string(TimeAxis)
 	if bin != defaultBin {
@@ -1467,7 +1467,7 @@ func makeVspChart(ctx context.Context, charts *ChartData, dataType, axis axisTyp
 	return MakeVspChart(charts, dates, deviations, vsps)
 }
 
-func MakeVspChart(charts *ChartData, dates ChartUints, deviations []ChartNullData, vsps []string) ([]byte, error) {
+func MakeVspChart(charts *Manager, dates ChartUints, deviations []ChartNullData, vsps []string) ([]byte, error) {
 	var recs = []Lengther{dates}
 	for _, d := range deviations {
 		recs = append(recs, d)
@@ -1477,7 +1477,7 @@ func MakeVspChart(charts *ChartData, dates ChartUints, deviations []ChartNullDat
 	return charts.Encode(nil, recs...)
 }
 
-func networkSnapshorChart(ctx context.Context, charts *ChartData, dataType, _ axisType, bin binLevel, extras ...string) ([]byte, error) {
+func networkSnapshorChart(ctx context.Context, charts *Manager, dataType, _ axisType, bin binLevel, extras ...string) ([]byte, error) {
 	switch dataType {
 	case SnapshotNodes:
 		return networkSnapshotNodesChart(charts, bin)
@@ -1490,7 +1490,7 @@ func networkSnapshorChart(ctx context.Context, charts *ChartData, dataType, _ ax
 	}
 }
 
-func networkSnapshotNodesChart(charts *ChartData, bin binLevel) ([]byte, error) {
+func networkSnapshotNodesChart(charts *Manager, bin binLevel) ([]byte, error) {
 	var dates, nodes, reachableNodes ChartUints
 
 	var key = fmt.Sprintf("%s-%s", Snapshot, TimeAxis)
@@ -1521,7 +1521,7 @@ func networkSnapshotNodesChart(charts *ChartData, bin binLevel) ([]byte, error) 
 	return charts.Encode(nil, dates, nodes, reachableNodes)
 }
 
-func networkSnapshotLocationsChart(charts *ChartData, bin binLevel, countries ...string) ([]byte, error) {
+func networkSnapshotLocationsChart(charts *Manager, bin binLevel, countries ...string) ([]byte, error) {
 	var recs = make([]Lengther, len(countries)+1)
 	var dates ChartUints
 	key := fmt.Sprintf("%s-%s-%s", Snapshot, SnapshotLocations, TimeAxis)
@@ -1551,7 +1551,7 @@ func networkSnapshotLocationsChart(charts *ChartData, bin binLevel, countries ..
 	return charts.Encode(nil, recs...)
 }
 
-func networkSnapshotNodeVersionsChart(charts *ChartData, bin binLevel, userAgents ...string) ([]byte, error) {
+func networkSnapshotNodeVersionsChart(charts *Manager, bin binLevel, userAgents ...string) ([]byte, error) {
 	var recs = make([]Lengther, len(userAgents)+1)
 	var dates ChartUints
 	key := fmt.Sprintf("%s-%s-%s", Snapshot, SnapshotNodeVersions, TimeAxis)

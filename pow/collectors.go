@@ -38,10 +38,10 @@ type Collector struct {
 	pows   []Pow
 	period int64
 	store  PowDataStore
-	charts *cache.ChartData
+	charts *cache.Manager
 }
 
-func NewCollector(disabledPows []string, period int64, store PowDataStore, charts *cache.ChartData) (*Collector, error) {
+func NewCollector(disabledPows []string, period int64, store PowDataStore, charts *cache.Manager) (*Collector, error) {
 	pows := make([]Pow, 0, len(availablePows)-len(disabledPows))
 	disabledMap := make(map[string]struct{})
 	for _, pow := range disabledPows {

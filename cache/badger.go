@@ -17,11 +17,11 @@ const (
 )
 
 // chart version
-func (charts *ChartData) SaveVersion() error {
+func (charts *Manager) SaveVersion() error {
 	return charts.SaveVal(versionKey, cacheVersion)
 }
 
-func (charts *ChartData) getVersion() (semver Semver, err error) {
+func (charts *Manager) getVersion() (semver Semver, err error) {
 	err = charts.ReadVal(versionKey, &semver)
 	if err == badger.ErrKeyNotFound {
 		semver, err = cacheVersion, nil
@@ -29,7 +29,7 @@ func (charts *ChartData) getVersion() (semver Semver, err error) {
 	return
 }
 
-func (charts *ChartData) SaveVal(key string, val interface{}) error {
+func (charts *Manager) SaveVal(key string, val interface{}) error {
 	var b bytes.Buffer
 	e := gob.NewEncoder(&b)
 	if err := e.Encode(val); err != nil {
@@ -42,7 +42,7 @@ func (charts *ChartData) SaveVal(key string, val interface{}) error {
 	return err
 }
 
-func (charts *ChartData) SaveValTx(key string, val interface{}, txn *badger.Txn) error {
+func (charts *Manager) SaveValTx(key string, val interface{}, txn *badger.Txn) error {
 	var b bytes.Buffer
 	e := gob.NewEncoder(&b)
 	if err := e.Encode(val); err != nil {
@@ -51,7 +51,7 @@ func (charts *ChartData) SaveValTx(key string, val interface{}, txn *badger.Txn)
 	return txn.Set([]byte(key), b.Bytes())
 }
 
-func (charts *ChartData) ClearVLog() {
+func (charts *Manager) ClearVLog() {
 again:
 	verr := charts.DB.RunValueLogGC(0.7)
 	if verr == nil {
@@ -59,7 +59,7 @@ again:
 	}
 }
 
-func (charts *ChartData) ReadVal(key string, result interface{}) error {
+func (charts *Manager) ReadVal(key string, result interface{}) error {
 	return charts.DB.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte(key))
 		if err != nil {
@@ -76,7 +76,7 @@ func (charts *ChartData) ReadVal(key string, result interface{}) error {
 	})
 }
 
-func (charts *ChartData) ReadValTx(key string, result interface{}, txn *badger.Txn) error {
+func (charts *Manager) ReadValTx(key string, result interface{}, txn *badger.Txn) error {
 	item, err := txn.Get([]byte(key))
 	if err != nil {
 		return err
@@ -93,7 +93,7 @@ func (charts *ChartData) ReadValTx(key string, result interface{}, txn *badger.T
 
 // Appenders
 
-func (charts *ChartData) AppendChartUintsAxis(key string, set ChartUints) error {
+func (charts *Manager) AppendChartUintsAxis(key string, set ChartUints) error {
 	var data ChartUints
 	err := charts.ReadVal(key, &data)
 	if err != nil {
@@ -105,7 +105,7 @@ func (charts *ChartData) AppendChartUintsAxis(key string, set ChartUints) error 
 	return charts.SaveVal(key, data)
 }
 
-func (charts *ChartData) AppendChartNullUintsAxis(key string, set ChartNullUints) error {
+func (charts *Manager) AppendChartNullUintsAxis(key string, set ChartNullUints) error {
 	var data chartNullIntsPointer
 	err := charts.ReadVal(key, &data)
 	if err != nil {
@@ -117,7 +117,7 @@ func (charts *ChartData) AppendChartNullUintsAxis(key string, set ChartNullUints
 	return charts.SaveVal(key, data)
 }
 
-func (charts *ChartData) AppendChartNullUintsAxisTx(key string, set ChartNullUints, txn *badger.Txn) error {
+func (charts *Manager) AppendChartNullUintsAxisTx(key string, set ChartNullUints, txn *badger.Txn) error {
 	var data chartNullIntsPointer
 	err := charts.ReadValTx(key, &data, txn)
 	if err != nil {
@@ -129,7 +129,7 @@ func (charts *ChartData) AppendChartNullUintsAxisTx(key string, set ChartNullUin
 	return charts.SaveValTx(key, data, txn)
 }
 
-func (charts *ChartData) AppendChartFloatsAxis(key string, set ChartFloats) error {
+func (charts *Manager) AppendChartFloatsAxis(key string, set ChartFloats) error {
 	var data ChartFloats
 	err := charts.ReadVal(key, &data)
 	if err != nil {
@@ -141,7 +141,7 @@ func (charts *ChartData) AppendChartFloatsAxis(key string, set ChartFloats) erro
 	return charts.SaveVal(key, data)
 }
 
-func (charts *ChartData) AppendChartNullFloatsAxis(key string, set ChartNullFloats) error {
+func (charts *Manager) AppendChartNullFloatsAxis(key string, set ChartNullFloats) error {
 	var data chartNullFloatsPointer
 	err := charts.ReadVal(key, &data)
 	if err != nil {
@@ -153,7 +153,7 @@ func (charts *ChartData) AppendChartNullFloatsAxis(key string, set ChartNullFloa
 	return charts.SaveVal(key, data)
 }
 
-func (charts *ChartData) AppendChartNullFloatsAxisTx(key string, set ChartNullFloats, txn *badger.Txn) error {
+func (charts *Manager) AppendChartNullFloatsAxisTx(key string, set ChartNullFloats, txn *badger.Txn) error {
 	var data chartNullFloatsPointer
 	err := charts.ReadValTx(key, &data, txn)
 	if err != nil {
@@ -165,7 +165,7 @@ func (charts *ChartData) AppendChartNullFloatsAxisTx(key string, set ChartNullFl
 	return charts.SaveValTx(key, data, txn)
 }
 
-func (charts *ChartData) NormalizeLength(tags ...string) error {
+func (charts *Manager) NormalizeLength(tags ...string) error {
 	txn := charts.DB.NewTransaction(true)
 	defer txn.Discard()
 
@@ -181,7 +181,7 @@ func (charts *ChartData) NormalizeLength(tags ...string) error {
 }
 
 // length correction
-func (charts *ChartData) normalizeLength(chartID string, txn *badger.Txn) error {
+func (charts *Manager) normalizeLength(chartID string, txn *badger.Txn) error {
 	// TODO: use transaction
 	switch chartID {
 	case Mempool:
@@ -209,7 +209,7 @@ func (charts *ChartData) normalizeLength(chartID string, txn *badger.Txn) error 
 	return nil
 }
 
-func (charts *ChartData) normalizeMempoolLength(txn *badger.Txn) error {
+func (charts *Manager) normalizeMempoolLength(txn *badger.Txn) error {
 	var firstLen, shortest, longest int
 	key := Mempool + "-" + string(TimeAxis)
 	firstLen, err := charts.chartUintsLength(key, txn)
@@ -266,7 +266,7 @@ func (charts *ChartData) normalizeMempoolLength(txn *badger.Txn) error {
 	return nil
 }
 
-func (charts *ChartData) normalizePropagationLength(txn *badger.Txn) error {
+func (charts *Manager) normalizePropagationLength(txn *badger.Txn) error {
 	var firstLen, shortest, longest int
 	key := Propagation + "-" + string(HeightAxis)
 	firstLen, err := charts.chartUintsLength(key, txn)
@@ -333,7 +333,7 @@ func (charts *ChartData) normalizePropagationLength(txn *badger.Txn) error {
 	return nil
 }
 
-func (charts *ChartData) normalizePowChartLength(txn *badger.Txn) error {
+func (charts *Manager) normalizePowChartLength(txn *badger.Txn) error {
 	var firstLen, shortest, longest int
 	key := PowChart + "-" + string(TimeAxis)
 	firstLen, err := charts.chartUintsLength(key, txn)
@@ -378,7 +378,7 @@ func (charts *ChartData) normalizePowChartLength(txn *badger.Txn) error {
 	return nil
 }
 
-func (charts *ChartData) normalizeVSPLength(txn *badger.Txn) error {
+func (charts *Manager) normalizeVSPLength(txn *badger.Txn) error {
 	var firstLen, shortest, longest int
 	key := VSP + "-" + string(TimeAxis)
 	firstLen, err := charts.chartUintsLength(key, txn)
@@ -531,7 +531,7 @@ func (charts *ChartData) normalizeVSPLength(txn *badger.Txn) error {
 	return nil
 }
 
-func (charts *ChartData) normalizeExchangeLength(txn *badger.Txn) error {
+func (charts *Manager) normalizeExchangeLength(txn *badger.Txn) error {
 
 	var shortest, longest int
 	for _, exchangeKeys := range charts.ExchangeKeys {
@@ -609,7 +609,7 @@ func (charts *ChartData) normalizeExchangeLength(txn *badger.Txn) error {
 	return nil
 }
 
-func (charts *ChartData) normalizeSnapshotLength(txn *badger.Txn) error {
+func (charts *Manager) normalizeSnapshotLength(txn *badger.Txn) error {
 	var firstLen, shortest, longest int
 	key := fmt.Sprintf("%s-%s", Snapshot, TimeAxis)
 	firstLen, err := charts.chartUintsLength(key, txn)
@@ -712,7 +712,7 @@ func (charts *ChartData) normalizeSnapshotLength(txn *badger.Txn) error {
 	return nil
 }
 
-func (charts *ChartData) chartUintsLength(key string, txn *badger.Txn) (int, error) {
+func (charts *Manager) chartUintsLength(key string, txn *badger.Txn) (int, error) {
 	var data ChartUints
 	err := charts.ReadValTx(key, &data, txn)
 	if err != nil {
@@ -723,7 +723,7 @@ func (charts *ChartData) chartUintsLength(key string, txn *badger.Txn) (int, err
 	return data.Length(), nil
 }
 
-func (charts *ChartData) chartFloatsLength(key string, txn *badger.Txn) (int, error) {
+func (charts *Manager) chartFloatsLength(key string, txn *badger.Txn) (int, error) {
 	var data ChartFloats
 	err := charts.ReadValTx(key, &data, txn)
 	if err != nil {
@@ -734,7 +734,7 @@ func (charts *ChartData) chartFloatsLength(key string, txn *badger.Txn) (int, er
 	return data.Length(), nil
 }
 
-func (charts *ChartData) chartNullUintsLength(key string, txn *badger.Txn) (int, error) {
+func (charts *Manager) chartNullUintsLength(key string, txn *badger.Txn) (int, error) {
 	var data chartNullIntsPointer
 	err := charts.ReadValTx(key, &data, txn)
 	if err != nil {
@@ -745,7 +745,7 @@ func (charts *ChartData) chartNullUintsLength(key string, txn *badger.Txn) (int,
 	return data.Length(), nil
 }
 
-func (charts *ChartData) chartNullFloatsLength(key string, txn *badger.Txn) (int, error) {
+func (charts *Manager) chartNullFloatsLength(key string, txn *badger.Txn) (int, error) {
 	var data chartNullFloatsPointer
 	err := charts.ReadValTx(key, &data, txn)
 	if err != nil {
@@ -756,7 +756,7 @@ func (charts *ChartData) chartNullFloatsLength(key string, txn *badger.Txn) (int
 	return data.Length(), nil
 }
 
-func (charts *ChartData) snipMempool(length int, txn *badger.Txn) error {
+func (charts *Manager) snipMempool(length int, txn *badger.Txn) error {
 	axis := []axisType{
 		TimeAxis, MempoolSize, MempoolTxCount,
 	}
@@ -777,7 +777,7 @@ func (charts *ChartData) snipMempool(length int, txn *badger.Txn) error {
 	return nil
 }
 
-func (charts *ChartData) snipPropagationChart(length int, axis axisType, txn *badger.Txn) error {
+func (charts *Manager) snipPropagationChart(length int, axis axisType, txn *badger.Txn) error {
 	key := Propagation + "-" + string(HeightAxis)
 	if err := charts.snipChartUintsAxis(key, length, txn); err != nil {
 		if err != badger.ErrKeyNotFound {
@@ -807,7 +807,7 @@ func (charts *ChartData) snipPropagationChart(length int, axis axisType, txn *ba
 	return nil
 }
 
-func (charts *ChartData) snipPowChart(length int, txn *badger.Txn) error {
+func (charts *Manager) snipPowChart(length int, txn *badger.Txn) error {
 	key := PowChart + "-" + string(TimeAxis)
 	if err := charts.snipChartUintsAxis(key, length, txn); err != nil {
 		if err != badger.ErrKeyNotFound {
@@ -830,7 +830,7 @@ func (charts *ChartData) snipPowChart(length int, txn *badger.Txn) error {
 	return nil
 }
 
-func (charts *ChartData) snipVspChart(length int, txn *badger.Txn) error {
+func (charts *Manager) snipVspChart(length int, txn *badger.Txn) error {
 	key := VSP + "-" + string(TimeAxis)
 	if err := charts.snipChartUintsAxis(key, length, txn); err != nil {
 		if err != badger.ErrKeyNotFound {
@@ -877,7 +877,7 @@ func (charts *ChartData) snipVspChart(length int, txn *badger.Txn) error {
 	return nil
 }
 
-func (charts *ChartData) snipExchangeChart(length int, txn *badger.Txn) error {
+func (charts *Manager) snipExchangeChart(length int, txn *badger.Txn) error {
 	for _, exchangeKey := range charts.ExchangeKeys {
 		key := exchangeKey + "-" + string(TimeAxis)
 		if err := charts.snipChartUintsAxis(key, length, txn); err != nil {
@@ -902,7 +902,7 @@ func (charts *ChartData) snipExchangeChart(length int, txn *badger.Txn) error {
 	return nil
 }
 
-func (charts *ChartData) snipSnapshotChart(length int, axis axisType, txn *badger.Txn) error {
+func (charts *Manager) snipSnapshotChart(length int, axis axisType, txn *badger.Txn) error {
 	var keys []string
 	switch axis {
 	case SnapshotNodes:
@@ -933,11 +933,11 @@ func (charts *ChartData) snipSnapshotChart(length int, axis axisType, txn *badge
 	return nil
 }
 
-func (charts *ChartData) snipCommunityChart(length int, txn *badger.Txn) error {
+func (charts *Manager) snipCommunityChart(length int, txn *badger.Txn) error {
 	return nil
 }
 
-func (charts *ChartData) snipChartUintsAxis(key string, length int, txn *badger.Txn) error {
+func (charts *Manager) snipChartUintsAxis(key string, length int, txn *badger.Txn) error {
 	var data ChartUints
 	err := charts.ReadValTx(key, &data, txn)
 	if err != nil {
@@ -949,7 +949,7 @@ func (charts *ChartData) snipChartUintsAxis(key string, length int, txn *badger.
 	return charts.SaveValTx(key, data, txn)
 }
 
-func (charts *ChartData) snipChartNullUintsAxis(key string, length int, txn *badger.Txn) error {
+func (charts *Manager) snipChartNullUintsAxis(key string, length int, txn *badger.Txn) error {
 	var data chartNullIntsPointer
 	err := charts.ReadValTx(key, &data, txn)
 	if err != nil {
@@ -961,7 +961,7 @@ func (charts *ChartData) snipChartNullUintsAxis(key string, length int, txn *bad
 	return charts.SaveValTx(key, data, txn)
 }
 
-func (charts *ChartData) snipChartNullFloatsAxis(key string, length int, txn *badger.Txn) error {
+func (charts *Manager) snipChartNullFloatsAxis(key string, length int, txn *badger.Txn) error {
 	var data chartNullFloatsPointer
 	err := charts.ReadValTx(key, &data, txn)
 	if err != nil {
@@ -973,7 +973,7 @@ func (charts *ChartData) snipChartNullFloatsAxis(key string, length int, txn *ba
 	return charts.SaveValTx(key, data, txn)
 }
 
-func (charts *ChartData) snipChartFloatsAxis(key string, length int, txn *badger.Txn) error {
+func (charts *Manager) snipChartFloatsAxis(key string, length int, txn *badger.Txn) error {
 	var data ChartFloats
 	err := charts.ReadValTx(key, &data, txn)
 	if err != nil {
@@ -985,7 +985,7 @@ func (charts *ChartData) snipChartFloatsAxis(key string, length int, txn *badger
 	return charts.SaveValTx(key, data, txn)
 }
 
-func (charts *ChartData) MempoolTimeTip() uint64 {
+func (charts *Manager) MempoolTimeTip() uint64 {
 	var dates ChartUints
 	err := charts.ReadVal(Mempool+"-"+string(TimeAxis), &dates)
 	if err != nil {
@@ -997,7 +997,7 @@ func (charts *ChartData) MempoolTimeTip() uint64 {
 	return dates[dates.Length()-1]
 }
 
-func (charts *ChartData) lengthenMempool() error {
+func (charts *Manager) lengthenMempool() error {
 	txn := charts.DB.NewTransaction(true)
 	defer txn.Discard()
 
@@ -1035,7 +1035,7 @@ func (charts *ChartData) lengthenMempool() error {
 	return nil
 }
 
-func (charts *ChartData) updateMempoolHeights(txn *badger.Txn) error {
+func (charts *Manager) updateMempoolHeights(txn *badger.Txn) error {
 	var mempoolDates, propagationDates, mempoolHeights, propagationHeights ChartUints
 	if err := charts.ReadValTx(fmt.Sprintf("%s-%s", Mempool, TimeAxis), &mempoolDates, txn); err != nil {
 		if err == badger.ErrKeyNotFound {
@@ -1091,7 +1091,7 @@ func (charts *ChartData) updateMempoolHeights(txn *badger.Txn) error {
 	return nil
 }
 
-func (charts *ChartData) lengthenPropagation() error {
+func (charts *Manager) lengthenPropagation() error {
 	txn := charts.DB.NewTransaction(true)
 	defer txn.Discard()
 
@@ -1121,7 +1121,7 @@ func (charts *ChartData) lengthenPropagation() error {
 	return nil
 }
 
-func (charts *ChartData) lengthenVsp() error {
+func (charts *Manager) lengthenVsp() error {
 	txn := charts.DB.NewTransaction(true)
 	defer txn.Discard()
 
@@ -1165,7 +1165,7 @@ func (charts *ChartData) lengthenVsp() error {
 	return nil
 }
 
-func (charts *ChartData) lengthenPow() error {
+func (charts *Manager) lengthenPow() error {
 	txn := charts.DB.NewTransaction(true)
 	defer txn.Discard()
 
@@ -1195,7 +1195,7 @@ func (charts *ChartData) lengthenPow() error {
 	return nil
 }
 
-func (charts *ChartData) lengthenSnapshot() error {
+func (charts *Manager) lengthenSnapshot() error {
 	txn := charts.DB.NewTransaction(true)
 	defer txn.Discard()
 
@@ -1255,7 +1255,7 @@ func (charts *ChartData) lengthenSnapshot() error {
 	return nil
 }
 
-func (charts *ChartData) lengthenTime(key string, txn *badger.Txn) (dayIntervals [][2]int, hourIntervals [][2]int, err error) {
+func (charts *Manager) lengthenTime(key string, txn *badger.Txn) (dayIntervals [][2]int, hourIntervals [][2]int, err error) {
 	var dates ChartUints
 	if err = charts.ReadValTx(key, &dates, txn); err != nil {
 		if err == badger.ErrKeyNotFound {
@@ -1343,7 +1343,7 @@ func (charts *ChartData) lengthenTime(key string, txn *badger.Txn) (dayIntervals
 	return
 }
 
-func (charts *ChartData) lengthenTimeAndHeight(timeKey, heightKey string, txn *badger.Txn) (dayIntervals [][2]int, hourIntervals [][2]int, err error) {
+func (charts *Manager) lengthenTimeAndHeight(timeKey, heightKey string, txn *badger.Txn) (dayIntervals [][2]int, hourIntervals [][2]int, err error) {
 	var dates, heights ChartUints
 	if err = charts.ReadValTx(timeKey, &dates, txn); err != nil {
 		if err == badger.ErrKeyNotFound {
@@ -1448,7 +1448,7 @@ func (charts *ChartData) lengthenTimeAndHeight(timeKey, heightKey string, txn *b
 	return
 }
 
-func (charts *ChartData) lengthenChartUints(key string, dayIntervals [][2]int, hourIntervals [][2]int, txn *badger.Txn) error {
+func (charts *Manager) lengthenChartUints(key string, dayIntervals [][2]int, hourIntervals [][2]int, txn *badger.Txn) error {
 
 	var data, dayData, hourData ChartUints
 	if err := charts.ReadValTx(key, &data, txn); err != nil {
@@ -1481,7 +1481,7 @@ func (charts *ChartData) lengthenChartUints(key string, dayIntervals [][2]int, h
 	return nil
 }
 
-func (charts *ChartData) lengthenChartNullUints(key string, dayIntervals [][2]int, hourIntervals [][2]int, txn *badger.Txn) error {
+func (charts *Manager) lengthenChartNullUints(key string, dayIntervals [][2]int, hourIntervals [][2]int, txn *badger.Txn) error {
 
 	var data, dayData, hourData chartNullIntsPointer
 	if err := charts.ReadValTx(key, &data, txn); err != nil {
@@ -1514,7 +1514,7 @@ func (charts *ChartData) lengthenChartNullUints(key string, dayIntervals [][2]in
 	return nil
 }
 
-func (charts *ChartData) lengthenChartFloats(key string, dayIntervals [][2]int, hourIntervals [][2]int, txn *badger.Txn) error {
+func (charts *Manager) lengthenChartFloats(key string, dayIntervals [][2]int, hourIntervals [][2]int, txn *badger.Txn) error {
 
 	var data, dayData, hourData ChartFloats
 	if err := charts.ReadValTx(key, &data, txn); err != nil {
@@ -1547,7 +1547,7 @@ func (charts *ChartData) lengthenChartFloats(key string, dayIntervals [][2]int, 
 	return nil
 }
 
-func (charts *ChartData) lengthenChartNullFloats(key string, dayIntervals [][2]int, hourIntervals [][2]int, txn *badger.Txn) error {
+func (charts *Manager) lengthenChartNullFloats(key string, dayIntervals [][2]int, hourIntervals [][2]int, txn *badger.Txn) error {
 
 	var data, dayData, hourData chartNullFloatsPointer
 	if err := charts.ReadValTx(key, &data, txn); err != nil {
@@ -1596,7 +1596,7 @@ func hourStamp(t uint64) (hour uint64) {
 	return
 }
 
-func (charts *ChartData) PropagationHeightTip() uint64 {
+func (charts *Manager) PropagationHeightTip() uint64 {
 	var heights ChartUints
 	err := charts.ReadVal(Propagation+"-"+string(HeightAxis), &heights)
 	if err != nil {
@@ -1608,7 +1608,7 @@ func (charts *ChartData) PropagationHeightTip() uint64 {
 	return heights[heights.Length()-1]
 }
 
-func (charts *ChartData) PowTimeTip() uint64 {
+func (charts *Manager) PowTimeTip() uint64 {
 	var dates ChartUints
 	err := charts.ReadVal(PowChart+"-"+string(TimeAxis), &dates)
 	if err != nil {
@@ -1620,7 +1620,7 @@ func (charts *ChartData) PowTimeTip() uint64 {
 	return dates[dates.Length()-1]
 }
 
-func (charts *ChartData) VSPTimeTip() uint64 {
+func (charts *Manager) VSPTimeTip() uint64 {
 	var dates ChartUints
 	err := charts.ReadVal(VSP+"-"+string(TimeAxis), &dates)
 	if err != nil {
@@ -1632,7 +1632,7 @@ func (charts *ChartData) VSPTimeTip() uint64 {
 	return dates[dates.Length()-1]
 }
 
-func (charts *ChartData) SnapshotTip() uint64 {
+func (charts *Manager) SnapshotTip() uint64 {
 	var dates ChartUints
 	err := charts.ReadVal(Snapshot+"-"+string(TimeAxis), &dates)
 	if err != nil {

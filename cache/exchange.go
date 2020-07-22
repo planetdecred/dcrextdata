@@ -36,7 +36,7 @@ func ExtractExchangeKey(setKey string) (exchangeName string, currencyPair string
 	return
 }
 
-func (charts *ChartData) ExchangeSetTime(key string) uint64 {
+func (charts *Manager) ExchangeSetTime(key string) uint64 {
 	var dates ChartUints
 	if err := charts.ReadVal(key+"-"+string(TimeAxis), &dates); err != nil {
 		return 0
@@ -47,7 +47,7 @@ func (charts *ChartData) ExchangeSetTime(key string) uint64 {
 	return dates[len(dates)-1]
 }
 
-func makeExchangeChart(ctx context.Context, charts *ChartData, dataType, _ axisType, bin binLevel, key ...string) ([]byte, error) {
+func makeExchangeChart(ctx context.Context, charts *Manager, dataType, _ axisType, bin binLevel, key ...string) ([]byte, error) {
 	if len(key) < 1 {
 		return nil, errors.New("exchange set key is required for exchange chart")
 	}

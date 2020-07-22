@@ -457,7 +457,7 @@ type vspSet struct {
 	usersActive      map[string]cache.ChartNullUints
 }
 
-func (pg *PgDb) fetchEncodeVspChart(ctx context.Context, charts *cache.ChartData, dataType, _ string, binString string, vspSources ...string) ([]byte, error) {
+func (pg *PgDb) fetchEncodeVspChart(ctx context.Context, charts *cache.Manager, dataType, _ string, binString string, vspSources ...string) ([]byte, error) {
 	data, _, err := pg.fetchVspChart(ctx, 0, 0, dataType, vspSources...)
 	if err != nil {
 		return nil, err
@@ -529,7 +529,7 @@ func (pg *PgDb) fetchEncodeVspChart(ctx context.Context, charts *cache.ChartData
 	return nil, cache.UnknownChartErr
 }
 
-func (pg *PgDb) fetchAndAppendVspChartAxis(ctx context.Context, charts *cache.ChartData,
+func (pg *PgDb) fetchAndAppendVspChartAxis(ctx context.Context, charts *cache.Manager,
 	dates cache.ChartUints, dataType string, startDate uint64) error {
 
 	txn := charts.DB.NewTransaction(true)
@@ -685,7 +685,7 @@ func (pg *PgDb) fetchAndAppendVspChartAxis(ctx context.Context, charts *cache.Ch
 	return nil
 }
 
-func (pg *PgDb) fetchCacheVspChart(ctx context.Context, charts *cache.ChartData, page int) (interface{}, func(), bool, error) {
+func (pg *PgDb) fetchCacheVspChart(ctx context.Context, charts *cache.Manager, page int) (interface{}, func(), bool, error) {
 	startDate := charts.VSPTimeTip()
 	// Get close to the nearest value after the start date to avoid continue loop for situations where there is a gap
 	var receiver time.Time
@@ -840,7 +840,7 @@ func (pg *PgDb) fetchVspChart(ctx context.Context, startDate uint64, endDate uin
 	return &vspDataSet, done, nil
 }
 
-func appendVspChart(charts *cache.ChartData, data interface{}) error {
+func appendVspChart(charts *cache.Manager, data interface{}) error {
 	vspDataSet := data.(*vspSet)
 
 	if len(vspDataSet.time) == 0 {

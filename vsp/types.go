@@ -76,7 +76,7 @@ type Collector struct {
 	period    time.Duration
 	request   *http.Request
 	dataStore DataStore
-	charts    *cache.ChartData
+	charts    *cache.Manager
 }
 
 type PoolTickTimeExistsError struct {

@@ -27,7 +27,7 @@ type TickHub struct {
 	collectors []ticks.Collector
 	client     *http.Client
 	store      ticks.Store
-	charts     *cache.ChartData
+	charts     *cache.Manager
 }
 
 var (
@@ -40,7 +40,7 @@ var (
 	}
 )
 
-func NewTickHub(ctx context.Context, disabledexchanges []string, store ticks.Store, charts *cache.ChartData) (*TickHub, error) {
+func NewTickHub(ctx context.Context, disabledexchanges []string, store ticks.Store, charts *cache.Manager) (*TickHub, error) {
 	collectors := make([]ticks.Collector, 0, len(availableExchanges)-len(disabledexchanges))
 	disabledMap := make(map[string]struct{})
 	for _, e := range disabledexchanges {
