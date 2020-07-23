@@ -54,7 +54,7 @@ func (pg *PgDb) RegisterCharts(charts *cache.Manager, syncSources []string, sync
 	charts.AddRetriever(cache.Snapshot, pg.fetchEncodeSnapshotChart)
 
 	charts.AddUpdater(cache.ChartUpdater{
-		Tag: cache.Community,
+		Tag:     cache.Community,
 		Fetcher: pg.fetchAppendCommunityChart,
 	})
 }

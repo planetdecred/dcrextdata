@@ -234,35 +234,35 @@ var (
 	twitterPlatform = "Twitter"
 	githubPlatform  = "GitHub"
 	youtubePlatform = "YouTube"
-
 )
-func (pg *PgDb) fetchAppendCommunityChart(ctx context.Context, 
+
+func (pg *PgDb) fetchAppendCommunityChart(ctx context.Context,
 	cacheManager *cache.Manager, page int) (interface{}, func(), bool, error) {
 
 	txn := cacheManager.DB.NewTransaction(true)
 	defer txn.Discard()
 
 	if err := pg.fetchAppendGithubChart(ctx, cacheManager, txn); err != nil {
-		return nil, func ()  {}, true, err
+		return nil, func() {}, true, err
 	}
 
 	if err := pg.fetchAppendRedditChart(ctx, cacheManager, txn); err != nil {
-		return nil, func ()  {}, true, err
+		return nil, func() {}, true, err
 	}
 
 	if err := pg.fetchAppendTwitterChart(ctx, cacheManager, txn); err != nil {
-		return nil, func ()  {}, true, err
+		return nil, func() {}, true, err
 	}
 
 	if err := pg.fetchAppendYouTubeChart(ctx, cacheManager, txn); err != nil {
-		return nil, func ()  {}, true, err
+		return nil, func() {}, true, err
 	}
 
 	if err := txn.Commit(); err != nil {
-		return nil, func ()  {}, true, err
+		return nil, func() {}, true, err
 	}
 
-	return nil, func ()  {}, true, nil
+	return nil, func() {}, true, nil
 }
 
 func (pg *PgDb) fetchAppendYouTubeChart(ctx context.Context, cacheManager *cache.Manager, txn *badger.Txn) error {
@@ -272,7 +272,7 @@ func (pg *PgDb) fetchAppendYouTubeChart(ctx context.Context, cacheManager *cache
 		filter := map[string]string{models.YoutubeColumns.Channel: fmt.Sprintf("'%s'", channel)}
 		for _, dataType := range columns {
 			data, err := pg.CommunityChart(ctx, youtubePlatform, dataType, filter)
-			if err != nil && err.Error() != sql.ErrNoRows.Error(){
+			if err != nil && err.Error() != sql.ErrNoRows.Error() {
 				return err
 			}
 			var dates, records cache.ChartUints
@@ -301,7 +301,7 @@ func (pg *PgDb) fetchAppendTwitterChart(ctx context.Context, cacheManager *cache
 		filter := map[string]string{models.TwitterColumns.Handle: fmt.Sprintf("'%s'", handle)}
 		for _, dataType := range columns {
 			data, err := pg.CommunityChart(ctx, twitterPlatform, dataType, filter)
-			if err != nil && err.Error() != sql.ErrNoRows.Error(){
+			if err != nil && err.Error() != sql.ErrNoRows.Error() {
 				return err
 			}
 			var dates, records cache.ChartUints
@@ -330,7 +330,7 @@ func (pg *PgDb) fetchAppendRedditChart(ctx context.Context, cacheManager *cache.
 		filter := map[string]string{models.RedditColumns.Subreddit: fmt.Sprintf("'%s'", subreddit)}
 		for _, dataType := range columns {
 			data, err := pg.CommunityChart(ctx, redditPlatform, dataType, filter)
-			if err != nil && err.Error() != sql.ErrNoRows.Error(){
+			if err != nil && err.Error() != sql.ErrNoRows.Error() {
 				return err
 			}
 			var dates, records cache.ChartUints
@@ -359,7 +359,7 @@ func (pg *PgDb) fetchAppendGithubChart(ctx context.Context, cacheManager *cache.
 		filter := map[string]string{models.GithubColumns.Repository: fmt.Sprintf("'%s'", repo)}
 		for _, dataType := range columns {
 			data, err := pg.CommunityChart(ctx, githubPlatform, dataType, filter)
-			if err != nil && err.Error() != sql.ErrNoRows.Error(){
+			if err != nil && err.Error() != sql.ErrNoRows.Error() {
 				return err
 			}
 			var dates, records cache.ChartUints

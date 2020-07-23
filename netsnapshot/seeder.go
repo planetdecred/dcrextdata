@@ -165,7 +165,7 @@ func creep(netParams *chaincfg.Params) {
 }
 
 func runSeeder(cfg config.NetworkSnapshotOptions, netParams *chaincfg.Params) {
-	amgr.AddAddresses([]peerAddress{peerAddress{net.ParseIP(cfg.Seeder), cfg.SeederPort}})
+	amgr.AddAddresses([]peerAddress{{net.ParseIP(cfg.Seeder), cfg.SeederPort}})
 
 	wg.Add(1)
 	go creep(netParams)
