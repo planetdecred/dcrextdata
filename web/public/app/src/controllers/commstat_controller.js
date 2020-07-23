@@ -10,8 +10,13 @@ import {
   formatDate,
   trimUrl,
   insertOrUpdateQueryParam,
-  removeUrlParam
+  removeUrlParam,
+  selectedOption,
+  updateZoomSelector
 } from '../utils'
+import Zoom from '../helpers/zoom_helper'
+import { animationFrame } from '../helpers/animation_helper'
+import TurboQuery from '../helpers/turbolinks_helper'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
 const redditPlatform = 'Reddit'
@@ -35,11 +40,13 @@ export default class extends Controller {
       'chartWrapper', 'chartsView', 'labels', 'tableWrapper', 'loadingData', 'messageView',
       'tableWrapper', 'table', 'rowTemplate', 'tableCol1', 'tableCol2', 'tableCol3',
       'platform', 'subreddit', 'subAccountWrapper', 'dataTypeWrapper', 'dataType',
-      'twitterHandle', 'repository', 'channel'
+      'twitterHandle', 'repository', 'channel', 'zoomSelector', 'zoomOption'
     ]
   }
 
   initialize () {
+    this.query = new TurboQuery()
+    this.settings = TurboQuery.nullTemplate(['zoom', 'dataType'])
     this.currentPage = parseInt(this.currentPageTarget.dataset.currentPage)
     if (this.currentPage < 1) {
       this.currentPage = 1
@@ -51,6 +58,8 @@ export default class extends Controller {
     if (this.platform === '' && this.platformTarget.options.length > 0) {
       this.platform = this.platformTarget.value = this.platformTarget.options[0].innerText
     }
+
+    this.settings = {} // TODO: populate from url
 
     this.showCurrentSubAccountWrapper()
 
@@ -93,6 +102,7 @@ export default class extends Controller {
     show(this.tableWrapperTarget)
     show(this.pageSizeWrapperTarget)
     show(this.paginationWrapperTarget)
+    hide(this.zoomSelectorTarget)
     this.pageSizeTarget.value = this.pageSize
     this.updateDataTypeControl()
     this.fetchData()
@@ -515,5 +525,71 @@ export default class extends Controller {
     }
 
     _this.chartsView = new Dygraph(_this.chartsViewTarget, dataSet.stats, options)
+    _this.validateZoom()
+    if (updateZoomSelector(_this.zoomOptionTargets, dataSet.min_date, dataSet.max_date, 1)) {
+      show(this.zoomSelectorTarget)
+    } else {
+      hide(this.zoomSelectorTarget)
+    }
+  }
+
+  selectedZoom () { return selectedOption(this.zoomOptionTargets) }
+
+  setZoom (e) {
+    var target = e.srcElement || e.target
+    var option
+    if (!target) {
+      let ex = this.chartsView.xAxisExtremes()
+      option = Zoom.mapKey(e, ex, 1)
+    } else {
+      option = target.dataset.option
+    }
+    setActiveOptionBtn(option, this.zoomOptionTargets)
+    if (!target) return // Exit if running for the first time
+    this.validateZoom()
+  }
+
+  async validateZoom () {
+    await animationFrame()
+    await animationFrame()
+    let oldLimits = this.limits || this.chartsView.xAxisExtremes()
+    this.limits = this.chartsView.xAxisExtremes()
+    var selected = this.selectedZoom()
+    if (selected) {
+      this.lastZoom = Zoom.validate(selected, this.limits, 1, 1)
+    } else {
+      this.lastZoom = Zoom.project(this.settings.zoom, oldLimits, this.limits)
+    }
+    if (this.lastZoom) {
+      this.chartsView.updateOptions({
+        dateWindow: [this.lastZoom.start, this.lastZoom.end]
+      })
+    }
+    if (selected !== this.settings.zoom) {
+      this._zoomCallback(this.lastZoom.start, this.lastZoom.end)
+    }
+    await animationFrame()
+    this.chartsView.updateOptions({
+      zoomCallback: this.zoomCallback,
+      drawCallback: this.drawCallback
+    })
+  }
+
+  _zoomCallback (start, end) {
+    this.lastZoom = Zoom.object(start, end)
+    this.settings.zoom = Zoom.encode(this.lastZoom)
+    // this.query.replace(this.settings)
+    let ex = this.chartsView.xAxisExtremes()
+    let option = Zoom.mapKey(this.settings.zoom, ex, 1)
+    setActiveOptionBtn(option, this.zoomOptionTargets)
+  }
+
+  _drawCallback (graph, first) {
+    if (first) return
+    var start, end
+    [start, end] = this.chartsView.xAxisRange()
+    if (start === end) return
+    if (this.lastZoom.start === start) return // only handle slide event.
+    this._zoomCallback(start, end)
   }
 }

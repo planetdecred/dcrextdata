@@ -9,30 +9,32 @@
         <div class="container-fluid">
             <div class="control-wrapper">
                 <div class="d-flex flex-row bottom-ctl">
-                    <div class="chart-control ml-auto mr-3 my-2" data-target="commstat.viewOptionControl"
-                         data-initial-value="{{ .viewOption }}">
-                        <ul class="nav nav-pills">
-                            <li class="nav-item">
-                                <a class="nav-link {{ if eq .viewOption "chart" }} active{{ end }}"
-                                   href="javascript:void(0);" data-target="commstat.viewOption"
-                                   data-action="click->commstat#setChart" data-option="chart">Chart</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ if eq .viewOption "table" }} active{{ end }}"
-                                   href="javascript:void(0);" data-target="commstat.viewOption"
-                                   data-action="click->commstat#setTable" data-option="table">Table</a>
-                            </li>
-                        </ul>
+                    <div class="chart-control-wrapper  ml-auto mr-3 my-2" data-target="nodes.dataTypeSelector">
+                        <div class="chart-control-label">View</div>
+                        <div class="chart-control" data-target="commstat.viewOptionControl"
+                            data-initial-value="{{ .viewOption }}">
+                            <ul class="nav nav-pills">
+                                <li class="nav-item">
+                                    <a class="nav-link {{ if eq .viewOption "chart" }} active{{ end }}"
+                                    href="javascript:void(0);" data-target="commstat.viewOption"
+                                    data-action="click->commstat#setChart" data-option="chart">Chart</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {{ if eq .viewOption "table" }} active{{ end }}"
+                                    href="javascript:void(0);" data-target="commstat.viewOption"
+                                    data-action="click->commstat#setTable" data-option="table">Table</a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
 
                     <div class="mr-auto d-flex my-2">
 
-                        <div class="control-div p-0 ml-1">
-                            <div class=" mb-2">
-                                <div class="control-label">Platform:</div>
+                        <div class="chart-control-wrapper">
+                            <div class="chart-control-label">Platform</div>
+                            <div class="chart-control control-div p-0">
                                 <select data-target="commstat.platform" data-initial-value="{{.platform}}"
-                                        data-action="change->commstat#platformChanged" class="form-control mr-5"
-                                        style="width: 120px;">
+                                        data-action="change->commstat#platformChanged" class="form-control mr-5">
                                     {{$platform := .platform}}
                                     {{ range $filter := .platforms }}
                                         <option value="{{$filter}}" {{ if eq $filter $platform}} selected {{ end }}>{{$filter}}</option>
@@ -41,12 +43,11 @@
                             </div>
                         </div>
 
-                        <div class="control-div p-0 ml-1 d-none" data-target="commstat.subAccountWrapper" data-platform="Reddit">
-                            <div class=" mb-2">
-                                <div class="control-label">Subreddit</div>
+                        <div class="chart-control-wrapper ml-1 d-none" data-target="commstat.subAccountWrapper" data-platform="Reddit">
+                            <div class="chart-control-label">Subreddit</div>
+                            <div class="chart-control control-div p-0">
                                 <select data-target="commstat.subreddit" data-initial-value="{{.subreddit}}"
-                                        data-action="change->commstat#subredditChanged" class="form-control mr-5"
-                                        style="width: 120px;">
+                                        data-action="change->commstat#subredditChanged" class="form-control mr-5">
                                     {{$subreddit := .subreddit}}
                                     {{ range $filter := .subreddits}}
                                         <option value="{{$filter}}" {{ if eq $filter $subreddit}} selected {{ end }}>{{$filter}}</option>
@@ -55,12 +56,11 @@
                             </div>
                         </div>
 
-                        <div class="control-div p-0 ml-1 d-none" data-target="commstat.subAccountWrapper" data-platform="Twitter">
-                            <div class=" mb-2">
-                                <div class="control-label">Handle</div>
+                        <div class="chart-control-wrapper ml-1 d-none" data-target="commstat.subAccountWrapper" data-platform="Twitter">
+                            <div class="chart-control-label">Handle</div>
+                            <div class="chart-control control-div p-0">
                                 <select data-target="commstat.twitterHandle" data-initial-value="{{.twitterHandle}}"
-                                        data-action="change->commstat#twitterHandleChanged" class="form-control mr-5"
-                                        style="width: 120px;">
+                                        data-action="change->commstat#twitterHandleChanged" class="form-control mr-5">
                                     {{$twitterHandle := .twitterHandle}}
                                     {{ range $filter := .twitterHandles}}
                                         <option value="{{$filter}}" {{ if eq $filter $twitterHandle}} selected {{ end }}>{{$filter}}</option>
@@ -69,9 +69,9 @@
                             </div>
                         </div>
 
-                        <div class="control-div p-0 ml-1 d-none" data-target="commstat.subAccountWrapper" data-platform="GitHub">
-                            <div class=" mb-2">
-                                <div class="control-label">Repository</div>
+                        <div class="chart-control-wrapper ml-1 d-none" data-target="commstat.subAccountWrapper" data-platform="GitHub">
+                            <div class="chart-control-label">Repository</div>
+                            <div class="chart-control control-div p-0">
                                 <select data-target="commstat.repository" data-initial-value="{{.repository}}"
                                         data-action="change->commstat#repositoryChanged" class="form-control mr-5"
                                         style="width: 120px;">
@@ -83,12 +83,11 @@
                             </div>
                         </div>
 
-                        <div class="control-div p-0 ml-1 d-none" data-target="commstat.subAccountWrapper" data-platform="YouTube">
-                            <div class=" mb-2">
-                                <div class="control-label">Channel</div>
+                        <div class="chart-control-wrapper ml-1 d-none" data-target="commstat.subAccountWrapper" data-platform="YouTube">
+                            <div class="chart-control-label">Channel</div>
+                            <div class="chart-control control-div p-0">
                                 <select data-target="commstat.channel" data-initial-value="{{.channel}}"
-                                        data-action="change->commstat#channelChanged" class="form-control mr-5"
-                                        style="width: 120px;">
+                                        data-action="change->commstat#channelChanged" class="form-control mr-5">
                                     {{$channel := .channel}}
                                     {{ range $filter := .channels}}
                                         <option value="{{$filter}}" {{ if eq $filter $channel}} selected {{ end }}>{{$filter}}</option>
@@ -97,15 +96,68 @@
                             </div>
                         </div>
 
-                        <div class="control-div p-0 ml-1 d-none" data-target="commstat.dataTypeWrapper">
-                            <div class=" mb-2">
-                                <div class="control-label">Data Type</div>
+                        <div class="chart-control-wrapper ml-1 d-none" data-target="commstat.dataTypeWrapper">
+                            <div class="chart-control-label">Data Type</div>
+                            <div class="chart-control control-div p-0">
                                 <select data-target="commstat.dataType" data-initial-value="{{.dataType}}"
-                                        data-action="change->commstat#dataTypeChanged" class="form-control mr-5"
-                                        style="width: 120px;">
+                                        data-action="change->commstat#dataTypeChanged" class="form-control mr-5">
                                 </select>
                             </div>
                         </div>
+
+                        <div class="chart-control-wrapper mr-2 mb-1" data-target="commstat.zoomSelector">
+                            <div class="chart-control-label">Zoom</div>
+                            <div class="chart-control">
+                                <ul class="nav nav-pills">
+                                    <li class="nav-item">
+                                        <a
+                                                class="nav-link active d-none"
+                                                href="javascript:void(0);"
+                                                data-target="commstat.zoomOption"
+                                                data-action="click->commstat#setZoom"
+                                                data-option="all"
+                                        >All</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a
+                                                class="nav-link d-none"
+                                                href="javascript:void(0);"
+                                                data-target="commstat.zoomOption"
+                                                data-action="click->commstat#setZoom"
+                                                data-option="year"
+                                        >Year</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a
+                                                class="nav-link d-none"
+                                                href="javascript:void(0);"
+                                                data-target="commstat.zoomOption"
+                                                data-action="click->commstat#setZoom"
+                                                data-option="month"
+                                        >Month</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a
+                                                class="nav-link d-none"
+                                                href="javascript:void(0);"
+                                                data-target="commstat.zoomOption"
+                                                data-action="click->commstat#setZoom"
+                                                data-option="week"
+                                        >Week</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a
+                                                class="nav-link d-none"
+                                                href="javascript:void(0);"
+                                                data-target="commstat.zoomOption"
+                                                data-action="click->commstat#setZoom"
+                                                data-option="day"
+                                        >Day</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
                     </div>
 
                 </div>
@@ -123,8 +175,7 @@
 
                                         <div class="control-label">Page Size:</div>
                                         <select data-target="commstat.pageSize"
-                                                data-action="change->commstat#pageSizeChanged" class="form-control"
-                                                style="width: 70px;">
+                                                data-action="change->commstat#pageSizeChanged" class="form-control">
                                             {{$selectedNum := .selectedNum}}
                                             {{ range $index, $filter := .pageSizeSelector}}
                                                 <option value="{{$index}}" {{ if eq $index $selectedNum}} selected {{ end }}>{{$filter}}</option>

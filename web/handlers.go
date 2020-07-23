@@ -1248,10 +1248,17 @@ func (s *Server) communityChat(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	var dates []time.Time
+	var minDate, maxDate time.Time
 	var pointsMap = map[time.Time]int64{}
 
 	csv := "" //fmt.Sprintf("Date,%s\n", yLabel)
 	for _, stat := range data {
+		if stat.Date.Before(minDate) || minDate.IsZero() {
+			minDate = stat.Date
+		}
+		if stat.Date.After(maxDate) || maxDate.IsZero() {
+			maxDate = stat.Date
+		}
 		dates = append(dates, stat.Date)
 		pointsMap[stat.Date] = stat.Record
 	}
@@ -1267,6 +1274,8 @@ func (s *Server) communityChat(resp http.ResponseWriter, req *http.Request) {
 	s.renderJSON(map[string]interface{}{
 		"stats":  csv,
 		"ylabel": yLabel,
+		"min_date": minDate.Unix(),
+		"max_Date": maxDate.Unix(),
 	}, resp)
 }
 
