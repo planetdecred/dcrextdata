@@ -29,9 +29,6 @@ export default class extends Controller {
   }
 
   initialize () {
-    this.query = new TurboQuery()
-    this.settings = TurboQuery.nullTemplate(['chart', 'zoom', 'scale', 'bin', 'axis', 'dataType'])
-
     this.selectedFilter = this.selectedFilterTarget.value
     this.selectedCurrencyPair = this.selectedCurrencyPairTarget.value
     this.numberOfRows = this.selectedNumTarget.value
@@ -44,6 +41,10 @@ export default class extends Controller {
 
     this.query = new TurboQuery()
     this.settings = TurboQuery.nullTemplate(['chart', 'zoom', 'scale', 'bin', 'axis', 'dataType', 'page', 'view-option'])
+    this.query.update(this.settings)
+    if (this.settings.zoom) {
+      setActiveOptionBtn(this.settings.zoom, this.zoomOptionTargets)
+    }
     this.settings.chart = this.settings.chart || 'mempool'
 
     this.zoomCallback = this._zoomCallback.bind(this)
@@ -113,7 +114,7 @@ export default class extends Controller {
     await this.loadIntervals()
     this.fetchExchange(this.selectedViewOption)
     updateQueryParam('view-option', this.selectedViewOption, 'chart')
-    trimUrl(['selected-tick', 'view-option', 'selected-currency-pair', 'selected-exchange', 'selected-interval'])
+    trimUrl(['selected-tick', 'view-option', 'selected-currency-pair', 'selected-exchange', 'selected-interval', 'zoom'])
     // reset this table properties as they are removed from the url
     this.currentPage = 1
     this.selectedNumTarget.value = 20
@@ -361,6 +362,7 @@ export default class extends Controller {
     }
     setActiveOptionBtn(option, this.zoomOptionTargets)
     if (!target) return // Exit if running for the first time
+    insertOrUpdateQueryParam('zoom', option, 'all')
     this.validateZoom()
   }
 

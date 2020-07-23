@@ -31,6 +31,14 @@ export default class extends Controller {
   initialize () {
     this.query = new TurboQuery()
     this.settings = TurboQuery.nullTemplate(['chart', 'zoom', 'scale', 'bin', 'axis', 'dataType'])
+    this.query.update(this.settings)
+
+    if (this.settings.zoom) {
+      setActiveOptionBtn(this.settings.zoom, this.zoomOptionTargets)
+    }
+    if (this.settings.bin) {
+      setActiveOptionBtn(this.settings.bin, this.intervalTargets)
+    }
 
     this.currentPage = parseInt(this.currentPageTarget.getAttribute('data-current-page'))
     if (this.currentPage < 1) {
@@ -99,7 +107,7 @@ export default class extends Controller {
     show(this.chartDataTypeSelectorTarget)
     this.fetchDataAndPlotGraph()
     updateQueryParam('view-option', this.selectedViewOption, 'chart')
-    trimUrl(['view-option', 'pools', 'data-type'])
+    trimUrl(['view-option', 'pools', 'data-type', 'bin', 'zoom'])
     // reset this table properties as they are removed from the url
     this.currentPage = 1
   }
@@ -274,6 +282,7 @@ export default class extends Controller {
     const option = e.currentTarget.dataset.option
     setActiveOptionBtn(option, this.intervalTargets)
     this.fetchDataAndPlotGraph()
+    insertOrUpdateQueryParam('bin', option, 'day')
   }
 
   selectedZoom () { return selectedOption(this.zoomOptionTargets) }
@@ -289,6 +298,7 @@ export default class extends Controller {
     }
     setActiveOptionBtn(option, this.zoomOptionTargets)
     if (!target) return // Exit if running for the first time
+    insertOrUpdateQueryParam('zoom', option, 'all')
     this.validateZoom()
   }
 

@@ -363,22 +363,6 @@ func (data ChartNullUints) toChartNullUintWrapper() chartNullIntsPointer {
 	return result
 }
 
-func uintMapToPointer(input map[string]ChartNullUints) map[string]chartNullIntsPointer {
-	result := map[string]chartNullIntsPointer{}
-	for key, value := range input {
-		result[key] = value.toChartNullUintWrapper()
-	}
-	return result
-}
-
-func uintPointerMapToUint(input map[string]chartNullIntsPointer) map[string]ChartNullUints {
-	result := map[string]ChartNullUints{}
-	for key, value := range input {
-		result[key] = value.toChartNullUint()
-	}
-	return result
-}
-
 // ChartNullUints is a slice of null.uints. It satisfies the lengther interface.
 type ChartNullUints []*null.Uint64
 
@@ -450,11 +434,6 @@ func (data ChartNullUints) snip(max int) ChartNullUints {
 		max = len(data)
 	}
 	return data[:max]
-}
-
-// A constructor for a sized ChartUints.
-func newChartNullUints() ChartNullUints {
-	return make(ChartNullUints, 0)
 }
 
 // nullFloat64Pointer is a wrapper around ChartNullFloats with Items as []nullFloat64Pointer instead of
@@ -564,22 +543,6 @@ func (data ChartNullFloats) toChartNullFloatsWrapper() chartNullFloatsPointer {
 	return result
 }
 
-func floatMapToPointer(input map[string]ChartNullFloats) map[string]chartNullFloatsPointer {
-	result := map[string]chartNullFloatsPointer{}
-	for key, value := range input {
-		result[key] = value.toChartNullFloatsWrapper()
-	}
-	return result
-}
-
-func floatPointerToChartFloatMap(input map[string]chartNullFloatsPointer) map[string]ChartNullFloats {
-	result := map[string]ChartNullFloats{}
-	for key, value := range input {
-		result[key] = value.toChartNullFloats()
-	}
-	return result
-}
-
 // ChartNullFloats is a slice of null.float64. It satisfies the lengther interface.
 type ChartNullFloats []*null.Float64
 
@@ -633,11 +596,6 @@ func (data ChartNullFloats) snip(max int) ChartNullFloats {
 		max = len(data)
 	}
 	return data[:max]
-}
-
-// A constructor for a sized ChartUints.
-func newChartNullFloats() ChartNullFloats {
-	return make(ChartNullFloats, 0)
 }
 
 // ChartStrings is a slice of strings. It satisfies the lengther interface, and
@@ -723,11 +681,6 @@ func (data ChartUints) Avg(s, e int) uint64 {
 		sum += v
 	}
 	return sum / uint64(e-s)
-}
-
-// A constructor for a sized ChartUints.
-func newChartUints() ChartUints {
-	return make(ChartUints, 0)
 }
 
 // The chart data is cached with the current cacheID of the zoomSet or windowSet.
@@ -1177,7 +1130,9 @@ func (charts *Manager) encodeArr(keys []string, sets []Lengther) ([]byte, error)
 
 // trim remove points that has 0s in all yAxis.
 func (charts *Manager) trim(sets ...Lengther) []Lengther {
-
+	if len(sets) == 2 {
+		return sets
+	}
 	dLen := sets[0].Length()
 	for i := dLen - 1; i >= 0; i-- {
 		var isZero bool = true
@@ -1456,7 +1411,7 @@ func makeVspChart(ctx context.Context, charts *Manager, dataType, axis axisType,
 			}
 			deviations[i] = data.toChartNullUint()
 
-		case ProportionLiveAxis, ProportionMissedAxis:
+		case ProportionLiveAxis, ProportionMissedAxis, PoolFeesAxis:
 			var data chartNullFloatsPointer
 			if err := charts.ReadVal(key, &data); err != nil {
 				return nil, err
@@ -1468,6 +1423,9 @@ func makeVspChart(ctx context.Context, charts *Manager, dataType, axis axisType,
 
 	return MakeVspChart(charts, dates, deviations, vsps)
 }
+
+// ImmatureAxis, LiveAxis, VotedAxis, MissedAxis, UserCountAxis, UsersActiveAxis
+// PoolFeesAxis, ProportionLiveAxis, ProportionMissedAxis,
 
 func MakeVspChart(charts *Manager, dates ChartUints, deviations []ChartNullData, vsps []string) ([]byte, error) {
 	var recs = []Lengther{dates}

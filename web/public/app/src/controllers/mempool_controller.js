@@ -37,8 +37,9 @@ export default class extends Controller {
     this.query = new TurboQuery()
     this.settings = TurboQuery.nullTemplate([
       'chart', 'zoom', 'scale', 'bin', 'axis',
-      'dataType', 'page', 'view-option', 'interval'
+      'dataType', 'page', 'view-option'
     ])
+    this.query.update(this.settings)
     this.settings.chart = this.settings.chart || 'mempool'
 
     this.zoomCallback = this._zoomCallback.bind(this)
@@ -46,6 +47,13 @@ export default class extends Controller {
 
     this.dataType = this.chartDataTypeTarget.getAttribute('data-initial-value')
     this.avgBlockTime = parseInt(this.data.get('blockTime')) * 1000
+
+    if (this.settings.zoom) {
+      setActiveOptionBtn(this.settings.zoom, this.zoomOptionTargets)
+    }
+    if (this.settings.bin) {
+      setActiveOptionBtn(this.settings.bin, this.intervalTargets)
+    }
 
     this.selectedViewOption = this.viewOptionControlTarget.getAttribute('data-initial-value')
     if (this.selectedViewOption === 'chart') {
@@ -85,7 +93,7 @@ export default class extends Controller {
     show(this.graphIntervalWrapperTarget)
     this.fetchData(this.selectedViewOption)
     updateQueryParam('view-option', this.selectedViewOption, 'chart')
-    trimUrl(['view-option', 'chart-data-type'])
+    trimUrl(['view-option', 'chart-data-type', 'zoom', 'bin'])
     // reset this table properties as they are removed from the url
     this.currentPage = 1
     this.selectedNumberOfRowsberOfRows = this.selectedNumberOfRowsTarget.value = 20
@@ -206,6 +214,7 @@ export default class extends Controller {
     setActiveOptionBtn(option, this.zoomOptionTargets)
     if (!target) return // Exit if running for the first time
     this.validateZoom()
+    insertOrUpdateQueryParam('zoom', option, 'all')
   }
 
   selectedInterval () { return selectedOption(this.intervalTargets) }
@@ -214,6 +223,7 @@ export default class extends Controller {
     const option = e.currentTarget.dataset.option
     setActiveOptionBtn(option, this.intervalTargets)
     this.fetchData(this.selectedViewOption)
+    insertOrUpdateQueryParam('bin', option, 'day')
   }
 
   selectedAxis () {

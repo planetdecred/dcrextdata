@@ -48,6 +48,7 @@ export default class extends Controller {
   initialize () {
     this.query = new TurboQuery()
     this.settings = TurboQuery.nullTemplate(['zoom', 'dataType'])
+    this.query.update(this.settings)
     this.zoomCallback = this._zoomCallback.bind(this)
     this.drawCallback = this._drawCallback.bind(this)
     this.currentPage = parseInt(this.currentPageTarget.dataset.currentPage)
@@ -85,6 +86,10 @@ export default class extends Controller {
     }
 
     this.dataType = this.dataTypeTarget.dataset.initialValue
+
+    if (this.settings.zoom) {
+      setActiveOptionBtn(this.settings.zoom, this.zoomOptionTargets)
+    }
 
     this.viewOption = this.viewOptionControlTarget.dataset.initialValue
     if (this.viewOption === 'chart') {
@@ -146,7 +151,7 @@ export default class extends Controller {
           break
       }
     } else {
-      var chartParams = baseSet
+      var chartParams = ['zoom', ...baseSet]
       switch (this.platform) {
         case redditPlatform:
           keepSet = ['subreddit', 'data-type', ...chartParams]
@@ -502,7 +507,6 @@ export default class extends Controller {
     })
   }
 
-  // vsp chart
   plotGraph (dataSet) {
     const _this = this
 
@@ -561,6 +565,7 @@ export default class extends Controller {
     setActiveOptionBtn(option, this.zoomOptionTargets)
     if (!target) return // Exit if running for the first time
     this.validateZoom()
+    insertOrUpdateQueryParam('zoom', option, 'all')
   }
 
   async validateZoom () {

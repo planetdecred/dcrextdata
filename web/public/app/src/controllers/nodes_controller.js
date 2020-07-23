@@ -58,9 +58,16 @@ export default class extends Controller {
 
     this.query = new TurboQuery()
     this.settings = TurboQuery.nullTemplate([
-      'zoom', 'bin', 'axis', 'dataType', 'page', 'view-option', 'interval'
+      'zoom', 'bin', 'axis', 'dataType', 'page', 'view-option'
     ])
+    this.query.update(this.settings)
 
+    if (this.settings.zoom) {
+      setActiveOptionBtn(this.settings.zoom, this.zoomOptionTargets)
+    }
+    if (this.settings.bin) {
+      setActiveOptionBtn(this.settings.bin, this.intervalTargets)
+    }
     this.zoomCallback = this._zoomCallback.bind(this)
     this.drawCallback = this._drawCallback.bind(this)
 
@@ -103,7 +110,7 @@ export default class extends Controller {
     show(this.graphIntervalWrapperTarget)
     updateQueryParam('view-option', this.selectedViewOption, 'chart')
     this.reloadChat()
-    trimUrl(['view-option', 'data-type'])
+    trimUrl(['view-option', 'data-type', 'zoom', 'bin'])
     // reset this table properties as the url params will be reset
     this.currentPage = 1
     this.pageSizeTarget.value = this.pageSize = 20
@@ -356,6 +363,7 @@ export default class extends Controller {
     }
     setActiveOptionBtn(option, this.zoomOptionTargets)
     if (!target) return // Exit if running for the first time
+    insertOrUpdateQueryParam('zoom', option, 'all')
     this.validateZoom()
   }
 
@@ -407,6 +415,7 @@ export default class extends Controller {
   setInterval (e) {
     const option = e.currentTarget.dataset.option
     setActiveOptionBtn(option, this.intervalTargets)
+    insertOrUpdateQueryParam('bin', option, 'day')
     this.reloadChat()
   }
 
