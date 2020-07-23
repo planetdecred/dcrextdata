@@ -126,7 +126,7 @@ export default class extends Controller {
     })
     if (count > 5) {
       event.currentTarget.checked = false
-      notifyFailure('You cannot compare more than 10 sources')
+      notifyFailure('You cannot compare more than 5 sources')
       return
     }
     this.reloadChat()

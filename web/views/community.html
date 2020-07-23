@@ -73,8 +73,7 @@
                             <div class="chart-control-label">Repository</div>
                             <div class="chart-control control-div p-0">
                                 <select data-target="commstat.repository" data-initial-value="{{.repository}}"
-                                        data-action="change->commstat#repositoryChanged" class="form-control mr-5"
-                                        style="width: 120px;">
+                                        data-action="change->commstat#repositoryChanged" class="form-control mr-5">
                                     {{$repository := .repository}}
                                     {{ range $filter := .repositories}}
                                         <option value="{{$filter}}" {{ if eq $filter $repository}} selected {{ end }}>{{$filter}}</option>
