@@ -906,18 +906,20 @@ func (charts *Manager) Update(ctx context.Context, tags ...string) error {
 			if err != nil {
 				err = fmt.Errorf("error encountered during charts %s update. aborting update: %v", updater.Tag, err)
 			} else {
-				charts.mtx.Lock()
-				if stateID != charts.cacheID(updater.Tag) {
-					if updater.Tag != VSP {
-						err = fmt.Errorf("state change detected during charts %s update. aborting update", updater.Tag)
+				if updater.Appender != nil {
+					charts.mtx.Lock()
+					if stateID != charts.cacheID(updater.Tag) {
+						if updater.Tag != VSP {
+							err = fmt.Errorf("state change detected during charts %s update. aborting update", updater.Tag)
+						}
+					} else {
+						err = updater.Appender(charts, rows)
+						if err != nil {
+							err = fmt.Errorf("error detected during charts %s append. aborting update: %v", updater.Tag, err)
+						}
 					}
-				} else {
-					err = updater.Appender(charts, rows)
-					if err != nil {
-						err = fmt.Errorf("error detected during charts %s append. aborting update: %v", updater.Tag, err)
-					}
+					charts.mtx.Unlock()
 				}
-				charts.mtx.Unlock()
 			}
 			completed = done
 			if updater.Tag != VSP {

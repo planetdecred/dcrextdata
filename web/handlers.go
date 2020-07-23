@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -35,6 +34,8 @@ const (
 )
 
 var (
+	commStatPlatforms = []string{redditPlatform, twitterPlatform, githubPlatform, youtubePlatform}
+
 	exchangeTickIntervals = map[int]string{
 		-1:   "All",
 		5:    "5m",
@@ -67,8 +68,6 @@ var (
 		"User-Count",
 		"Users-Active",
 	}
-
-	commStatPlatforms = []string{redditPlatform, twitterPlatform, githubPlatform, youtubePlatform}
 )
 
 // /home
@@ -1200,40 +1199,36 @@ func (s *Server) getCommunityStat(resp http.ResponseWriter, req *http.Request) {
 // /communitychat
 func (s *Server) communityChat(resp http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
-	plarform := req.FormValue("platform")
+	platform := req.FormValue("platform")
 	dataType := req.FormValue("data-type")
 
-	filters := map[string]string{}
-	yLabel := ""
-	switch plarform {
+	var yLabel, subAccount string
+	switch platform {
 	case githubPlatform:
 		if dataType == models.GithubColumns.Folks {
 			yLabel = "Forks"
 		} else {
 			yLabel = "Stars"
 		}
-		plarform = models.TableNames.Github
-		filters[models.GithubColumns.Repository] = fmt.Sprintf("'%s'", req.FormValue("repository"))
+		subAccount = req.FormValue("repository")
 	case twitterPlatform:
 		yLabel = "Followers"
 		dataType = models.TwitterColumns.Followers
-		plarform = models.TableNames.Twitter
+		subAccount = req.FormValue("twitter-handle")
 	case redditPlatform:
 		if dataType == models.RedditColumns.ActiveAccounts {
 			yLabel = "Active Accounts"
 		} else if dataType == models.RedditColumns.Subscribers {
 			yLabel = "Subscribers"
 		}
-		plarform = models.TableNames.Reddit
-		filters[models.RedditColumns.Subreddit] = fmt.Sprintf("'%s'", req.FormValue("subreddit"))
+		subAccount = req.FormValue("subreddit")
 	case youtubePlatform:
-		plarform = models.TableNames.Youtube
 		if dataType == models.YoutubeColumns.ViewCount {
 			yLabel = "View Count"
 		} else if dataType == models.YoutubeColumns.Subscribers {
 			yLabel = "Subscribers"
 		}
-		filters[models.YoutubeColumns.Channel] = fmt.Sprintf("'%s'", req.FormValue("channel"))
+		subAccount = req.FormValue("channel")
 	}
 
 	if dataType == "" {
@@ -1241,41 +1236,23 @@ func (s *Server) communityChat(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	data, err := s.db.CommunityChart(req.Context(), plarform, dataType, filters)
-	if err != nil {
-		s.renderErrorJSON(fmt.Sprintf("Cannot fetch chart data, %s", err.Error()), resp)
+	var dates, records cache.ChartUints
+	dateKey := fmt.Sprintf("%s-%s-%s-%s", cache.Community, platform, subAccount, cache.TimeAxis)
+	if err := s.charts.ReadVal(dateKey, &dates); err != nil {
+		s.renderErrorJSON(fmt.Sprintf("Cannot fetch chart data, %s, %s", err.Error(), dateKey), resp)
 		return
 	}
 
-	var dates []time.Time
-	var minDate, maxDate time.Time
-	var pointsMap = map[time.Time]int64{}
-
-	csv := "" //fmt.Sprintf("Date,%s\n", yLabel)
-	for _, stat := range data {
-		if stat.Date.Before(minDate) || minDate.IsZero() {
-			minDate = stat.Date
-		}
-		if stat.Date.After(maxDate) || maxDate.IsZero() {
-			maxDate = stat.Date
-		}
-		dates = append(dates, stat.Date)
-		pointsMap[stat.Date] = stat.Record
-	}
-
-	sort.Slice(dates, func(i, j int) bool {
-		return dates[i].Before(dates[j])
-	})
-
-	for _, date := range dates {
-		csv += fmt.Sprintf("%s,%d\n", date.Format(time.RFC3339Nano), pointsMap[date])
+	dataKey := fmt.Sprintf("%s-%s-%s-%s", cache.Community, platform, subAccount, dataType)
+	if err := s.charts.ReadVal(dataKey, &records); err != nil {
+		s.renderErrorJSON(fmt.Sprintf("Cannot fetch chart data, %s, %s", err.Error(), dataKey), resp)
+		return
 	}
 
 	s.renderJSON(map[string]interface{}{
-		"stats":  csv,
+		"x":      dates,
+		"y":      records,
 		"ylabel": yLabel,
-		"min_date": minDate.Unix(),
-		"max_Date": maxDate.Unix(),
 	}, resp)
 }
 

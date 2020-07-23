@@ -12,7 +12,8 @@ import {
   insertOrUpdateQueryParam,
   removeUrlParam,
   selectedOption,
-  updateZoomSelector
+  updateZoomSelector,
+  zipXYZData
 } from '../utils'
 import Zoom from '../helpers/zoom_helper'
 import { animationFrame } from '../helpers/animation_helper'
@@ -47,6 +48,8 @@ export default class extends Controller {
   initialize () {
     this.query = new TurboQuery()
     this.settings = TurboQuery.nullTemplate(['zoom', 'dataType'])
+    this.zoomCallback = this._zoomCallback.bind(this)
+    this.drawCallback = this._drawCallback.bind(this)
     this.currentPage = parseInt(this.currentPageTarget.dataset.currentPage)
     if (this.currentPage < 1) {
       this.currentPage = 1
@@ -58,8 +61,6 @@ export default class extends Controller {
     if (this.platform === '' && this.platformTarget.options.length > 0) {
       this.platform = this.platformTarget.value = this.platformTarget.options[0].innerText
     }
-
-    this.settings = {} // TODO: populate from url
 
     this.showCurrentSubAccountWrapper()
 
@@ -505,6 +506,18 @@ export default class extends Controller {
   plotGraph (dataSet) {
     const _this = this
 
+    let minDate, maxDate
+    dataSet.x.forEach(unixTime => {
+      let date = new Date(unixTime * 1000)
+      if (minDate === undefined || date < minDate) {
+        minDate = date
+      }
+
+      if (maxDate === undefined || date > maxDate) {
+        maxDate = date
+      }
+    })
+
     let options = {
       legend: 'always',
       includeZero: true,
@@ -524,9 +537,10 @@ export default class extends Controller {
       }
     }
 
-    _this.chartsView = new Dygraph(_this.chartsViewTarget, dataSet.stats, options)
+    const chartData = zipXYZData(dataSet)
+    _this.chartsView = new Dygraph(_this.chartsViewTarget, chartData, options)
     _this.validateZoom()
-    if (updateZoomSelector(_this.zoomOptionTargets, dataSet.min_date, dataSet.max_date, 1)) {
+    if (updateZoomSelector(_this.zoomOptionTargets, minDate, maxDate, 1)) {
       show(this.zoomSelectorTarget)
     } else {
       hide(this.zoomSelectorTarget)

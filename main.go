@@ -205,6 +205,8 @@ func _main(ctx context.Context) error {
 		return err
 	}
 
+	commstats.SetAccounts(cfg.CommunityStatOptions)
+
 	charts := cache.NewChartData(ctx, cfg.EnableChartCache, cfg.SyncDatabases, poolSources, vsps,
 		nodeCountries, noveVersions, netParams(cfg.DcrdNetworkType), bdb)
 	db.RegisterCharts(charts, cfg.SyncDatabases, func(name string) (*postgres.PgDb, error) {

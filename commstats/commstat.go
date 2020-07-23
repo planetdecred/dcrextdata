@@ -20,11 +20,6 @@ const (
 )
 
 func NewCommStatCollector(store DataStore, options *config.CommunityStatOptions) (*Collector, error) {
-	subreddits = options.Subreddit
-	twitterHandles = options.TwitterHandles
-	repositories = options.GithubRepositories
-	youtubeChannels = options.YoutubeChannelName
-
 	return &Collector{
 		client:    http.Client{Timeout: 10 * time.Second},
 		dataStore: store,
@@ -56,4 +51,11 @@ func (c *Collector) Run(ctx context.Context) {
 	go c.startGithubCollector(ctx)
 
 	go c.startRedditCollector(ctx)
+}
+
+func SetAccounts(options config.CommunityStatOptions) {
+	subreddits = options.Subreddit
+	twitterHandles = options.TwitterHandles
+	repositories = options.GithubRepositories
+	youtubeChannels = options.YoutubeChannelName
 }
