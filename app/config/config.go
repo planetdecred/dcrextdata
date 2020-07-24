@@ -33,7 +33,7 @@ const (
 	defaultVSPInterval         = 300
 	defaultPowInterval         = 300
 	defaultSyncInterval        = 60
-	defaultSnapshotInterval    = 5
+	defaultSnapshotInterval    = 720
 	defaultRedditInterval      = 60
 	defaultTwitterStatInterval = 60 * 24
 	defaultGithubStatInterval  = 60 * 24
