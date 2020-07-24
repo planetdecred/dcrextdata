@@ -1,6 +1,6 @@
 package postgres
 
-import "github.com/raedahgroup/dcrextdata/cache"
+import "github.com/planetdecred/dcrextdata/cache"
 
 func (pg *PgDb) RegisterCharts(charts *cache.Manager, syncSources []string, syncSourceDbProvider func(source string) (*PgDb, error)) {
 	pg.syncSourceDbProvider = syncSourceDbProvider

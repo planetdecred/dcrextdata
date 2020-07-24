@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/raedahgroup/dcrextdata/app/helpers"
+	"github.com/planetdecred/dcrextdata/app/helpers"
 )
 
 type Collector interface {

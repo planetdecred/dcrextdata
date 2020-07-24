@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/chaincfg/v2"
-	"github.com/raedahgroup/dcrextdata/app"
-	"github.com/raedahgroup/dcrextdata/app/config"
-	"github.com/raedahgroup/dcrextdata/app/helpers"
+	"github.com/planetdecred/dcrextdata/app"
+	"github.com/planetdecred/dcrextdata/app/config"
+	"github.com/planetdecred/dcrextdata/app/helpers"
 )
 
 var snapshotinterval int

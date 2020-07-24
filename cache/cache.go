@@ -13,7 +13,7 @@ import (
 
 	"github.com/decred/dcrd/chaincfg"
 	"github.com/dgraph-io/badger"
-	"github.com/raedahgroup/dcrextdata/app/helpers"
+	"github.com/planetdecred/dcrextdata/app/helpers"
 	"github.com/volatiletech/null"
 )
 

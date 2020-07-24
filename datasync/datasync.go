@@ -8,7 +8,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/raedahgroup/dcrextdata/app/helpers"
+	"github.com/planetdecred/dcrextdata/app/helpers"
 )
 
 var coordinator *SyncCoordinator

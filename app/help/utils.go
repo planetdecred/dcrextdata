@@ -9,7 +9,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/jessevdk/go-flags"
-	"github.com/raedahgroup/dcrextdata/app"
+	"github.com/planetdecred/dcrextdata/app"
 )
 
 //TabWriter creates a tabwriter object that writes tab-aligned text.

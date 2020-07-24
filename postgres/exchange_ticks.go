@@ -12,10 +12,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/raedahgroup/dcrextdata/app/helpers"
-	"github.com/raedahgroup/dcrextdata/cache"
-	"github.com/raedahgroup/dcrextdata/exchanges/ticks"
-	"github.com/raedahgroup/dcrextdata/postgres/models"
+	"github.com/planetdecred/dcrextdata/app/helpers"
+	"github.com/planetdecred/dcrextdata/cache"
+	"github.com/planetdecred/dcrextdata/exchanges/ticks"
+	"github.com/planetdecred/dcrextdata/postgres/models"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 )

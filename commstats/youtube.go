@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/raedahgroup/dcrextdata/app"
-	"github.com/raedahgroup/dcrextdata/app/helpers"
-	"github.com/raedahgroup/dcrextdata/postgres/models"
+	"github.com/planetdecred/dcrextdata/app"
+	"github.com/planetdecred/dcrextdata/app/helpers"
+	"github.com/planetdecred/dcrextdata/postgres/models"
 )
 
 var youtubeChannels []string

@@ -21,9 +21,9 @@ import (
 	"github.com/decred/dcrd/wire"
 	exptypes "github.com/decred/dcrdata/explorer/types"
 	"github.com/decred/dcrdata/txhelpers/v2"
-	"github.com/raedahgroup/dcrextdata/app/helpers"
-	"github.com/raedahgroup/dcrextdata/cache"
-	"github.com/raedahgroup/dcrextdata/datasync"
+	"github.com/planetdecred/dcrextdata/app/helpers"
+	"github.com/planetdecred/dcrextdata/cache"
+	"github.com/planetdecred/dcrextdata/datasync"
 )
 
 func NewCollector(interval float64, activeChain *chaincfg.Params, dataStore DataStore) *Collector {

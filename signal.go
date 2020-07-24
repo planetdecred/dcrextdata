@@ -10,7 +10,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/raedahgroup/dcrextdata/app"
+	"github.com/planetdecred/dcrextdata/app"
 )
 
 // shutdownRequested checks if the Done channel of the given context has been

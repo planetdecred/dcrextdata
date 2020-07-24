@@ -13,10 +13,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/raedahgroup/dcrextdata/app"
-	"github.com/raedahgroup/dcrextdata/app/helpers"
-	"github.com/raedahgroup/dcrextdata/cache"
-	"github.com/raedahgroup/dcrextdata/datasync"
+	"github.com/planetdecred/dcrextdata/app"
+	"github.com/planetdecred/dcrextdata/app/helpers"
+	"github.com/planetdecred/dcrextdata/cache"
+	"github.com/planetdecred/dcrextdata/datasync"
 )
 
 const (

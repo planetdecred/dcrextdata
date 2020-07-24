@@ -5,8 +5,8 @@ import (
 	"io"
 
 	"github.com/jessevdk/go-flags"
-	"github.com/raedahgroup/dcrextdata/app"
-	"github.com/raedahgroup/dcrextdata/app/config"
+	"github.com/planetdecred/dcrextdata/app"
+	"github.com/planetdecred/dcrextdata/app/config"
 )
 
 type GeneralHelpData struct {

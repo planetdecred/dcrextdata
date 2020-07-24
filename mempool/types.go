@@ -10,7 +10,7 @@ import (
 
 	"github.com/decred/dcrd/chaincfg"
 	"github.com/decred/dcrd/rpcclient"
-	"github.com/raedahgroup/dcrextdata/datasync"
+	"github.com/planetdecred/dcrextdata/datasync"
 )
 
 type Mempool struct {

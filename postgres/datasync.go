@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/raedahgroup/dcrextdata/postgres/models"
+	"github.com/planetdecred/dcrextdata/postgres/models"
 )
 
 func (pg *PgDb) TableNames() []string {

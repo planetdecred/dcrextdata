@@ -14,7 +14,7 @@ import (
 	"github.com/decred/dcrd/dcrutil/v2"
 	"github.com/decred/dcrd/peer/v2"
 	"github.com/decred/dcrd/wire"
-	"github.com/raedahgroup/dcrextdata/app/config"
+	"github.com/planetdecred/dcrextdata/app/config"
 )
 
 const (

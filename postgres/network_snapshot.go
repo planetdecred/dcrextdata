@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/dgraph-io/badger"
-	"github.com/raedahgroup/dcrextdata/cache"
-	"github.com/raedahgroup/dcrextdata/netsnapshot"
-	"github.com/raedahgroup/dcrextdata/postgres/models"
+	"github.com/planetdecred/dcrextdata/cache"
+	"github.com/planetdecred/dcrextdata/netsnapshot"
+	"github.com/planetdecred/dcrextdata/postgres/models"
 	"github.com/volatiletech/null"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries/qm"

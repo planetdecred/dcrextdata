@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/raedahgroup/dcrextdata/cache"
-	"github.com/raedahgroup/dcrextdata/datasync"
+	"github.com/planetdecred/dcrextdata/cache"
+	"github.com/planetdecred/dcrextdata/datasync"
 )
 
 type Response map[string]*ResposeData

@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/raedahgroup/dcrextdata/app/helpers"
+	"github.com/planetdecred/dcrextdata/app/helpers"
 	"github.com/volatiletech/sqlboiler/boil"
 )
 

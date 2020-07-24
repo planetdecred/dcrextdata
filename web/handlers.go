@@ -9,13 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/raedahgroup/dcrextdata/cache"
-	"github.com/raedahgroup/dcrextdata/commstats"
-	"github.com/raedahgroup/dcrextdata/datasync"
-	"github.com/raedahgroup/dcrextdata/netsnapshot"
-	"github.com/raedahgroup/dcrextdata/postgres/models"
-	"github.com/raedahgroup/dcrextdata/pow"
-	"github.com/raedahgroup/dcrextdata/vsp"
+	"github.com/planetdecred/dcrextdata/cache"
+	"github.com/planetdecred/dcrextdata/commstats"
+	"github.com/planetdecred/dcrextdata/datasync"
+	"github.com/planetdecred/dcrextdata/netsnapshot"
+	"github.com/planetdecred/dcrextdata/postgres/models"
+	"github.com/planetdecred/dcrextdata/pow"
+	"github.com/planetdecred/dcrextdata/vsp"
 )
 
 const (

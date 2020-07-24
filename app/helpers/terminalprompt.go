@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/raedahgroup/dcrextdata/app/help"
+	"github.com/planetdecred/dcrextdata/app/help"
 )
 
 // ValidatorFunction  validates the input string according to its custom logic.

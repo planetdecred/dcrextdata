@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/raedahgroup/dcrextdata/app"
-	"github.com/raedahgroup/dcrextdata/app/config"
+	"github.com/planetdecred/dcrextdata/app"
+	"github.com/planetdecred/dcrextdata/app/config"
 )
 
 const (

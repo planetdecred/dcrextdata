@@ -12,16 +12,16 @@ import (
 
 	"github.com/decred/slog"
 	"github.com/jrick/logrotate/rotator"
-	"github.com/raedahgroup/dcrextdata/cache"
-	"github.com/raedahgroup/dcrextdata/commstats"
-	"github.com/raedahgroup/dcrextdata/datasync"
-	"github.com/raedahgroup/dcrextdata/exchanges"
-	"github.com/raedahgroup/dcrextdata/mempool"
-	"github.com/raedahgroup/dcrextdata/netsnapshot"
-	"github.com/raedahgroup/dcrextdata/postgres"
-	"github.com/raedahgroup/dcrextdata/pow"
-	"github.com/raedahgroup/dcrextdata/vsp"
-	"github.com/raedahgroup/dcrextdata/web"
+	"github.com/planetdecred/dcrextdata/cache"
+	"github.com/planetdecred/dcrextdata/commstats"
+	"github.com/planetdecred/dcrextdata/datasync"
+	"github.com/planetdecred/dcrextdata/exchanges"
+	"github.com/planetdecred/dcrextdata/mempool"
+	"github.com/planetdecred/dcrextdata/netsnapshot"
+	"github.com/planetdecred/dcrextdata/postgres"
+	"github.com/planetdecred/dcrextdata/pow"
+	"github.com/planetdecred/dcrextdata/vsp"
+	"github.com/planetdecred/dcrextdata/web"
 )
 
 // logWriter implements an io.Writer that outputs to both standard output and

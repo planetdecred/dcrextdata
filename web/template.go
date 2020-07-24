@@ -8,7 +8,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/raedahgroup/dcrextdata/app/helpers"
+	"github.com/planetdecred/dcrextdata/app/helpers"
 )
 
 var templateDirs = []string{"web/views"}

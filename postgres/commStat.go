@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/dgraph-io/badger"
-	"github.com/raedahgroup/dcrextdata/cache"
-	"github.com/raedahgroup/dcrextdata/commstats"
-	"github.com/raedahgroup/dcrextdata/postgres/models"
+	"github.com/planetdecred/dcrextdata/cache"
+	"github.com/planetdecred/dcrextdata/commstats"
+	"github.com/planetdecred/dcrextdata/postgres/models"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 )
