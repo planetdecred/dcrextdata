@@ -234,25 +234,11 @@ func (data ChartFloats) Avg(s, e int) float64 {
 	return sum / float64(e-s)
 }
 
-// A constructor for a sized ChartFloats.
-func newChartFloats() ChartFloats {
-	return make([]float64, 0)
-}
-
 type ChartNullData interface {
 	Lengther
 	Value(index int) interface{}
 	Valid(index int) bool
 	String(index int) string
-}
-
-func noValidEntryBeforeIndex(data ChartNullData, index int) bool {
-	for i := index; i >= 0; i-- {
-		if data.Valid(i) {
-			return false
-		}
-	}
-	return true
 }
 
 // chartNullIntsPointer is a wrapper around ChartNullInt with Items as []nullUint64Pointer instead of
@@ -286,9 +272,9 @@ func (data chartNullIntsPointer) Avg(s, e int) (d nullUint64Pointer) {
 		if v.HasValue {
 			d.HasValue = true
 		}
-		sum += v.Value.Uint64
+		sum += v.Value
 	}
-	d.Value.Uint64 = sum / uint64(e-s)
+	d.Value = sum / uint64(e-s)
 	return
 }
 
@@ -297,7 +283,7 @@ func (data chartNullIntsPointer) Append(set ChartNullUints) chartNullIntsPointer
 		var intPointer nullUint64Pointer
 		if item != nil {
 			intPointer.HasValue = true
-			intPointer.Value = *item
+			intPointer.Value = item.Uint64
 		}
 		data.Items = append(data.Items, intPointer)
 	}
@@ -308,7 +294,7 @@ func (data chartNullIntsPointer) IsZero(index int) bool {
 	if index >= data.Length() {
 		return false
 	}
-	return data.Items[index].Value.IsZero()
+	return data.Items[index].Value == 0
 }
 
 func (data chartNullIntsPointer) Remove(index int) Lengther {
@@ -331,7 +317,7 @@ func (data chartNullIntsPointer) snip(max int) chartNullIntsPointer {
 // nullUint64Pointer provides a wrapper around *null.Uint64 to resolve the issue of inability to write nil pointer to gob
 type nullUint64Pointer struct {
 	HasValue bool
-	Value    null.Uint64
+	Value    uint64
 }
 
 func (data *chartNullIntsPointer) toChartNullUint() ChartNullUints {
@@ -339,7 +325,7 @@ func (data *chartNullIntsPointer) toChartNullUint() ChartNullUints {
 	for _, item := range data.Items {
 		if item.HasValue {
 			result = append(result, &null.Uint64{
-				Uint64: item.Value.Uint64, Valid: item.HasValue,
+				Uint64: item.Value, Valid: item.HasValue,
 			})
 		} else {
 			result = append(result, nil)
@@ -355,7 +341,7 @@ func (data ChartNullUints) toChartNullUintWrapper() chartNullIntsPointer {
 		var intPointer nullUint64Pointer
 		if item != nil {
 			intPointer.HasValue = true
-			intPointer.Value = *item
+			intPointer.Value = item.Uint64
 		}
 		result.Items = append(result.Items, intPointer)
 	}
@@ -445,7 +431,7 @@ type chartNullFloatsPointer struct {
 // nullFloat64Pointer provides a wrapper around *null.Float64 to resolve the issue of inability to write nil pointer to gob
 type nullFloat64Pointer struct {
 	HasValue bool
-	Value    null.Float64
+	Value    float64
 }
 
 func (data chartNullFloatsPointer) Length() int {
@@ -472,9 +458,9 @@ func (data chartNullFloatsPointer) Avg(s, e int) (d nullFloat64Pointer) {
 		if v.HasValue {
 			d.HasValue = true
 		}
-		sum += v.Value.Float64
+		sum += v.Value
 	}
-	d.Value.Float64 = sum / float64(e-s)
+	d.Value = sum / float64(e-s)
 	return
 }
 
@@ -483,7 +469,7 @@ func (data chartNullFloatsPointer) Append(set ChartNullFloats) chartNullFloatsPo
 		var intPointer nullFloat64Pointer
 		if item != nil {
 			intPointer.HasValue = true
-			intPointer.Value = *item
+			intPointer.Value = item.Float64
 		}
 		data.Items = append(data.Items, intPointer)
 	}
@@ -494,7 +480,7 @@ func (data chartNullFloatsPointer) IsZero(index int) bool {
 	if index >= data.Length() {
 		return false
 	}
-	return data.Items[index].Value.IsZero()
+	return data.Items[index].Value == 0
 }
 
 func (data chartNullFloatsPointer) Remove(index int) Lengther {
@@ -519,7 +505,7 @@ func (data *chartNullFloatsPointer) toChartNullFloats() ChartNullFloats {
 	for _, item := range data.Items {
 		if item.HasValue {
 			result = append(result, &null.Float64{
-				Float64: item.Value.Float64, Valid: item.Value.Valid,
+				Float64: item.Value, Valid: item.HasValue,
 			})
 		} else {
 			result = append(result, nil)
@@ -535,11 +521,10 @@ func (data ChartNullFloats) toChartNullFloatsWrapper() chartNullFloatsPointer {
 		var intPointer nullFloat64Pointer
 		if item != nil {
 			intPointer.HasValue = true
-			intPointer.Value = *item
+			intPointer.Value = item.Float64
 		}
 		result.Items = append(result.Items, intPointer)
 	}
-
 	return result
 }
 
@@ -1402,12 +1387,6 @@ func makeVspChart(ctx context.Context, charts *Manager, dataType, axis axisType,
 			var data chartNullIntsPointer
 			if err := charts.ReadVal(key, &data); err != nil {
 				return nil, err
-			}
-			var valid = 0
-			for _, d := range data.Items {
-				if !d.Value.IsZero() {
-					valid++
-				}
 			}
 			deviations[i] = data.toChartNullUint()
 
