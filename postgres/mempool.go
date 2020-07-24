@@ -755,7 +755,6 @@ func appendBlockPropagationChart(charts *cache.Manager, data interface{}) error 
 	propagationSet := data.(propagationSet)
 
 	if len(propagationSet.height) == 0 {
-		log.Info("No propagation records found. Ensure that external sources are configured.")
 		return nil
 	}
 
