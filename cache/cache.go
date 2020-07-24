@@ -150,7 +150,7 @@ func ParseBin(binString string) binLevel {
 // cacheVersion helps detect when the cache data stored has changed its
 // structure or content. A change on the cache version results to recomputing
 // all the charts data a fresh thereby making the cache to hold the latest changes.
-var cacheVersion = NewSemver(1, 0, 0)
+var cacheVersion = NewSemver(1, 0, 1)
 
 // ChartError is an Error interface for use with constant errors.
 type ChartError string
