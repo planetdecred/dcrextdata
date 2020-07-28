@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dgraph-io/badger"
 	"github.com/planetdecred/dcrextdata/app/helpers"
 	"github.com/planetdecred/dcrextdata/cache"
 	"github.com/planetdecred/dcrextdata/datasync"
@@ -535,6 +536,16 @@ func (pg *PgDb) fetchAndAppendVspChartAxis(ctx context.Context, charts *cache.Ma
 	txn := charts.DB.NewTransaction(true)
 	defer txn.Discard()
 
+	var keys []string
+	keyExists := func(key string) bool {
+		for _, k := range keys {
+			if key == k {
+				return true
+			}
+		}
+		return false
+	}
+
 	processUint := func(recMap map[int64]int, source string) error {
 		var chartData cache.ChartNullUints
 		var hasFoundOne bool
@@ -554,9 +565,16 @@ func (pg *PgDb) fetchAndAppendVspChartAxis(ctx context.Context, charts *cache.Ma
 			chartData = append(chartData, data)
 		}
 		key := fmt.Sprintf("%s-%s-%s", cache.VSP, dataType, source)
+		var retryCount int
+	retry:
 		if err := charts.AppendChartNullUintsAxisTx(key, chartData, txn); err != nil {
+			if err == badger.ErrConflict && !keyExists(key) && retryCount < 3 {
+				retryCount++
+				goto retry
+			}
 			return err
 		}
+		keys = append(keys, key)
 		return nil
 	}
 
@@ -581,9 +599,16 @@ func (pg *PgDb) fetchAndAppendVspChartAxis(ctx context.Context, charts *cache.Ma
 			chartData = append(chartData, data)
 		}
 		key := fmt.Sprintf("%s-%s-%s", cache.VSP, dataType, source)
+		var retryCount int
+	retry:
 		if err := charts.AppendChartNullFloatsAxisTx(key, chartData, txn); err != nil {
+			if err == badger.ErrConflict && !keyExists(key) && retryCount < 3 {
+				retryCount++
+				goto retry
+			}
 			return err
 		}
+		keys = append(keys, key)
 		return nil
 	}
 
