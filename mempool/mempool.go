@@ -264,12 +264,6 @@ func (c *Collector) StartMonitoring(ctx context.Context, charts *cache.Manager) 
 			if err = charts.TriggerUpdate(ctx, cache.Propagation); err != nil {
 				log.Errorf("Charts update problem for %s: %s", cache.Mempool, err.Error())
 			}
-			if err = charts.TriggerUpdate(ctx, cache.Snapshot); err != nil { // TODO: move the the module
-				log.Errorf("Charts update problem for %s: %s", cache.Snapshot, err.Error())
-			}
-			if err = charts.TriggerUpdate(ctx, cache.Community); err != nil { // TODO: move the the module
-				log.Errorf("Charts update problem for %s: %s", cache.Community, err.Error())
-			}
 		}
 	}
 

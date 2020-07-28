@@ -11,6 +11,7 @@ import (
 	"github.com/planetdecred/dcrextdata/app"
 	"github.com/planetdecred/dcrextdata/app/helpers"
 	"github.com/planetdecred/dcrextdata/postgres/models"
+	"github.com/planetdecred/dcrextdata/cache"
 )
 
 const (
@@ -23,7 +24,7 @@ func Subreddits() []string {
 	return subreddits
 }
 
-func (c *Collector) startRedditCollector(ctx context.Context) {
+func (c *Collector) startRedditCollector(ctx context.Context, cacheManager *cache.Manager) {
 	var lastCollectionDate time.Time
 	err := c.dataStore.LastEntry(ctx, models.TableNames.Reddit, &lastCollectionDate)
 	if err != nil && err != sql.ErrNoRows {
@@ -63,6 +64,9 @@ func (c *Collector) startRedditCollector(ctx context.Context) {
 		case <-ticker.C:
 			registerStarter()
 			c.collectAndStoreRedditStat(ctx)
+			if err = cacheManager.Update(ctx, cache.Community); err != nil {
+				log.Error(err)
+			}
 			app.ReleaseForNewModule()
 		}
 	}

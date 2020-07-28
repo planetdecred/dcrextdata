@@ -12,6 +12,7 @@ import (
 	"github.com/planetdecred/dcrextdata/app"
 	"github.com/planetdecred/dcrextdata/app/helpers"
 	"github.com/planetdecred/dcrextdata/postgres/models"
+	"github.com/planetdecred/dcrextdata/cache"
 )
 
 const (
@@ -24,7 +25,7 @@ func TwitterHandles() []string {
 	return twitterHandles
 }
 
-func (c *Collector) startTwitterCollector(ctx context.Context) {
+func (c *Collector) startTwitterCollector(ctx context.Context, cacheManager *cache.Manager) {
 	var lastCollectionDate time.Time
 	err := c.dataStore.LastEntry(ctx, models.TableNames.Twitter, &lastCollectionDate)
 	if err != nil && err != sql.ErrNoRows {
@@ -64,6 +65,9 @@ func (c *Collector) startTwitterCollector(ctx context.Context) {
 		case <-ticker.C:
 			registerStarter()
 			c.collectAndStoreTwitterStat(ctx)
+			if err = cacheManager.Update(ctx, cache.Community); err != nil {
+				log.Error(err)
+			}
 			app.ReleaseForNewModule()
 		}
 	}

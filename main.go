@@ -302,7 +302,7 @@ func _main(ctx context.Context) error {
 		vspCollector, err := vsp.NewVspCollector(cfg.VSPInterval, db, charts)
 		if err == nil {
 			vspCollector.RegisterSyncer(syncCoordinator)
-			go vspCollector.Run(ctx)
+			go vspCollector.Run(ctx, charts)
 		} else {
 			log.Error(err)
 		}
@@ -324,7 +324,7 @@ func _main(ctx context.Context) error {
 		powCollector, err := pow.NewCollector(cfg.DisabledPows, cfg.PowInterval, db, charts)
 		if err == nil {
 			powCollector.RegisterSyncer(syncCoordinator)
-			go powCollector.Run(ctx)
+			go powCollector.Run(ctx, charts)
 
 		} else {
 			log.Error(err)
@@ -334,7 +334,7 @@ func _main(ctx context.Context) error {
 	if !cfg.DisableCommunityStat {
 		redditCollector, err := commstats.NewCommStatCollector(db, &cfg.CommunityStatOptions)
 		if err == nil {
-			go redditCollector.Run(ctx)
+			go redditCollector.Run(ctx, charts)
 		} else {
 			log.Error(err)
 		}
@@ -342,7 +342,7 @@ func _main(ctx context.Context) error {
 
 	if !cfg.DisableNetworkSnapshot {
 		snapshotTaker := netsnapshot.NewTaker(db, cfg.NetworkSnapshotOptions)
-		go snapshotTaker.Start(ctx)
+		go snapshotTaker.Start(ctx, charts)
 	}
 
 	go syncCoordinator.StartSyncing(ctx)

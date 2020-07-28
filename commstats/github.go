@@ -11,6 +11,7 @@ import (
 	"github.com/planetdecred/dcrextdata/app"
 	"github.com/planetdecred/dcrextdata/app/helpers"
 	"github.com/planetdecred/dcrextdata/postgres/models"
+	"github.com/planetdecred/dcrextdata/cache"
 )
 
 var repositories []string
@@ -19,7 +20,7 @@ func Repositories() []string {
 	return repositories
 }
 
-func (c *Collector) startGithubCollector(ctx context.Context) {
+func (c *Collector) startGithubCollector(ctx context.Context, cacheManager *cache.Manager) {
 	var lastCollectionDate time.Time
 	err := c.dataStore.LastEntry(ctx, models.TableNames.Github, &lastCollectionDate)
 	if err != nil && err != sql.ErrNoRows {
@@ -59,6 +60,9 @@ func (c *Collector) startGithubCollector(ctx context.Context) {
 		case <-ticker.C:
 			registerStarter()
 			c.collectAndStoreGithubStat(ctx)
+			if err = cacheManager.Update(ctx, cache.Community); err != nil {
+				log.Error(err)
+			}
 			app.ReleaseForNewModule()
 		}
 	}

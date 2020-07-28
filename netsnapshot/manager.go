@@ -64,22 +64,22 @@ var (
 
 	// defaultStaleTimeout is the time in which a host is considered
 	// stale.
-	defaultStaleTimeout = time.Hour
+	defaultStaleTimeout = time.Minute * 720
 
 	// dumpAddressInterval is the interval used to dump the address
 	// cache to disk for future use.
-	dumpAddressInterval = time.Second * 30
+	dumpAddressInterval = time.Minute * 720
 
 	// peersFilename is the name of the file.
 	peersFilename = "nodes.json"
 
 	// pruneAddressInterval is the interval used to run the address
 	// pruner.
-	pruneAddressInterval = time.Minute * 1
+	pruneAddressInterval = time.Minute * 60
 
 	// pruneExpireTimeout is the expire time in which a node is
 	// considered dead.
-	pruneExpireTimeout = time.Hour * 5
+	pruneExpireTimeout = time.Hour * 24
 )
 
 var (

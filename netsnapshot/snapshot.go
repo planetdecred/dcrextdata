@@ -15,6 +15,7 @@ import (
 	"github.com/planetdecred/dcrextdata/app"
 	"github.com/planetdecred/dcrextdata/app/config"
 	"github.com/planetdecred/dcrextdata/app/helpers"
+	"github.com/planetdecred/dcrextdata/cache"
 )
 
 var snapshotinterval int
@@ -31,7 +32,7 @@ func NewTaker(store DataStore, cfg config.NetworkSnapshotOptions) *taker {
 	}
 }
 
-func (t taker) Start(ctx context.Context) {
+func (t taker) Start(ctx context.Context, cacheManager *cache.Manager) {
 	for {
 		if app.MarkBusyIfFree() {
 			break
@@ -112,6 +113,10 @@ func (t taker) Start(ctx context.Context) {
 			if err != nil {
 				t.dataStore.DeleteSnapshot(ctx, timestamp)
 				log.Errorf("Error in saving network snapshot, %s", err.Error())
+			}
+
+			if err = cacheManager.Update(ctx, cache.Snapshot); err != nil {
+				log.Error(err)
 			}
 
 			mtx.Lock()

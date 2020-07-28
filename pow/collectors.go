@@ -71,7 +71,7 @@ func NewCollector(disabledPows []string, period int64, store PowDataStore, chart
 	}, nil
 }
 
-func (pc *Collector) Run(ctx context.Context) {
+func (pc *Collector) Run(ctx context.Context, cacheManager *cache.Manager) {
 	for {
 		if app.MarkBusyIfFree() {
 			break
@@ -101,12 +101,12 @@ func (pc *Collector) Run(ctx context.Context) {
 			}
 		}
 	}
-	pc.Collect(ctx)
+	pc.Collect(ctx, cacheManager)
 	app.ReleaseForNewModule()
-	go pc.CollectAsync(ctx)
+	go pc.CollectAsync(ctx, cacheManager)
 }
 
-func (pc *Collector) CollectAsync(ctx context.Context) {
+func (pc *Collector) CollectAsync(ctx context.Context, cacheManager *cache.Manager) {
 	if ctx.Err() != nil {
 		return
 	}
@@ -132,13 +132,13 @@ func (pc *Collector) CollectAsync(ctx context.Context) {
 			log.Info("The next collection cycle begins in", timeInterval)
 
 			log.Info("Starting a new PoW collection cycle")
-			pc.Collect(ctx)
+			pc.Collect(ctx, cacheManager)
 			app.ReleaseForNewModule()
 		}
 	}
 }
 
-func (pc *Collector) Collect(ctx context.Context) {
+func (pc *Collector) Collect(ctx context.Context, cacheManager *cache.Manager) {
 	log.Info("Fetching PoW data.")
 	for _, powInfo := range pc.pows {
 		select {
@@ -151,6 +151,9 @@ func (pc *Collector) Collect(ctx context.Context) {
 			}
 			err = pc.store.AddPowData(ctx, data)
 			if err != nil {
+				log.Error(err)
+			}
+			if err = cacheManager.Update(ctx, cache.PowChart); err != nil {
 				log.Error(err)
 			}
 		}

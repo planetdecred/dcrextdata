@@ -57,7 +57,7 @@ func (vsp *Collector) fetch(ctx context.Context, response interface{}) error {
 	return nil
 }
 
-func (vsp *Collector) Run(ctx context.Context) {
+func (vsp *Collector) Run(ctx context.Context, cacheManager *cache.Manager) {
 	if ctx.Err() != nil {
 		return
 	}
@@ -110,6 +110,9 @@ func (vsp *Collector) Run(ctx context.Context) {
 				app.ReleaseForNewModule()
 				if err != nil {
 					return
+				}
+				if err = cacheManager.Update(ctx, cache.VSP); err != nil {
+					log.Error(err)
 				}
 			}
 		}

@@ -13,6 +13,7 @@ import (
 	"github.com/planetdecred/dcrextdata/app"
 	"github.com/planetdecred/dcrextdata/app/helpers"
 	"github.com/planetdecred/dcrextdata/postgres/models"
+	"github.com/planetdecred/dcrextdata/cache"
 )
 
 var youtubeChannels []string
@@ -21,7 +22,7 @@ func YoutubeChannels() []string {
 	return youtubeChannels
 }
 
-func (c *Collector) startYoutubeCollector(ctx context.Context) {
+func (c *Collector) startYoutubeCollector(ctx context.Context, cacheManager *cache.Manager) {
 	if c.options.YoutubeDataApiKey == "" {
 		log.Error("youtubedataapikey is required for the youtube stat collector to work")
 		return
@@ -71,6 +72,9 @@ func (c *Collector) startYoutubeCollector(ctx context.Context) {
 		case <-ticker.C:
 			registerStarter()
 			c.collectAndStoreYoutubeStat(ctx)
+			if err = cacheManager.Update(ctx, cache.Community); err != nil {
+				log.Error(err)
+			}
 			app.ReleaseForNewModule()
 		}
 	}
