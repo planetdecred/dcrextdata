@@ -44,7 +44,7 @@ func (t taker) Start(ctx context.Context, cacheManager *cache.Manager) {
 
 	var err error
 	amgr, err = NewManager(filepath.Join(defaultHomeDir,
-		netParams.Name), t.cfg.ShowDetailedLog)
+		netParams.Name), t.cfg.ShowDetailedLog, t.cfg.SnapshotInterval)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "NewManager: %v\n", err)
 		os.Exit(1)

@@ -136,12 +136,15 @@ func isRoutable(addr net.IP) bool {
 	return true
 }
 
-func NewManager(dataDir string, showDetailedLog bool) (*Manager, error) {
+func NewManager(dataDir string, showDetailedLog bool, snapshotInterval int) (*Manager, error) {
 	err := os.MkdirAll(dataDir, 0700)
 	if err != nil {
 		return nil, err
 	}
 
+	defaultStaleTimeout = time.Minute * time.Duration(snapshotInterval)
+	dumpAddressInterval = defaultStaleTimeout
+	
 	amgr := Manager{
 		nodes:           make(map[string]*Node),
 		peerNtfn:        make(chan *Node),
