@@ -870,9 +870,9 @@ func (pg *PgDb) fetchNetworkSnapshotChart(ctx context.Context, charts *cache.Man
 	}
 
 	if !done {
-		done = true
+		done = true //TODO: remove
 	}
-	return set, func() {}, true, nil
+	return set, func() {}, done, nil
 }
 
 func appendSnapshotChart(charts *cache.Manager, data interface{}) error {

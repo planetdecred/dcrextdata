@@ -40,12 +40,7 @@ func (c *Collector) startGithubCollector(ctx context.Context, cacheManager *cach
 	}
 
 	registerStarter := func() {
-		// continually check the state of the app until its free to run this module
-		for {
-			if app.MarkBusyIfFree() {
-				break
-			}
-		}
+		app.MarkBusyIfFree()
 	}
 
 	registerStarter()

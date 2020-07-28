@@ -72,11 +72,7 @@ func NewCollector(disabledPows []string, period int64, store PowDataStore, chart
 }
 
 func (pc *Collector) Run(ctx context.Context, cacheManager *cache.Manager) {
-	for {
-		if app.MarkBusyIfFree() {
-			break
-		}
-	}
+	app.MarkBusyIfFree()
 	log.Info("Triggering PoW collectors.")
 
 	lastCollectionDateUnix := pc.store.LastPowEntryTime("")
@@ -95,11 +91,7 @@ func (pc *Collector) Run(ctx context.Context, cacheManager *cache.Manager) {
 
 	if lastCollectionDateUnix > 0 && secondsPassed < period {
 		// continually check the state of the app until its free to run this module
-		for {
-			if app.MarkBusyIfFree() {
-				break
-			}
-		}
+		app.MarkBusyIfFree()
 	}
 	pc.Collect(ctx, cacheManager)
 	app.ReleaseForNewModule()
@@ -121,11 +113,7 @@ func (pc *Collector) CollectAsync(ctx context.Context, cacheManager *cache.Manag
 			return
 		case <-ticker.C:
 			// continually check the state of the app until its free to run this module
-			for {
-				if app.MarkBusyIfFree() {
-					break
-				}
-			}
+			app.MarkBusyIfFree()
 			completeCollectionCycle := pc.store.LastPowEntryTime("")
 			collectionCycleDate := helpers.UnixTime(completeCollectionCycle)
 			timeInterval := time.Since(collectionCycleDate)

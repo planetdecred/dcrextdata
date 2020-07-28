@@ -106,24 +106,12 @@ func normalizeBuildString(str string) string {
 	return normalizeSemString(str, semanticBuildAlphabet)
 }
 
-// MarkBusyIfFree checks if the busy flag is false and set it to true
-func MarkBusyIfFree() bool {
+// MarkBusyIfFree locks the busy locker to ensure sequential execution of callers
+func MarkBusyIfFree() {
 	busyLocker.Lock()
-	defer busyLocker.Unlock()
-
-	if busy {
-		return false
-	}
-
-	busy = true
-
-	return true
 }
 
-// ReleaseForNewModule sets the busy flag to false to alow other modules to start running
+// ReleaseForNewModule unlocks the busy locker to allow other modules to start running
 func ReleaseForNewModule() {
-	busyLocker.Lock()
-	defer busyLocker.Unlock()
-
-	busy = false
+	busyLocker.Unlock()
 }

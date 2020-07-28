@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/chaincfg/v2"
-	"github.com/planetdecred/dcrextdata/app"
 	"github.com/planetdecred/dcrextdata/app/config"
 	"github.com/planetdecred/dcrextdata/app/helpers"
 	"github.com/planetdecred/dcrextdata/cache"
@@ -33,11 +32,6 @@ func NewTaker(store DataStore, cfg config.NetworkSnapshotOptions) *taker {
 }
 
 func (t taker) Start(ctx context.Context, cacheManager *cache.Manager) {
-	for {
-		if app.MarkBusyIfFree() {
-			break
-		}
-	}
 	log.Info("Triggering network snapshot taker.")
 
 	var netParams = chaincfg.MainNetParams()

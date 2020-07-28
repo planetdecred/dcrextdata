@@ -34,11 +34,7 @@ func (c *Collector) Run(ctx context.Context, cacheManager *cache.Manager) {
 	}
 
 	// continually check the state of the app until its free to run this module
-	for {
-		if app.MarkBusyIfFree() {
-			break
-		}
-	}
+	app.MarkBusyIfFree()
 
 	log.Info("Fetching community stats...")
 

@@ -77,11 +77,7 @@ func (vsp *Collector) Run(ctx context.Context, cacheManager *cache.Manager) {
 	}
 
 	// continually check the state of the app until its free to run this module
-	for {
-		if app.MarkBusyIfFree() {
-			break
-		}
-	}
+	app.MarkBusyIfFree()
 
 	err := vsp.collectAndStore(ctx)
 	app.ReleaseForNewModule()
@@ -101,11 +97,7 @@ func (vsp *Collector) Run(ctx context.Context, cacheManager *cache.Manager) {
 				return
 			case <-ticker.C:
 				// continually check the state of the app until its free to run this module
-				for {
-					if app.MarkBusyIfFree() {
-						break
-					}
-				}
+				app.MarkBusyIfFree()
 				err := vsp.collectAndStore(ctx)
 				app.ReleaseForNewModule()
 				if err != nil {
