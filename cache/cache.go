@@ -19,13 +19,14 @@ import (
 
 // Keys for specifying chart data type.
 const (
-	Mempool     = "mempool"
-	Propagation = "propagation"
-	Community   = "community"
-	PowChart    = "pow"
-	VSP         = "vsp"
-	Exchange    = "exchange"
-	Snapshot    = "snapshot"
+	Mempool       = "mempool"
+	Propagation   = "propagation"
+	Community     = "community"
+	PowChart      = "pow"
+	VSP           = "vsp"
+	Exchange      = "exchange"
+	Snapshot      = "snapshot"
+	SnapshotTable = Snapshot + "_table"
 )
 
 // binLevel specifies the granularity of data.
@@ -857,6 +858,9 @@ func (charts *Manager) Update(ctx context.Context, tags ...string) error {
 						}
 					}
 					charts.mtx.Unlock()
+				}
+				if err == nil {
+					log.Infof("Updated %s cache data", updater.Tag)
 				}
 			}
 			completed = done

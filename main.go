@@ -207,9 +207,9 @@ func _main(ctx context.Context) error {
 
 	commstats.SetAccounts(cfg.CommunityStatOptions)
 
-	charts := cache.NewChartData(ctx, cfg.EnableChartCache, cfg.SyncDatabases, poolSources, vsps,
+	cacheManager := cache.NewChartData(ctx, cfg.EnableChartCache, cfg.SyncDatabases, poolSources, vsps,
 		nodeCountries, noveVersions, netParams(cfg.DcrdNetworkType), bdb)
-	db.RegisterCharts(charts, cfg.SyncDatabases, func(name string) (*postgres.PgDb, error) {
+	db.RegisterCharts(cacheManager, cfg.SyncDatabases, func(name string) (*postgres.PgDb, error) {
 		db, found := syncDbs[name]
 		if !found {
 			return nil, fmt.Errorf("no db is registered for the source, %s", name)
@@ -217,11 +217,11 @@ func _main(ctx context.Context) error {
 		return db, nil
 	})
 
-	if err = charts.Load(ctx); err != nil {
+	if err = cacheManager.Load(ctx); err != nil {
 		return err
 	}
 
-	defer charts.SaveVersion()
+	defer cacheManager.SaveVersion()
 
 	// http server method
 	if cfg.HttpMode {
@@ -232,7 +232,7 @@ func _main(ctx context.Context) error {
 			}
 			return db, nil
 		}
-		go web.StartHttpServer(cfg.HTTPHost, cfg.HTTPPort, charts, db, netParams(cfg.DcrdNetworkType), extDbFactory)
+		go web.StartHttpServer(cfg.HTTPHost, cfg.HTTPPort, cacheManager, db, netParams(cfg.DcrdNetworkType), extDbFactory)
 	}
 
 	var dcrClient *rpcclient.Client
@@ -261,7 +261,7 @@ func _main(ctx context.Context) error {
 		collector = mempool.NewCollector(cfg.MempoolInterval, netParams(cfg.DcrdNetworkType), db)
 		collector.RegisterSyncer(syncCoordinator)
 
-		dcrClient, err = rpcclient.New(connCfg, collector.DcrdHandlers(ctx))
+		dcrClient, err = rpcclient.New(connCfg, collector.DcrdHandlers(ctx, cacheManager))
 		if err != nil {
 			dcrNotRunningErr := "No connection could be made because the target machine actively refused it"
 			if strings.Contains(err.Error(), dcrNotRunningErr) {
@@ -295,14 +295,14 @@ func _main(ctx context.Context) error {
 
 		collector.SetClient(dcrClient)
 
-		go collector.StartMonitoring(ctx, charts)
+		go collector.StartMonitoring(ctx, cacheManager)
 	}
 
 	if !cfg.DisableVSP {
-		vspCollector, err := vsp.NewVspCollector(cfg.VSPInterval, db, charts)
+		vspCollector, err := vsp.NewVspCollector(cfg.VSPInterval, db, cacheManager)
 		if err == nil {
 			vspCollector.RegisterSyncer(syncCoordinator)
-			go vspCollector.Run(ctx, charts)
+			go vspCollector.Run(ctx, cacheManager)
 		} else {
 			log.Error(err)
 		}
@@ -310,7 +310,7 @@ func _main(ctx context.Context) error {
 
 	if !cfg.DisableExchangeTicks {
 		go func() {
-			ticksHub, err := exchanges.NewTickHub(ctx, cfg.DisabledExchanges, db, charts)
+			ticksHub, err := exchanges.NewTickHub(ctx, cfg.DisabledExchanges, db, cacheManager)
 			if err == nil {
 				ticksHub.RegisterSyncer(syncCoordinator)
 				ticksHub.Run(ctx)
@@ -321,10 +321,10 @@ func _main(ctx context.Context) error {
 	}
 
 	if !cfg.DisablePow {
-		powCollector, err := pow.NewCollector(cfg.DisabledPows, cfg.PowInterval, db, charts)
+		powCollector, err := pow.NewCollector(cfg.DisabledPows, cfg.PowInterval, db, cacheManager)
 		if err == nil {
 			powCollector.RegisterSyncer(syncCoordinator)
-			go powCollector.Run(ctx, charts)
+			go powCollector.Run(ctx, cacheManager)
 
 		} else {
 			log.Error(err)
@@ -334,7 +334,7 @@ func _main(ctx context.Context) error {
 	if !cfg.DisableCommunityStat {
 		redditCollector, err := commstats.NewCommStatCollector(db, &cfg.CommunityStatOptions)
 		if err == nil {
-			go redditCollector.Run(ctx, charts)
+			go redditCollector.Run(ctx, cacheManager)
 		} else {
 			log.Error(err)
 		}
@@ -342,7 +342,7 @@ func _main(ctx context.Context) error {
 
 	if !cfg.DisableNetworkSnapshot {
 		snapshotTaker := netsnapshot.NewTaker(db, cfg.NetworkSnapshotOptions)
-		go snapshotTaker.Start(ctx, charts)
+		go snapshotTaker.Start(ctx, cacheManager)
 	}
 
 	go syncCoordinator.StartSyncing(ctx)

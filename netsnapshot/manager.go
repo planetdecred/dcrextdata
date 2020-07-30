@@ -144,7 +144,7 @@ func NewManager(dataDir string, showDetailedLog bool, snapshotInterval int) (*Ma
 
 	defaultStaleTimeout = time.Minute * time.Duration(snapshotInterval)
 	dumpAddressInterval = defaultStaleTimeout
-	
+
 	amgr := Manager{
 		nodes:           make(map[string]*Node),
 		peerNtfn:        make(chan *Node),

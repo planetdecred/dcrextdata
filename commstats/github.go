@@ -10,8 +10,8 @@ import (
 
 	"github.com/planetdecred/dcrextdata/app"
 	"github.com/planetdecred/dcrextdata/app/helpers"
-	"github.com/planetdecred/dcrextdata/postgres/models"
 	"github.com/planetdecred/dcrextdata/cache"
+	"github.com/planetdecred/dcrextdata/postgres/models"
 )
 
 var repositories []string
@@ -44,7 +44,7 @@ func (c *Collector) startGithubCollector(ctx context.Context, cacheManager *cach
 	}
 
 	registerStarter()
-	c.collectAndStoreGithubStat(ctx)
+	c.collectAndStoreGithubStat(ctx, cacheManager)
 	app.ReleaseForNewModule()
 
 	ticker := time.NewTicker(time.Duration(c.options.TwitterStatInterval) * time.Minute)
@@ -54,16 +54,13 @@ func (c *Collector) startGithubCollector(ctx context.Context, cacheManager *cach
 			return
 		case <-ticker.C:
 			registerStarter()
-			c.collectAndStoreGithubStat(ctx)
-			if err = cacheManager.Update(ctx, cache.Community); err != nil {
-				log.Error(err)
-			}
+			c.collectAndStoreGithubStat(ctx, cacheManager)
 			app.ReleaseForNewModule()
 		}
 	}
 }
 
-func (c *Collector) collectAndStoreGithubStat(ctx context.Context) {
+func (c *Collector) collectAndStoreGithubStat(ctx context.Context, cacheManager *cache.Manager) {
 	log.Info("Starting Github stats collection cycle")
 	for _, repo := range c.options.GithubRepositories {
 		githubStars, githubFolks, err := c.getGithubData(ctx, repo)
@@ -90,6 +87,10 @@ func (c *Collector) collectAndStoreGithubStat(ctx context.Context) {
 
 		log.Infof("New Github stat collected for %s at %s, Stars %d, Folks %d", repo,
 			githubStat.Date.Format(dateMiliTemplate), githubStars, githubFolks)
+
+		if err = cacheManager.Update(ctx, cache.Community); err != nil {
+			log.Error(err)
+		}
 	}
 }
 

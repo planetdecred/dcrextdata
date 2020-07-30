@@ -62,7 +62,7 @@ func (c *Collector) SetExplorerBestBlock(ctx context.Context) error {
 	return nil
 }
 
-func (c *Collector) DcrdHandlers(ctx context.Context) *rpcclient.NotificationHandlers {
+func (c *Collector) DcrdHandlers(ctx context.Context, cacheManager *cache.Manager) *rpcclient.NotificationHandlers {
 	var ticketIndsMutex sync.Mutex
 	ticketInds := make(exptypes.BlockValidatorIndex)
 
@@ -176,12 +176,14 @@ func (c *Collector) DcrdHandlers(ctx context.Context) *rpcclient.NotificationHan
 			}
 			if err = c.dataStore.SaveBlock(ctx, block); err != nil {
 				log.Error(err)
+			} else if err = cacheManager.TriggerUpdate(ctx, cache.Propagation); err != nil {
+				log.Errorf("Charts update problem for %s: %s", cache.Mempool, err.Error())
 			}
 		},
 	}
 }
 
-func (c *Collector) StartMonitoring(ctx context.Context, charts *cache.Manager) {
+func (c *Collector) StartMonitoring(ctx context.Context, cacheManager *cache.Manager) {
 	var mu sync.Mutex
 
 	collectMempool := func() {
@@ -258,10 +260,7 @@ func (c *Collector) StartMonitoring(ctx context.Context, charts *cache.Manager) 
 		if err = c.dataStore.StoreMempool(ctx, mempoolDto); err != nil {
 			log.Error(err)
 		} else {
-			if err = charts.TriggerUpdate(ctx, cache.Mempool); err != nil {
-				log.Errorf("Charts update problem for %s: %s", cache.Mempool, err.Error())
-			}
-			if err = charts.TriggerUpdate(ctx, cache.Propagation); err != nil {
+			if err = cacheManager.TriggerUpdate(ctx, cache.Mempool); err != nil {
 				log.Errorf("Charts update problem for %s: %s", cache.Mempool, err.Error())
 			}
 		}

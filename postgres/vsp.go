@@ -531,10 +531,7 @@ func (pg *PgDb) fetchEncodeVspChart(ctx context.Context, charts *cache.Manager, 
 }
 
 func (pg *PgDb) fetchAndAppendVspChartAxis(ctx context.Context, charts *cache.Manager,
-	dates cache.ChartUints, dataType string, startDate uint64) error {
-
-	txn := charts.DB.NewTransaction(true)
-	defer txn.Discard()
+	dates cache.ChartUints, dataType string, startDate uint64, txn *badger.Txn) error {
 
 	var keys []string
 	keyExists := func(key string) bool {
@@ -572,7 +569,7 @@ func (pg *PgDb) fetchAndAppendVspChartAxis(ctx context.Context, charts *cache.Ma
 				retryCount++
 				goto retry
 			}
-			return err
+			return fmt.Errorf("%s - ", key)
 		}
 		keys = append(keys, key)
 		return nil
@@ -703,10 +700,6 @@ func (pg *PgDb) fetchAndAppendVspChartAxis(ctx context.Context, charts *cache.Ma
 		}
 	}
 
-	if err := txn.Commit(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -740,8 +733,11 @@ func (pg *PgDb) fetchCacheVspChart(ctx context.Context, charts *cache.Manager, p
 		unixTimes = append(unixTimes, uint64(d.Unix()))
 	}
 
+	txn := charts.DB.NewTransaction(true)
+	defer txn.Discard()
+
 	key := fmt.Sprintf("%s-%s", cache.VSP, cache.TimeAxis)
-	if err := charts.AppendChartUintsAxis(key, unixTimes); err != nil {
+	if err := charts.AppendChartUintsAxisTx(key, unixTimes, txn); err != nil {
 		return nil, func() {}, true, err
 	}
 
@@ -757,17 +753,17 @@ func (pg *PgDb) fetchCacheVspChart(ctx context.Context, charts *cache.Manager, p
 		string(cache.UsersActiveAxis),
 	}
 	for _, ax := range axis {
-		if err := pg.fetchAndAppendVspChartAxis(ctx, charts, unixTimes, ax, startDate); err != nil {
+		if err := pg.fetchAndAppendVspChartAxis(ctx, charts, unixTimes, ax, startDate, txn); err != nil {
+			log.Error(err, ax)
 			return nil, func() {}, true, err
 		}
 	}
 
-	return &vspSet{}, func() {}, true, nil
+	if err := txn.Commit(); err != nil {
+		return nil, func() {}, true, err
+	}
 
-	// aDay := 86400
-	// endDate := startDate + uint64(7*aDay)
-	// data, done, err := pg.fetchVspChart(ctx, startDate, endDate, "")
-	// return data, func() {}, done, err
+	return &vspSet{}, func() {}, true, nil
 }
 
 func (pg *PgDb) fetchVspChart(ctx context.Context, startDate uint64, endDate uint64, axisString string, vspSources ...string) (*vspSet, bool, error) {

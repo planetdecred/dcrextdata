@@ -103,9 +103,6 @@ func (vsp *Collector) Run(ctx context.Context, cacheManager *cache.Manager) {
 				if err != nil {
 					return
 				}
-				if err = cacheManager.Update(ctx, cache.VSP); err != nil {
-					log.Error(err)
-				}
 			}
 		}
 	}()

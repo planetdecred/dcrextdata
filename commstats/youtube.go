@@ -12,8 +12,8 @@ import (
 
 	"github.com/planetdecred/dcrextdata/app"
 	"github.com/planetdecred/dcrextdata/app/helpers"
-	"github.com/planetdecred/dcrextdata/postgres/models"
 	"github.com/planetdecred/dcrextdata/cache"
+	"github.com/planetdecred/dcrextdata/postgres/models"
 )
 
 var youtubeChannels []string
@@ -57,7 +57,7 @@ func (c *Collector) startYoutubeCollector(ctx context.Context, cacheManager *cac
 	}
 
 	registerStarter()
-	c.collectAndStoreYoutubeStat(ctx)
+	c.collectAndStoreYoutubeStat(ctx, cacheManager)
 	app.ReleaseForNewModule()
 
 	ticker := time.NewTicker(time.Duration(c.options.YoutubeStatInterval) * time.Minute)
@@ -67,16 +67,13 @@ func (c *Collector) startYoutubeCollector(ctx context.Context, cacheManager *cac
 			return
 		case <-ticker.C:
 			registerStarter()
-			c.collectAndStoreYoutubeStat(ctx)
-			if err = cacheManager.Update(ctx, cache.Community); err != nil {
-				log.Error(err)
-			}
+			c.collectAndStoreYoutubeStat(ctx, cacheManager)
 			app.ReleaseForNewModule()
 		}
 	}
 }
 
-func (c *Collector) collectAndStoreYoutubeStat(ctx context.Context) {
+func (c *Collector) collectAndStoreYoutubeStat(ctx context.Context, cacheManager *cache.Manager) {
 	log.Info("Starting Github stats collection cycle")
 	// youtube
 	for index, id := range c.options.YoutubeChannelId {
@@ -105,6 +102,9 @@ func (c *Collector) collectAndStoreYoutubeStat(ctx context.Context) {
 
 		log.Infof("New Youtube stat collected for %s at %s, Subscribers %d", channel,
 			youtubeStat.Date.Format(dateMiliTemplate), youtubeSubscribers)
+		if err = cacheManager.Update(ctx, cache.Community); err != nil {
+			log.Error(err)
+		}
 	}
 
 }

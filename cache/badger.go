@@ -105,6 +105,18 @@ func (charts *Manager) AppendChartUintsAxis(key string, set ChartUints) error {
 	return charts.SaveVal(key, data)
 }
 
+func (charts *Manager) AppendChartUintsAxisTx(key string, set ChartUints, txn *badger.Txn) error {
+	var data ChartUints
+	err := charts.ReadValTx(key, &data, txn)
+	if err != nil {
+		if err != badger.ErrKeyNotFound {
+			return err
+		}
+	}
+	data = append(data, set...)
+	return charts.SaveValTx(key, data, txn)
+}
+
 func (charts *Manager) AppendChartNullUintsAxis(key string, set ChartNullUints) error {
 	var data chartNullIntsPointer
 	err := charts.ReadVal(key, &data)

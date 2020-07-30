@@ -109,7 +109,7 @@ func (t taker) Start(ctx context.Context, cacheManager *cache.Manager) {
 				log.Errorf("Error in saving network snapshot, %s", err.Error())
 			}
 
-			if err = cacheManager.Update(ctx, cache.Snapshot); err != nil {
+			if err = cacheManager.Update(ctx, cache.Snapshot, cache.SnapshotTable); err != nil {
 				log.Error(err)
 			}
 
