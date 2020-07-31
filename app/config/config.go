@@ -17,8 +17,8 @@ import (
 
 const (
 	defaultConfigFileName      = "dcrextdata.conf"
-	sampleConfigFileName      = "sample-dcrextdata.conf"
-	defaultLogFilename         = "dcrextdata.log"
+	sampleConfigFileName       = "./sample-dcrextdata.conf"
+	defaultLogFileName         = "dcrextdata.log"
 	defaultChartsCacheDump     = "charts-cache.glob"
 	Hint                       = `Run dcrextdata < --http > to start http server or dcrextdata < --help > for help.`
 	defaultDbHost              = "localhost"
@@ -52,6 +52,7 @@ const (
 var (
 	defaultHomeDir        = dcrutil.AppDataDir("dcrextdata", false)
 	defaultConfigFilename = filepath.Join(defaultHomeDir, defaultConfigFileName)
+	defaultLogFilename    = filepath.Join(defaultHomeDir, "log", defaultLogFileName)
 
 	defaultSubreddits          = []string{"decred"}
 	defaultTwitterHandles      = []string{"decredproject"}
@@ -245,7 +246,7 @@ func LoadConfig() (*Config, []string, error) {
 
 	// if the config file is missing, create the default
 	if _, err := os.Stat(defaultConfigFilename); os.IsNotExist(err) {
-		if err = copyFile("./" + sampleConfigFileName, defaultConfigFilename); err != nil {
+		if err = copyFile(sampleConfigFileName, defaultConfigFilename); err != nil {
 			return nil, nil, fmt.Errorf("Missing default config file and cannot copy the sample - %s", err.Error())
 		}
 	}

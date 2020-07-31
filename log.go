@@ -7,6 +7,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -89,12 +90,15 @@ func init() {
 // create roll files in the same directory.  It must be called before the
 // package-global log rotater variables are used.
 func initLogRotator(logFile string) {
-	// logDir, _ := filepath.Split(logFile)
-	// err := os.MkdirAll(logDir, 0700)
-	// if err != nil {
-	// 	fmt.Fprintf(os.Stderr, "failed to create log directory: %v\n", err)
-	// 	os.Exit(1)
-	// }
+	logDir, _ := filepath.Split(logFile)
+	if logDir != "" {
+		err := os.MkdirAll(logDir, 0700)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to create log directory: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
 	r, err := rotator.New(logFile, 10*1024, false, 8)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create file rotator: %v\n", err)
