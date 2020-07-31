@@ -64,15 +64,15 @@ Run `export GO111MODULE=on` in terminal (for Mac/Linux) or `setx GO111MODULE on`
 Building will place the `dcrextdata` binary in your working directory while install will place the binary in $GOPATH/bin.
 
 #### Building http front-end
-* From your project directory, type `cd web/public/app` using command line, rn `npm install` when its done installing packages, 
+* From your project directory, run `npm install` when its done installing packages, 
 run `npm run build`.
 
 ### Step 4. Configuration
-`dcrextdata` can be configured via command-line options or a config file located in the same diretcory as the executable. Start with the sample config file:
+`dcrextdata` can be configured via command-line options or a config file located in the home directory. Start with the sample config file:
 ```sh
-cp sample-dcrextdata.conf dcrextdata.conf
+cp sample-dcrextdata.conf ~/.dcrextdata/dcrextdata.conf
 ```
-Then edit `dcrextdata.conf` with your postgres settings.  See the output of `dcrextdata --help`
+Then edit `dcrextdata.conf` with your postgres settings. See the output of `dcrextdata --help`
 for a list of all options and their default values.
 
 ## Running dcrextdata
