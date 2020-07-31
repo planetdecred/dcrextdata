@@ -167,7 +167,7 @@ type ConfigFileOptions struct {
 type CommandLineOptions struct {
 	Reset      bool   `short:"R" long:"reset" description:"Drop all database tables and start over"`
 	ConfigFile string `short:"C" long:"configfile" description:"Path to Configuration file"`
-	HttpMode   bool   `long:"http" description:"Launch http server"`
+	HttpMode   string `long:"http" description:"Launch http server"`
 }
 
 type CommunityStatOptions struct {
@@ -201,6 +201,7 @@ func defaultConfig() Config {
 	return Config{
 		CommandLineOptions: CommandLineOptions{
 			ConfigFile: defaultConfigFilename,
+			HttpMode:   "true",
 		},
 		ConfigFileOptions: defaultFileOptions(),
 	}

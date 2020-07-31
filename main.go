@@ -221,10 +221,14 @@ func _main(ctx context.Context) error {
 		return err
 	}
 
-	defer cacheManager.SaveVersion()
+	defer func() {
+		if err = cacheManager.SaveVersion(); err != nil {
+			log.Error(err)
+		}
+	}()
 
 	// http server method
-	if cfg.HttpMode {
+	if strings.ToLower(cfg.HttpMode) == "true" || cfg.HttpMode == "1" {
 		extDbFactory := func(name string) (query web.DataQuery, e error) {
 			db, found := syncDbs[name]
 			if !found {

@@ -77,8 +77,7 @@ for a list of all options and their default values.
 
 ## Running dcrextdata
 To run *dcrextdata*, use...
-- `dcrextdata` on your command line interface to create database table, fetch data and store the data.
-- `dcrextdata --http` on your command line interface to launch the http web user interface/front-end.
+- `dcrextdata` on your command line interface to create database table, fetch data and store the data and launch the http web server. The web server can be disabled by setting `--http=false`
 - You can perform a reset by running with the `-R` or `--reset` flag.
 - Run `dcrextdata -h` or `dcrextdata help` to get general information of commands and options that can be issued on the cli.
 - Use `dcrextdata <command> -h` or   `dcrextdata help <command>` to get detailed information about a command.
