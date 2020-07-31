@@ -249,6 +249,7 @@ func LoadConfig() (*Config, []string, error) {
 			return nil, nil, fmt.Errorf("Missing default config file and cannot copy the sample - %s", err.Error())
 		}
 	}
+	fmt.Printf("Loading config file from %s\n", preCfg.ConfigFile)
 	parser := flags.NewParser(&cfg, flags.IgnoreUnknown)
 	err := flags.NewIniParser(parser).ParseFile(preCfg.ConfigFile)
 	if err != nil {
