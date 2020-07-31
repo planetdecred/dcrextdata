@@ -8,12 +8,14 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 
+	"github.com/decred/dcrd/dcrutil"
 	flags "github.com/jessevdk/go-flags"
 )
 
 const (
-	DefaultConfigFilename      = "dcrextdata.conf"
+	defaultConfigFileName      = "dcrextdata.conf"
 	defaultLogFilename         = "dcrextdata.log"
 	defaultChartsCacheDump     = "charts-cache.glob"
 	Hint                       = `Run dcrextdata < --http > to start http server or dcrextdata < --help > for help.`
@@ -38,6 +40,7 @@ const (
 	defaultTwitterStatInterval = 60 * 24
 	defaultGithubStatInterval  = 60 * 24
 	defaultYoutubeInterval     = 60 * 24
+
 	//dcrseeder
 	defaultSeeder            = "127.0.0.1"
 	defaultSeederPort        = 9108
@@ -45,6 +48,9 @@ const (
 )
 
 var (
+	defaultHomeDir        = dcrutil.AppDataDir("dcrextdata", false)
+	defaultConfigFilename = filepath.Join(defaultHomeDir, defaultConfigFileName)
+
 	defaultSubreddits          = []string{"decred"}
 	defaultTwitterHandles      = []string{"decredproject"}
 	defaultGithubRepositories  = []string{"decred/dcrd", "decred/dcrdata", "decred/dcrwallet", "decred/politeia", "decred/decrediton"}
@@ -191,7 +197,7 @@ type NetworkSnapshotOptions struct {
 func defaultConfig() Config {
 	return Config{
 		CommandLineOptions: CommandLineOptions{
-			ConfigFile: DefaultConfigFilename,
+			ConfigFile: defaultConfigFilename,
 		},
 		ConfigFileOptions: defaultFileOptions(),
 	}
@@ -220,7 +226,7 @@ func LoadConfig() (*Config, []string, error) {
 		if _, ok := err.(*os.PathError); !ok {
 			return nil, nil, err
 		}
-		fmt.Printf("Missing Config file %s in current directory\n", preCfg.ConfigFile)
+		fmt.Printf("Missing Config file %s\n", preCfg.ConfigFile)
 	}
 
 	unknownArg, err := parser.Parse()
