@@ -6,6 +6,7 @@ package config
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"path/filepath"
@@ -16,6 +17,7 @@ import (
 
 const (
 	defaultConfigFileName      = "dcrextdata.conf"
+	sampleConfigFileName      = "sample-dcrextdata.conf"
 	defaultLogFilename         = "dcrextdata.log"
 	defaultChartsCacheDump     = "charts-cache.glob"
 	Hint                       = `Run dcrextdata < --http > to start http server or dcrextdata < --help > for help.`
@@ -203,6 +205,27 @@ func defaultConfig() Config {
 	}
 }
 
+func copyFile(sourec, destination string) error {
+	from, err := os.Open(sourec)
+	if err != nil {
+		return err
+	}
+	defer from.Close()
+
+	to, err := os.OpenFile(destination, os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		return err
+	}
+	defer to.Close()
+
+	_, err = io.Copy(to, from)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func LoadConfig() (*Config, []string, error) {
 	cfg := defaultConfig()
 
@@ -220,6 +243,12 @@ func LoadConfig() (*Config, []string, error) {
 		}
 	}
 
+	// if the config file is missing, create the default
+	if _, err := os.Stat(defaultConfigFilename); os.IsNotExist(err) {
+		if err = copyFile("./" + sampleConfigFileName, defaultConfigFilename); err != nil {
+			return nil, nil, fmt.Errorf("Missing default config file and cannot copy the sample - %s", err.Error())
+		}
+	}
 	parser := flags.NewParser(&cfg, flags.IgnoreUnknown)
 	err := flags.NewIniParser(parser).ParseFile(preCfg.ConfigFile)
 	if err != nil {
