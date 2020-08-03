@@ -35,6 +35,9 @@ func (charts *Manager) SaveVal(key string, val interface{}) error {
 	if err := e.Encode(val); err != nil {
 		return err
 	}
+	_ = charts.DB.Update(func(txn *badger.Txn) error {
+		return txn.Delete([]byte(key))
+	})
 	err := charts.DB.Update(func(txn *badger.Txn) error {
 		err := txn.Set([]byte(key), b.Bytes())
 		return err
@@ -48,6 +51,7 @@ func (charts *Manager) SaveValTx(key string, val interface{}, txn *badger.Txn) e
 	if err := e.Encode(val); err != nil {
 		return err
 	}
+	_ = txn.Delete([]byte(key))
 	return txn.Set([]byte(key), b.Bytes())
 }
 
