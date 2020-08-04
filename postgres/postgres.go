@@ -9,6 +9,8 @@ package postgres
 import (
 	"database/sql"
 	"time"
+
+	"github.com/volatiletech/sqlboiler/boil"
 )
 
 type PgDb struct {
@@ -17,13 +19,23 @@ type PgDb struct {
 	syncSourceDbProvider func(source string) (*PgDb, error)
 	syncSources          []string
 }
+type logWriter struct{}
 
-func NewPgDb(host, port, user, pass, dbname string) (*PgDb, error) {
+func (l logWriter) Write(p []byte) (n int, err error) {
+	log.Debug(string(p))
+	return len(p), nil
+}
+
+func NewPgDb(host, port, user, pass, dbname string, debug bool) (*PgDb, error) {
 	db, err := Connect(host, port, user, pass, dbname)
 	if err != nil {
 		return nil, err
 	}
 	db.SetMaxOpenConns(5)
+	if debug {
+		boil.DebugMode = true
+		boil.DebugWriter = logWriter{}
+	}
 	return &PgDb{
 		db:           db,
 		queryTimeout: time.Second * 30,

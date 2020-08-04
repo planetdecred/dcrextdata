@@ -26,7 +26,7 @@ const (
 	defaultDbUser              = "postgres"
 	defaultDbPass              = "dbpass"
 	defaultDbName              = "dcrextdata"
-	defaultLogLevel            = "debug"
+	defaultLogLevel            = InfoLogLevel
 	defaultHttpHost            = "127.0.0.1"
 	defaultHttpPort            = "7770"
 	defaultDcrdServer          = "127.0.0.1:9109"
@@ -47,6 +47,13 @@ const (
 	defaultSeeder            = "127.0.0.1"
 	defaultSeederPort        = 9108
 	maxPeerConnectionFailure = 3
+
+	// log levels
+	TraceLogLevel   = "trace"
+	DebugLogLevel   = "debug"
+	InfoLogLevel    = "info"
+	WarningLogLevel = "warning"
+	ErrorLogLevel   = "error"
 )
 
 var (
@@ -69,7 +76,7 @@ func defaultFileOptions() ConfigFileOptions {
 		DBUser:           defaultDbUser,
 		DBPass:           defaultDbPass,
 		DBName:           defaultDbName,
-		DebugLevel:       defaultLogLevel,
+		LogLevel:         defaultLogLevel,
 		VSPInterval:      defaultVSPInterval,
 		PowInterval:      defaultPowInterval,
 		MempoolInterval:  defaultMempoolInterval,
@@ -108,9 +115,9 @@ type Config struct {
 
 type ConfigFileOptions struct {
 	// General application behaviour
-	LogFile    string `short:"L" long:"logfile" description:"File name of the log file"`
-	DebugLevel string `short:"d" long:"debuglevel" description:"Logging level {trace, debug, info, warn, error, critical}"`
-	Quiet      bool   `short:"q" long:"quiet" description:"Easy way to set debuglevel to error"`
+	LogFile  string `short:"L" long:"logfile" description:"File name of the log file"`
+	LogLevel string `long:"loglevel" description:"Logging level {trace, debug, info, warn, error, critical}"`
+	Quiet    bool   `short:"q" long:"quiet" description:"Easy way to set debuglevel to error"`
 
 	// Postgresql Configuration
 	DBHost string `long:"dbhost" description:"Database host"`

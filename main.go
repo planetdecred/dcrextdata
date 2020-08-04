@@ -86,18 +86,18 @@ func _main(ctx context.Context) error {
 	}()
 
 	// Special show command to list supported subsystems and exit.
-	if cfg.DebugLevel == "show" {
+	if cfg.LogLevel == "show" {
 		fmt.Println("Supported subsystems", supportedSubsystems())
 		os.Exit(0)
 	}
 
 	// Parse, validate, and set debug log level(s).
 	if cfg.Quiet {
-		cfg.ConfigFileOptions.DebugLevel = "error"
+		cfg.ConfigFileOptions.LogLevel = "error"
 	}
 
 	// Parse, validate, and set debug log level(s).
-	if err := parseAndSetDebugLevels(cfg.DebugLevel); err != nil {
+	if err := parseAndSetDebugLevels(cfg.LogLevel); err != nil {
 		err := fmt.Errorf("loadConfig: %s", err.Error())
 		return err
 	}
@@ -116,7 +116,7 @@ func _main(ctx context.Context) error {
 		return nil
 	}
 
-	db, err := postgres.NewPgDb(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPass, cfg.DBName)
+	db, err := postgres.NewPgDb(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPass, cfg.DBName, cfg.LogLevel == config.DebugLogLevel)
 
 	if err != nil {
 		return fmt.Errorf("error in establishing database connection: %s", err.Error())
@@ -164,7 +164,7 @@ func _main(ctx context.Context) error {
 	for i := 0; i < len(cfg.SyncSources); i++ {
 		source := cfg.SyncSources[i]
 		databaseName := cfg.SyncDatabases[i]
-		db, err := postgres.NewPgDb(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPass, databaseName)
+		db, err := postgres.NewPgDb(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPass, databaseName, cfg.LogLevel == config.DebugLogLevel)
 		if err != nil {
 			log.Errorf("Error in open database connection for the sync instance, %s, %s", source, err.Error())
 			continue
