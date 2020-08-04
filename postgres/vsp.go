@@ -251,48 +251,79 @@ func (pg *PgDb) AddVspTicksFromSync(ctx context.Context, tick datasync.VSPTickSy
 	return tickModel.Insert(ctx, pg.db, boil.Infer())
 }
 
-func (pg *PgDb) FiltredVSPTicks(ctx context.Context, vspName string, offset, limit int) ([]vsp.VSPTickDto, int64, error) {
+func (pg *PgDb) FilteredVSPTicks(ctx context.Context, vspName string, offset, limit int) ([]vsp.VSPTickDto, int64, error) {
+
 	vspInfo, err := models.VSPS(models.VSPWhere.Name.EQ(null.StringFrom(vspName))).One(ctx, pg.db)
 	if err != nil {
+		log.Errorf("Error in FilteredVSPTicks - %s", err.Error())
 		return nil, 0, err
 	}
 
 	vspIdQuery := models.VSPTickWhere.VSPID.EQ(vspInfo.ID)
-	vspTickSlice, err := models.VSPTicks(qm.Load(models.VSPTickRels.VSP), vspIdQuery, qm.Limit(limit), qm.Offset(offset), qm.OrderBy(fmt.Sprintf("%s DESC", models.VSPTickColumns.Time))).All(ctx, pg.db)
+	vspTickCount, err := models.VSPTicks(vspIdQuery).Count(ctx, pg.db)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	vspTickCount, err := models.VSPTicks(qm.Load(models.VSPTickRels.VSP), vspIdQuery).Count(ctx, pg.db)
-	if err != nil {
+	statement := `SELECT 
+			t.id, 
+			s.name as vsp,
+			t.immature,
+			t.live,
+			t.voted,
+			t.missed,
+			t.pool_fees,
+			t.proportion_live,
+			t.proportion_missed,
+			t.user_count,
+			t.users_active,
+			t.time
+		FROM vsp_tick t
+		INNER JOIN vsp s ON t.vsp_id = s.id
+		WHERE t.vsp_id = $1 
+		ORDER BY t.time DESC 
+		LIMIT $2 OFFSET $3`
+
+	var vspTicks []vsp.VSPTickDto
+	if err = models.NewQuery(qm.SQL(statement, vspInfo.ID, limit, offset)).Bind(ctx, pg.db, &vspTicks); err != nil {
+		log.Errorf("Error in FilteredVSPTicks - %s", err.Error())
 		return nil, 0, err
 	}
-
-	vspTicks := []vsp.VSPTickDto{}
-	for _, tick := range vspTickSlice {
-		vspTicks = append(vspTicks, pg.vspTickModelToDto(tick))
-	}
-
 	return vspTicks, vspTickCount, nil
 }
 
 // VSPTicks
 func (pg *PgDb) AllVSPTicks(ctx context.Context, offset, limit int) ([]vsp.VSPTickDto, int64, error) {
-	vspTickSlice, err := models.VSPTicks(qm.Load(models.VSPTickRels.VSP), qm.Limit(limit), qm.Offset(offset), qm.OrderBy(fmt.Sprintf("%s DESC", models.VSPTickColumns.Time))).All(ctx, pg.db)
-	if err != nil {
-		return nil, 0, err
-	}
 
 	vspTickCount, err := models.VSPTicks().Count(ctx, pg.db)
 	if err != nil {
+		log.Errorf("Error in AllVSPTicks - %s", err.Error())
 		return nil, 0, err
 	}
 
-	vspTicks := []vsp.VSPTickDto{}
-	for _, tick := range vspTickSlice {
-		vspTicks = append(vspTicks, pg.vspTickModelToDto(tick))
-	}
+	statement := `SELECT 
+		t.id, 
+		s.name as vsp,
+		t.immature,
+		t.live,
+		t.voted,
+		t.missed,
+		t.pool_fees,
+		t.proportion_live,
+		t.proportion_missed,
+		t.user_count,
+		t.users_active,
+		t.time
+		FROM vsp_tick t
+		INNER JOIN vsp s ON t.vsp_id = s.id
+		ORDER BY time DESC
+		LIMIT $1 OFFSET $2`
 
+	var vspTicks []vsp.VSPTickDto
+	if err = models.NewQuery(qm.SQL(statement, limit, offset)).Bind(ctx, pg.db, &vspTicks); err != nil {
+		log.Errorf("Error in AllVSPTicks - %s", err.Error())
+		return nil, 0, err
+	}
 	return vspTicks, vspTickCount, nil
 }
 

@@ -39,7 +39,7 @@ type DataQuery interface {
 
 	VspTickCount(ctx context.Context) (int64, error)
 	FetchVSPs(ctx context.Context) ([]vsp.VSPDto, error)
-	FiltredVSPTicks(ctx context.Context, vspName string, offset, limit int) ([]vsp.VSPTickDto, int64, error)
+	FilteredVSPTicks(ctx context.Context, vspName string, offset, limit int) ([]vsp.VSPTickDto, int64, error)
 	AllVSPTicks(ctx context.Context, offset, limit int) ([]vsp.VSPTickDto, int64, error)
 
 	PowCount(ctx context.Context) (int64, error)

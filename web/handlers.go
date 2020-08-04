@@ -443,7 +443,7 @@ func (s *Server) fetchVSPData(req *http.Request) (map[string]interface{}, error)
 			return nil, err
 		}
 	} else {
-		allVSPSlice, totalCount, err = s.db.FiltredVSPTicks(ctx, selectedVsp, offset, pageSize)
+		allVSPSlice, totalCount, err = s.db.FilteredVSPTicks(ctx, selectedVsp, offset, pageSize)
 		if err != nil {
 			return nil, err
 		}
