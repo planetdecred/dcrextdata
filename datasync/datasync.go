@@ -87,11 +87,11 @@ func (s *SyncCoordinator) sync(ctx context.Context, source instance, tableName s
 	skip := 0
 	take := 1000
 	lastEntry, err := syncer.LastEntry(ctx, source.store)
-	for {
-		if err != nil {
-			return fmt.Errorf("error in fetching sync history, %s", err.Error())
+	if err != nil {
+		return fmt.Errorf("error in fetching sync history, %s", err.Error())
+	}
 
-		}
+	for {
 		retries := 0
 		url := fmt.Sprintf("%s/api/sync/%s?last=%s&skip=%d&take=%d", strings.TrimSuffix(source.url, "/"),
 			tableName, lastEntry, skip, take)
@@ -102,9 +102,8 @@ func (s *SyncCoordinator) sync(ctx context.Context, source instance, tableName s
 			retries++
 			if err == nil || retries >= 3 {
 				break
-			} else {
-				log.Errorf("Sync %s data from %s failed, %s. Retrying...", tableName, url, err.Error())
 			}
+			log.Errorf("Sync %s data from %s failed, %s. Retrying...", tableName, url, err.Error())
 		}
 		if err != nil {
 			return fmt.Errorf("error in fetching data for %s, %s", url, err.Error())
@@ -125,7 +124,6 @@ func (s *SyncCoordinator) sync(ctx context.Context, source instance, tableName s
 		}
 
 		syncer.Append(ctx, source.store, result.Records)
-
 		skip += take
 	}
 }
@@ -144,6 +142,7 @@ func RegisteredSources() ([]string, error) {
 }
 
 func Retrieve(ctx context.Context, tableName string, last string, skip, take int) (*Result, error) {
+	log.Infof("Sync request received for %s, last: %d, start: %s", tableName, skip, take)
 	if coordinator == nil {
 		return nil, errors.New("syncer not initialized")
 	}
@@ -154,6 +153,7 @@ func Retrieve(ctx context.Context, tableName string, last string, skip, take int
 
 	syncer, found := coordinator.syncers[tableName]
 	if !found {
+		log.Infof("Invalid data type in sync request, %s", tableName)
 		return nil, errors.New("syncer not found for " + tableName)
 	}
 
