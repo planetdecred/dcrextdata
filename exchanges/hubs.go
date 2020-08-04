@@ -8,14 +8,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 
 	"github.com/planetdecred/dcrextdata/app"
 	"github.com/planetdecred/dcrextdata/app/helpers"
 	"github.com/planetdecred/dcrextdata/cache"
-	"github.com/planetdecred/dcrextdata/datasync"
 	"github.com/planetdecred/dcrextdata/exchanges/ticks"
 )
 
@@ -239,110 +237,4 @@ func (hub *TickHub) Run(ctx context.Context) {
 			}
 		}
 	}()
-}
-
-func (hub *TickHub) RegisterSyncer(syncCoordinator *datasync.SyncCoordinator) {
-	hub.registerExchangeSyncer(syncCoordinator)
-	hub.registerExchangeTickSyncer(syncCoordinator)
-}
-
-func (hub *TickHub) registerExchangeSyncer(syncCoordinator *datasync.SyncCoordinator) {
-	syncCoordinator.AddSyncer(hub.store.ExchangeTableName(), datasync.Syncer{
-		LastEntry: func(ctx context.Context, db datasync.Store) (string, error) {
-			return strconv.FormatInt(db.LastExchangeEntryID(), 10), nil
-		},
-		Collect: func(ctx context.Context, url string) (result *datasync.Result, err error) {
-			result = new(datasync.Result)
-			result.Records = []ticks.ExchangeData{}
-			err = helpers.GetResponse(ctx, &http.Client{Timeout: 10 * time.Second}, url, result)
-			return
-		},
-		Retrieve: func(ctx context.Context, last string, skip, take int) (result *datasync.Result, err error) {
-			result = new(datasync.Result)
-			lastID, err := strconv.ParseInt(last, 10, 64)
-			if err != nil {
-				return nil, fmt.Errorf("invalid date, %s", err.Error())
-			}
-			exchanges, totalCount, err := hub.store.FetchExchangeForSync(ctx, int(lastID), skip, take)
-			if err != nil {
-				result.Message = err.Error()
-				return
-			}
-			result.Records = exchanges
-			result.TotalCount = totalCount
-			result.Success = true
-			return
-		},
-		Append: func(ctx context.Context, store datasync.Store, data interface{}) {
-			mappedData := data.([]interface{})
-			var exchangeData []ticks.ExchangeData
-			for _, item := range mappedData {
-				var exchange ticks.ExchangeData
-				err := datasync.DecodeSyncObj(item, &exchange)
-				if err != nil {
-					log.Errorf("Error in decoding the received exchange data, %s", err.Error())
-					return
-				}
-				exchangeData = append(exchangeData, exchange)
-			}
-
-			for _, exchange := range exchangeData {
-				err := store.SaveExchangeFromSync(ctx, exchange)
-				if err != nil {
-					log.Errorf("Error while appending exchange synced data, %s", err.Error())
-				}
-			}
-		},
-	})
-}
-
-func (hub *TickHub) registerExchangeTickSyncer(syncCoordinator *datasync.SyncCoordinator) {
-	syncCoordinator.AddSyncer(hub.store.ExchangeTickTableName(), datasync.Syncer{
-		LastEntry: func(ctx context.Context, db datasync.Store) (string, error) {
-			entry := strconv.FormatInt(db.LastExchangeTickEntryTime().Unix(), 10)
-			return entry, nil
-		},
-		Collect: func(ctx context.Context, url string) (result *datasync.Result, err error) {
-			result = new(datasync.Result)
-			result.Records = []ticks.TickDto{}
-			err = helpers.GetResponse(ctx, &http.Client{Timeout: 10 * time.Second}, url, result)
-			return
-		},
-		Retrieve: func(ctx context.Context, last string, skip, take int) (result *datasync.Result, err error) {
-			result = new(datasync.Result)
-			unitDate, err := strconv.ParseInt(last, 10, 64)
-			if err != nil {
-				return nil, fmt.Errorf("invalid date, %s", err.Error())
-			}
-			exchangeTicks, totalCount, err := hub.store.FetchExchangeTicksForSync(ctx, helpers.UnixTime(unitDate), skip, take)
-			if err != nil {
-				result.Message = err.Error()
-				return
-			}
-			result.Records = exchangeTicks
-			result.TotalCount = totalCount
-			result.Success = true
-			return
-		},
-		Append: func(ctx context.Context, store datasync.Store, data interface{}) {
-			mappedData := data.([]interface{})
-			var tickDtos []ticks.TickSyncDto
-			for _, item := range mappedData {
-				var tickDto ticks.TickSyncDto
-				err := datasync.DecodeSyncObj(item, &tickDto)
-				if err != nil {
-					log.Errorf("Error in decoding the received exchange tick, %s", err.Error())
-					return
-				}
-				tickDtos = append(tickDtos, tickDto)
-			}
-
-			for _, tickDto := range tickDtos {
-				err := store.SaveExchangeTickFromSync(ctx, tickDto)
-				if err != nil {
-					log.Errorf("Error while appending exchange tick synced data, %s", err.Error())
-				}
-			}
-		},
-	})
 }

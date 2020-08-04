@@ -6,16 +6,12 @@ package pow
 
 import (
 	"context"
-	"database/sql"
-	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/planetdecred/dcrextdata/app"
 	"github.com/planetdecred/dcrextdata/app/helpers"
 	"github.com/planetdecred/dcrextdata/cache"
-	"github.com/planetdecred/dcrextdata/datasync"
 )
 
 var (
@@ -149,56 +145,4 @@ func (pc *Collector) Collect(ctx context.Context, cacheManager *cache.Manager) {
 	if err := pc.charts.TriggerUpdate(ctx, cache.PowChart); err != nil {
 		log.Errorf("Charts update problem for %s: %s", cache.PowChart, err.Error())
 	}
-}
-
-func (pc *Collector) RegisterSyncer(syncCoordinator *datasync.SyncCoordinator) {
-	syncCoordinator.AddSyncer(pc.store.PowTableName(), datasync.Syncer{
-		LastEntry: func(ctx context.Context, db datasync.Store) (string, error) {
-			var lastTime int64
-			err := db.LastEntry(ctx, pc.store.PowTableName(), &lastTime)
-			if err != nil && err != sql.ErrNoRows {
-				return "0", fmt.Errorf("error in fetching last PoW time, %s", err.Error())
-			}
-			return strconv.FormatInt(lastTime, 10), nil
-		},
-		Collect: func(ctx context.Context, url string) (result *datasync.Result, err error) {
-			result = new(datasync.Result)
-			result.Records = []PowData{}
-			err = helpers.GetResponse(ctx, &http.Client{Timeout: 10 * time.Second}, url, result)
-			return
-		},
-		Retrieve: func(ctx context.Context, last string, skip, take int) (result *datasync.Result, err error) {
-			dateUnix, _ := strconv.ParseInt(last, 10, 64)
-			result = new(datasync.Result)
-			powDatum, totalCount, err := pc.store.FetchPowDataForSync(ctx, dateUnix, skip, take)
-			if err != nil {
-				result.Message = err.Error()
-				return
-			}
-			result.Records = powDatum
-			result.TotalCount = totalCount
-			result.Success = true
-			return
-		},
-		Append: func(ctx context.Context, store datasync.Store, data interface{}) {
-			mappedData := data.([]interface{})
-			var powDataSlice []PowData
-			for _, item := range mappedData {
-				var powData PowData
-				err := datasync.DecodeSyncObj(item, &powData)
-				if err != nil {
-					log.Errorf("Error in decoding the received PoW data, %s", err.Error())
-					return
-				}
-				powDataSlice = append(powDataSlice, powData)
-			}
-
-			for _, powData := range powDataSlice {
-				err := store.AddPowDataFromSync(ctx, powData)
-				if err != nil {
-					log.Errorf("Error while appending PoW synced data, %s", err.Error())
-				}
-			}
-		},
-	})
 }

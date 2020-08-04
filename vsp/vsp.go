@@ -6,17 +6,14 @@ package vsp
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/planetdecred/dcrextdata/app"
 	"github.com/planetdecred/dcrextdata/app/helpers"
 	"github.com/planetdecred/dcrextdata/cache"
-	"github.com/planetdecred/dcrextdata/datasync"
 )
 
 const (
@@ -143,120 +140,4 @@ func (vsp *Collector) collectAndStore(ctx context.Context) error {
 		}
 	}()
 	return nil
-}
-
-func (vsp *Collector) RegisterSyncer(syncCoordinator *datasync.SyncCoordinator) {
-	vsp.registerVspSyncer(syncCoordinator)
-	vsp.registerVspTickSyncer(syncCoordinator)
-}
-
-func (vsp *Collector) registerVspSyncer(syncCoordinator *datasync.SyncCoordinator) {
-	syncCoordinator.AddSyncer(vsp.dataStore.VspTableName(), datasync.Syncer{
-		LastEntry: func(ctx context.Context, db datasync.Store) (string, error) {
-			var lastID int64
-			err := db.LastEntry(ctx, vsp.dataStore.VspTableName(), &lastID)
-			if err != nil && err != sql.ErrNoRows {
-				return "0", fmt.Errorf("error in fetching last VSP ID, %s", err.Error())
-			}
-			return strconv.FormatInt(lastID, 10), nil
-		},
-		Collect: func(ctx context.Context, url string) (result *datasync.Result, err error) {
-			result = new(datasync.Result)
-			result.Records = []VSPDto{}
-			err = helpers.GetResponse(ctx, &http.Client{Timeout: 10 * time.Second}, url, result)
-			return
-		},
-		Retrieve: func(ctx context.Context, last string, skip, take int) (result *datasync.Result, err error) {
-			lastID, err := strconv.ParseInt(last, 10, 64)
-			if err != nil {
-				return nil, fmt.Errorf("invalid ID, %s", err)
-			}
-			result = new(datasync.Result)
-			vspSources, totalCount, err := vsp.dataStore.FetchVspSourcesForSync(ctx, lastID, skip, take)
-			if err != nil {
-				result.Message = err.Error()
-				return
-			}
-			result.Records = vspSources
-			result.TotalCount = totalCount
-			result.Success = true
-			return
-		},
-		Append: func(ctx context.Context, store datasync.Store, data interface{}) {
-			mappedData := data.([]interface{})
-			var vspDtos []VSPDto
-			for _, item := range mappedData {
-				var vspDto VSPDto
-				err := datasync.DecodeSyncObj(item, &vspDto)
-				if err != nil {
-					log.Errorf("Error in decoding the received VSP sources, %s", err.Error())
-					return
-				}
-				vspDtos = append(vspDtos, vspDto)
-			}
-
-			for _, vspSource := range vspDtos {
-				err := store.AddVspSourceFromSync(ctx, vspSource)
-				if err != nil {
-					log.Errorf("Error while appending vsp source synced data, %s", err.Error())
-				}
-			}
-		},
-	})
-}
-
-func (vsp *Collector) registerVspTickSyncer(syncCoordinator *datasync.SyncCoordinator) {
-	syncCoordinator.AddSyncer(vsp.dataStore.VspTickTableName(), datasync.Syncer{
-		LastEntry: func(ctx context.Context, db datasync.Store) (string, error) {
-			var lastID int64
-			err := db.LastEntry(ctx, vsp.dataStore.VspTickTableName(), &lastID)
-			if err != nil && err != sql.ErrNoRows {
-				return "0", fmt.Errorf("error in fetching last VSP ID, %s", err.Error())
-			}
-			return strconv.FormatInt(lastID, 10), nil
-		},
-		Collect: func(ctx context.Context, url string) (result *datasync.Result, err error) {
-			result = new(datasync.Result)
-			result.Records = []datasync.VSPTickSyncDto{}
-			err = helpers.GetResponse(ctx, &http.Client{Timeout: 10 * time.Second}, url, result)
-			return
-		},
-		Retrieve: func(ctx context.Context, last string, skip, take int) (result *datasync.Result, err error) {
-			lastID, err := strconv.ParseInt(last, 10, 64)
-			if err != nil {
-				return nil, fmt.Errorf("invalid id, %s", err)
-			}
-
-			result = new(datasync.Result)
-			vspTicks, totalCount, err := vsp.dataStore.FetchVspTicksForSync(ctx, lastID, skip, take)
-			if err != nil {
-				result.Message = err.Error()
-				return
-			}
-			result.Records = vspTicks
-			result.TotalCount = totalCount
-			result.Success = true
-			return
-		},
-		Append: func(ctx context.Context, store datasync.Store, data interface{}) {
-			mappedData := data.([]interface{})
-			var vspTicks []datasync.VSPTickSyncDto
-			for _, item := range mappedData {
-				var tickSyncDto datasync.VSPTickSyncDto
-				err := datasync.DecodeSyncObj(item, &tickSyncDto)
-				if err != nil {
-					log.Errorf("Error in decoding the received VSP tick, %s", err.Error())
-					return
-				}
-				vspTicks = append(vspTicks, tickSyncDto)
-			}
-
-			for _, tick := range vspTicks {
-				err := store.AddVspTicksFromSync(ctx, tick)
-				if err != nil {
-					log.Errorf("Error while appending vsp tick synced data, %s", err.Error())
-				}
-			}
-		},
-	})
 }

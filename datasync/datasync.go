@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/planetdecred/dcrextdata/app/helpers"
@@ -92,14 +93,17 @@ func (s *SyncCoordinator) sync(ctx context.Context, source instance, tableName s
 
 		}
 		retries := 0
-		url := fmt.Sprintf("%s/api/sync/%s?last=%s&skip=%d&take=%d", source.url, tableName, lastEntry, skip, take)
-
+		url := fmt.Sprintf("%s/api/sync/%s?last=%s&skip=%d&take=%d", strings.TrimSuffix(source.url, "/"),
+			tableName, lastEntry, skip, take)
+		log.Infof("Syncing %s data from %s", tableName, url)
 		var result *Result
 		for {
 			result, err = syncer.Collect(ctx, url)
 			retries++
 			if err == nil || retries >= 3 {
 				break
+			} else {
+				log.Errorf("Sync %s data from %s failed, %s. Retrying...", tableName, url, err.Error())
 			}
 		}
 		if err != nil {
@@ -131,9 +135,9 @@ func RegisteredSources() ([]string, error) {
 		return nil, errors.New("syncer not initialized")
 	}
 
-	var sources []string
-	for _, s := range coordinator.instances {
-		sources = append(sources, s.database)
+	var sources = make([]string, len(coordinator.instances))
+	for i, s := range coordinator.instances {
+		sources[i] = s.database
 	}
 
 	return sources, nil

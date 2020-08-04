@@ -169,24 +169,37 @@ func _main(ctx context.Context) error {
 			log.Errorf("Error in open database connection for the sync instance, %s, %s", source, err.Error())
 			continue
 		}
-		if err = createTablesAndIndex(db); err != nil {
-			log.Errorf("can not create tables for sync data, %s", err.Error())
-			continue
+
+		if !db.BlockTableExits() {
+			if err := db.CreateBlockTable(); err != nil {
+				log.Error("Error creating block table for sync source, %s: ", source, err)
+				return err
+			}
+			log.Info("Blocks table created successfully.")
+
+		}
+
+		if !db.VoteTableExits() {
+			if err := db.CreateVoteTable(); err != nil {
+				log.Error("Error creating vote table for sync source, %s: ", source, err)
+				return err
+			}
+			log.Info("Votes table created successfully.")
 		}
 		syncDbs[databaseName] = db
 		syncCoordinator.AddSource(source, db, databaseName)
 	}
 
 	pools, _ := db.FetchPowSourceData(ctx)
-	var poolSources []string
-	for _, pool := range pools {
-		poolSources = append(poolSources, pool.Source)
+	var poolSources = make([]string, len(pools))
+	for i, pool := range pools {
+		poolSources[i] = pool.Source
 	}
 
 	allVspData, _ := db.FetchVSPs(ctx)
-	var vsps []string
-	for _, vspSource := range allVspData {
-		vsps = append(vsps, vspSource.Name)
+	var vsps = make([]string, len(allVspData))
+	for i, vspSource := range allVspData {
+		vsps[i] = vspSource.Name
 	}
 
 	noveVersions, err := db.AllNodeVersions(ctx)
@@ -305,7 +318,6 @@ func _main(ctx context.Context) error {
 	if !cfg.DisableVSP {
 		vspCollector, err := vsp.NewVspCollector(cfg.VSPInterval, db, cacheManager)
 		if err == nil {
-			vspCollector.RegisterSyncer(syncCoordinator)
 			go vspCollector.Run(ctx, cacheManager)
 		} else {
 			log.Error(err)
@@ -315,24 +327,23 @@ func _main(ctx context.Context) error {
 	if !cfg.DisableExchangeTicks {
 		go func() {
 			ticksHub, err := exchanges.NewTickHub(ctx, cfg.DisabledExchanges, db, cacheManager)
-			if err == nil {
-				ticksHub.RegisterSyncer(syncCoordinator)
-				ticksHub.Run(ctx)
-			} else {
+			if err != nil {
 				log.Error(err)
+				return
 			}
+			ticksHub.Run(ctx)
 		}()
 	}
 
 	if !cfg.DisablePow {
-		powCollector, err := pow.NewCollector(cfg.DisabledPows, cfg.PowInterval, db, cacheManager)
-		if err == nil {
-			powCollector.RegisterSyncer(syncCoordinator)
-			go powCollector.Run(ctx, cacheManager)
-
-		} else {
-			log.Error(err)
-		}
+		go func() {
+			powCollector, err := pow.NewCollector(cfg.DisabledPows, cfg.PowInterval, db, cacheManager)
+			if err != nil {
+				log.Error(err)
+				return
+			}
+			powCollector.Run(ctx, cacheManager)
+		}()
 	}
 
 	if !cfg.DisableCommunityStat {

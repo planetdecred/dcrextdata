@@ -297,65 +297,7 @@ func (c *Collector) StartMonitoring(ctx context.Context, cacheManager *cache.Man
 
 func (c *Collector) RegisterSyncer(syncCoordinator *datasync.SyncCoordinator) {
 	c.registerBlockSyncer(syncCoordinator)
-	c.registerMempoolSyncer(syncCoordinator)
 	c.registerVoteSyncer(syncCoordinator)
-}
-
-func (c *Collector) registerMempoolSyncer(syncCoordinator *datasync.SyncCoordinator) {
-	syncCoordinator.AddSyncer(c.dataStore.MempoolTableName(), datasync.Syncer{
-		LastEntry: func(ctx context.Context, db datasync.Store) (string, error) {
-			var lastDate time.Time
-			err := db.LastEntry(ctx, c.dataStore.MempoolTableName(), &lastDate)
-			if err != nil {
-				if err != sql.ErrNoRows {
-					return "0", fmt.Errorf("error in fetching last mempool time, %s", err.Error())
-				}
-			}
-			return strconv.FormatInt(lastDate.Unix(), 10), nil
-		},
-		Collect: func(ctx context.Context, url string) (result *datasync.Result, err error) {
-			result = new(datasync.Result)
-			result.Records = []Mempool{}
-			err = helpers.GetResponse(ctx, &http.Client{Timeout: 10 * time.Second}, url, result)
-			return
-		},
-		Retrieve: func(ctx context.Context, last string, skip, take int) (result *datasync.Result, err error) {
-			dateUnix, err := strconv.ParseInt(last, 10, 64)
-			if err != nil {
-				return nil, fmt.Errorf("invalid date, %s", err)
-			}
-			result = new(datasync.Result)
-			mempoolDtos, totalCount, err := c.dataStore.FetchMempoolForSync(ctx, helpers.UnixTime(dateUnix), skip, take)
-			if err != nil {
-				result.Message = err.Error()
-				return
-			}
-			result.Records = mempoolDtos
-			result.TotalCount = totalCount
-			result.Success = true
-			return
-		},
-		Append: func(ctx context.Context, store datasync.Store, data interface{}) {
-			mappedData := data.([]interface{})
-			var mempoolDtos []Mempool
-			for _, item := range mappedData {
-				var mempoolData Mempool
-				err := datasync.DecodeSyncObj(item, &mempoolData)
-				if err != nil {
-					log.Errorf("Error in decoding the received mempool data, %s", err.Error())
-					return
-				}
-				mempoolDtos = append(mempoolDtos, mempoolData)
-			}
-
-			for _, mempoolDto := range mempoolDtos {
-				err := store.StoreMempoolFromSync(ctx, mempoolDto)
-				if err != nil {
-					log.Errorf("Error while appending mempool synced data, %s", err.Error())
-				}
-			}
-		},
-	})
 }
 
 func (c *Collector) registerBlockSyncer(syncCoordinator *datasync.SyncCoordinator) {
