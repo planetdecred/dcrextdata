@@ -201,7 +201,6 @@ type NetworkSnapshotOptions struct {
 	IpStackAccessKey         string `long:"ipStackAccessKey" description:"IP stack access key https://ipstack.com/"`
 	IpLocationProvidingPeer  string `long:"ipLocationProvidingPeer" description:"An optional peer address for getting IP info"`
 	TestNet                  bool   `long:"testnet" description:"Use testnet"`
-	ShowDetailedLog          bool   `long:"showdetailedlog" description:"Weather or not to show detailed log for peer discovery"`
 }
 
 func defaultConfig() Config {

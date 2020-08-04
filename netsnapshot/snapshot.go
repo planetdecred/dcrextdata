@@ -43,8 +43,7 @@ func (t taker) Start(ctx context.Context, cacheManager *cache.Manager) {
 	// pruneExpireTimeout = defaultStaleTimeout * 2
 
 	var err error
-	amgr, err = NewManager(filepath.Join(defaultHomeDir,
-		netParams.Name), t.cfg.ShowDetailedLog, t.cfg.SnapshotInterval)
+	amgr, err = NewManager(filepath.Join(defaultHomeDir, netParams.Name), t.cfg.SnapshotInterval)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "NewManager: %v\n", err)
 		os.Exit(1)
@@ -115,9 +114,7 @@ func (t taker) Start(ctx context.Context, cacheManager *cache.Manager) {
 
 			mtx.Lock()
 			count = 0
-			if t.cfg.ShowDetailedLog {
-				log.Infof("Took a new network snapshot, recorded %d discoverable nodes.", count)
-			}
+			log.Infof("Took a new network snapshot, recorded %d discoverable nodes.", count)
 			timestamp = time.Now().UTC().Unix()
 			mtx.Unlock()
 			// update all reachable nodes
@@ -197,10 +194,8 @@ func (t taker) Start(ctx context.Context, cacheManager *cache.Manager) {
 				}
 
 				mtx.Unlock()
-				if amgr.showDetailedLog {
-					log.Infof("New heartbeat recorded for node: %s, %s, %d", node.IP.String(),
-						node.UserAgent, node.ProtocolVersion)
-				}
+				log.Debugf("New heartbeat recorded for node: %s, %s, %d", node.IP.String(),
+					node.UserAgent, node.ProtocolVersion)
 			}
 
 		case attemptedPeer := <-amgr.attemptNtfn:
