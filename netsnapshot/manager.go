@@ -48,13 +48,13 @@ type attemptedPeer struct {
 type Manager struct {
 	mtx sync.RWMutex
 
-	nodes           map[string]*Node
-	liveNodeIPs     []net.IP
-	peerNtfn        chan *Node
-	attemptNtfn     chan attemptedPeer
-	connFailNtfn    chan net.IP
-	quit            chan struct{}
-	peersFile       string
+	nodes        map[string]*Node
+	liveNodeIPs  []net.IP
+	peerNtfn     chan *Node
+	attemptNtfn  chan attemptedPeer
+	connFailNtfn chan net.IP
+	quit         chan struct{}
+	peersFile    string
 }
 
 var (
@@ -145,12 +145,12 @@ func NewManager(dataDir string, snapshotInterval int) (*Manager, error) {
 	dumpAddressInterval = defaultStaleTimeout
 
 	amgr := Manager{
-		nodes:           make(map[string]*Node),
-		peerNtfn:        make(chan *Node),
-		attemptNtfn:     make(chan attemptedPeer),
-		connFailNtfn:    make(chan net.IP),
-		peersFile:       filepath.Join(dataDir, peersFilename),
-		quit:            make(chan struct{}),
+		nodes:        make(map[string]*Node),
+		peerNtfn:     make(chan *Node),
+		attemptNtfn:  make(chan attemptedPeer),
+		connFailNtfn: make(chan net.IP),
+		peersFile:    filepath.Join(dataDir, peersFilename),
+		quit:         make(chan struct{}),
 	}
 
 	err = amgr.deserializePeers()

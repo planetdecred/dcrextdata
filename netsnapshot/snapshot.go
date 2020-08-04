@@ -2,6 +2,7 @@ package netsnapshot
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"net"
@@ -217,6 +218,10 @@ func (t taker) Start(ctx context.Context, cacheManager *cache.Manager) {
 }
 
 func (t taker) geolocation(ctx context.Context, ip net.IP) (*IPInfo, error) {
+	// IP stack access key verification
+	if t.cfg.IpStackAccessKey == "" {
+		return nil, errors.New("IP stack access key is required")
+	}
 	url := fmt.Sprintf("http://api.ipstack.com/%s?access_key=%s&format=1", ip.String(), t.cfg.IpStackAccessKey)
 	var geo IPInfo
 	err := helpers.GetResponse(ctx, &http.Client{Timeout: 3 * time.Second}, url, &geo)
