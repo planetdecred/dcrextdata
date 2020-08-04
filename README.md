@@ -64,7 +64,7 @@ Run `export GO111MODULE=on` in terminal (for Mac/Linux) or `setx GO111MODULE on`
 Building will place the `dcrextdata` binary in your working directory while install will place the binary in $GOPATH/bin.
 
 #### Building http front-end
-* From your project directory, run `npm install` when its done installing packages, 
+* From your project directory, type `cd web/public/app` using command line, run `npm install` when its done installing packages, 
 run `npm run build`.
 
 ### Step 4. Configuration
