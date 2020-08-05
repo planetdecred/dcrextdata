@@ -544,7 +544,7 @@ func (pg *PgDb) fetchEncodeMempoolChart(ctx context.Context, charts *cache.Manag
 func (pg *PgDb) retrieveChartMempool(ctx context.Context, charts *cache.Manager, _ int) (interface{}, func(), bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, pg.queryTimeout)
 
-	mempoolSlice, err := models.Mempools(models.MempoolWhere.Time.GT(helpers.UnixTime(int64(charts.MempoolTimeTip())))).All(ctx, pg.db)
+	mempoolSlice, err := models.Mempools(models.MempoolWhere.Time.GT(helpers.UnixTime(int64(charts.MempoolTip())))).All(ctx, pg.db)
 	if err != nil {
 		return nil, cancel, false, fmt.Errorf("chartBlocks: %s", err.Error())
 	}
@@ -559,32 +559,34 @@ func appendChartMempool(charts *cache.Manager, mempoolSliceInt interface{}) erro
 		return nil
 	}
 
+	mempoolSet := charts.MempoolSet(cache.DefaultBin)
+
 	var chartsMempoolTime, chartsMempoolTxCount, chartsMempoolSize cache.ChartUints
 	var chartsMempoolFees cache.ChartFloats
 
+	var min, max int64
 	for _, mempoolData := range mempoolSlice {
+		if min == 0 || min > mempoolData.Time.UTC().Unix() {
+			min = mempoolData.Time.UTC().Unix()
+		}
+		if min == 0 || max < mempoolData.Time.UTC().Unix() {
+			max = mempoolData.Time.UTC().Unix()
+		}
 		chartsMempoolTime = append(chartsMempoolTime, uint64(mempoolData.Time.UTC().Unix()))
 		chartsMempoolFees = append(chartsMempoolFees, mempoolData.TotalFee.Float64)
 		chartsMempoolTxCount = append(chartsMempoolTxCount, uint64(mempoolData.NumberOfTransactions.Int))
 		chartsMempoolSize = append(chartsMempoolSize, uint64(mempoolData.Size.Int))
 	}
 
-	if err := charts.AppendChartUintsAxis(cache.Mempool+"-"+string(cache.TimeAxis), chartsMempoolTime); err != nil {
-		return err
-	}
+	mempoolSet.Time = append(mempoolSet.Time, chartsMempoolTime...)
+	mempoolSet.Fee = append(mempoolSet.Fee, chartsMempoolFees...)
+	mempoolSet.TxCount = append(mempoolSet.TxCount, chartsMempoolTxCount...)
+	mempoolSet.Size = append(mempoolSet.Size, chartsMempoolSize...)
 
-	if err := charts.AppendChartFloatsAxis(cache.Mempool+"-"+string(cache.MempoolFees), chartsMempoolFees); err != nil {
-		return err
+	if len := mempoolSet.Time.Length(); len > 0 {
+		charts.SetMempoolTip(mempoolSet.Time[len-1])
 	}
-
-	if err := charts.AppendChartUintsAxis(cache.Mempool+"-"+string(cache.MempoolTxCount), chartsMempoolTxCount); err != nil {
-		return err
-	}
-
-	if err := charts.AppendChartUintsAxis(cache.Mempool+"-"+string(cache.MempoolSize), chartsMempoolSize); err != nil {
-		return err
-	}
-	return nil
+	return mempoolSet.Save(charts)
 }
 
 type propagationSet struct {

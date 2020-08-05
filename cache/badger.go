@@ -1317,7 +1317,7 @@ func (charts *Manager) lengthenTime(key string, txn *badger.Txn) (dayIntervals [
 		}
 	}
 
-	if err = charts.SaveValTx(fmt.Sprintf("%s-%s", key, dayBin), days, txn); err != nil {
+	if err = charts.SaveValTx(fmt.Sprintf("%s-%s", key, DayBin), days, txn); err != nil {
 		return
 	}
 
@@ -1352,7 +1352,7 @@ func (charts *Manager) lengthenTime(key string, txn *badger.Txn) (dayIntervals [
 		}
 	}
 
-	if err = charts.SaveValTx(fmt.Sprintf("%s-%s", key, hourBin), hours, txn); err != nil {
+	if err = charts.SaveValTx(fmt.Sprintf("%s-%s", key, HourBin), hours, txn); err != nil {
 		return
 	}
 
@@ -1414,11 +1414,11 @@ func (charts *Manager) lengthenTimeAndHeight(timeKey, heightKey string, txn *bad
 		}
 	}
 
-	if err = charts.SaveValTx(fmt.Sprintf("%s-%s", timeKey, dayBin), days, txn); err != nil {
+	if err = charts.SaveValTx(fmt.Sprintf("%s-%s", timeKey, DayBin), days, txn); err != nil {
 		return
 	}
 
-	if err = charts.SaveValTx(fmt.Sprintf("%s-%s", heightKey, dayBin), dayHeights, txn); err != nil {
+	if err = charts.SaveValTx(fmt.Sprintf("%s-%s", heightKey, DayBin), dayHeights, txn); err != nil {
 		return
 	}
 
@@ -1454,10 +1454,10 @@ func (charts *Manager) lengthenTimeAndHeight(timeKey, heightKey string, txn *bad
 		}
 	}
 
-	if err = charts.SaveValTx(fmt.Sprintf("%s-%s", timeKey, hourBin), hours, txn); err != nil {
+	if err = charts.SaveValTx(fmt.Sprintf("%s-%s", timeKey, HourBin), hours, txn); err != nil {
 		return
 	}
-	if err = charts.SaveValTx(fmt.Sprintf("%s-%s", heightKey, hourBin), hourHeights, txn); err != nil {
+	if err = charts.SaveValTx(fmt.Sprintf("%s-%s", heightKey, HourBin), hourHeights, txn); err != nil {
 		return
 	}
 
@@ -1480,7 +1480,7 @@ func (charts *Manager) lengthenChartUints(key string, dayIntervals [][2]int, hou
 		dayData = append(dayData, data.Avg(interval[0], interval[1]))
 	}
 
-	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, dayBin), dayData, txn); err != nil {
+	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, DayBin), dayData, txn); err != nil {
 		return err
 	}
 
@@ -1490,7 +1490,7 @@ func (charts *Manager) lengthenChartUints(key string, dayIntervals [][2]int, hou
 		hourData = append(hourData, data.Avg(interval[0], interval[1]))
 	}
 
-	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, hourBin), hourData, txn); err != nil {
+	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, HourBin), hourData, txn); err != nil {
 		return err
 	}
 
@@ -1513,7 +1513,7 @@ func (charts *Manager) lengthenChartNullUints(key string, dayIntervals [][2]int,
 		dayData.Items = append(dayData.Items, data.Avg(interval[0], interval[1]))
 	}
 
-	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, dayBin), dayData, txn); err != nil {
+	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, DayBin), dayData, txn); err != nil {
 		return err
 	}
 
@@ -1523,7 +1523,7 @@ func (charts *Manager) lengthenChartNullUints(key string, dayIntervals [][2]int,
 		hourData.Items = append(hourData.Items, data.Avg(interval[0], interval[1]))
 	}
 
-	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, hourBin), hourData, txn); err != nil {
+	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, HourBin), hourData, txn); err != nil {
 		return err
 	}
 
@@ -1546,7 +1546,7 @@ func (charts *Manager) lengthenChartFloats(key string, dayIntervals [][2]int, ho
 		dayData = append(dayData, data.Avg(interval[0], interval[1]))
 	}
 
-	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, dayBin), dayData, txn); err != nil {
+	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, DayBin), dayData, txn); err != nil {
 		return err
 	}
 
@@ -1556,7 +1556,7 @@ func (charts *Manager) lengthenChartFloats(key string, dayIntervals [][2]int, ho
 		hourData = append(hourData, data.Avg(interval[0], interval[1]))
 	}
 
-	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, hourBin), hourData, txn); err != nil {
+	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, HourBin), hourData, txn); err != nil {
 		return err
 	}
 
@@ -1579,7 +1579,7 @@ func (charts *Manager) lengthenChartNullFloats(key string, dayIntervals [][2]int
 		dayData.Items = append(dayData.Items, data.Avg(interval[0], interval[1]))
 	}
 
-	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, dayBin), dayData, txn); err != nil {
+	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, DayBin), dayData, txn); err != nil {
 		return err
 	}
 
@@ -1589,7 +1589,7 @@ func (charts *Manager) lengthenChartNullFloats(key string, dayIntervals [][2]int
 		hourData.Items = append(hourData.Items, data.Avg(interval[0], interval[1]))
 	}
 
-	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, hourBin), hourData, txn); err != nil {
+	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", key, HourBin), hourData, txn); err != nil {
 		return err
 	}
 

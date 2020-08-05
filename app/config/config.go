@@ -58,6 +58,7 @@ const (
 
 var (
 	defaultHomeDir        = dcrutil.AppDataDir("dcrextdata", false)
+	defaultCacheDir       = filepath.Join(defaultHomeDir, "data")
 	defaultConfigFilename = filepath.Join(defaultHomeDir, defaultConfigFileName)
 	defaultLogFilename    = filepath.Join(defaultHomeDir, "log", defaultLogFileName)
 
@@ -71,6 +72,7 @@ var (
 func defaultFileOptions() ConfigFileOptions {
 	cfg := ConfigFileOptions{
 		LogFile:          defaultLogFilename,
+		CacheDir:         defaultCacheDir,
 		DBHost:           defaultDbHost,
 		DBPort:           defaultDbPort,
 		DBUser:           defaultDbUser,
@@ -118,6 +120,7 @@ type ConfigFileOptions struct {
 	LogFile  string `short:"L" long:"logfile" description:"File name of the log file"`
 	LogLevel string `long:"loglevel" description:"Logging level {trace, debug, info, warn, error, critical}"`
 	Quiet    bool   `short:"q" long:"quiet" description:"Easy way to set debuglevel to error"`
+	CacheDir string `long:"cachedir" description:"The directory for store cache data"`
 
 	// Postgresql Configuration
 	DBHost string `long:"dbhost" description:"Database host"`
@@ -248,6 +251,13 @@ func LoadConfig() (*Config, []string, error) {
 		e, ok := flagerr.(*flags.Error)
 		if ok && e.Type != flags.ErrHelp {
 			return nil, nil, flagerr
+		}
+	}
+
+	// create cache dir if not existing
+	if _, err := os.Stat(defaultCacheDir); os.IsNotExist(err) {
+		if err = os.MkdirAll(defaultCacheDir, 0777); err != nil {
+			return nil, nil, fmt.Errorf("error in creating default cache dir - %s", err.Error())
 		}
 	}
 

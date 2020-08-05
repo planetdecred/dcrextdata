@@ -221,7 +221,7 @@ func _main(ctx context.Context) error {
 	commstats.SetAccounts(cfg.CommunityStatOptions)
 
 	cacheManager := cache.NewChartData(ctx, cfg.EnableChartCache, cfg.SyncDatabases, poolSources, vsps,
-		nodeCountries, noveVersions, netParams(cfg.DcrdNetworkType), bdb)
+		nodeCountries, noveVersions, netParams(cfg.DcrdNetworkType), bdb, cfg.CacheDir)
 	db.RegisterCharts(cacheManager, cfg.SyncDatabases, func(name string) (*postgres.PgDb, error) {
 		db, found := syncDbs[name]
 		if !found {
