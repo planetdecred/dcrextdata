@@ -22,6 +22,7 @@ require (
 	github.com/jrick/logrotate v1.0.0
 	github.com/kat-co/vala v0.0.0-20170210184112-42e1d8b61f12
 	github.com/lib/pq v1.0.0
+	github.com/pkg/errors v0.8.1
 	github.com/raedahgroup/dcrextdata v0.0.0-20200724170046-05b8940680c6
 	github.com/spf13/viper v1.3.2
 	github.com/volatiletech/null v8.0.0+incompatible

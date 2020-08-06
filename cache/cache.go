@@ -6,6 +6,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/decred/dcrd/chaincfg"
 	"github.com/dgraph-io/badger"
+	"github.com/pkg/errors"
 	"github.com/planetdecred/dcrextdata/app/helpers"
 	"github.com/volatiletech/null"
 )
@@ -702,8 +704,9 @@ type Manager struct {
 	ctx         context.Context
 	EnableCache bool
 
-	cacheMtx   sync.RWMutex
-	mempoolMtx sync.RWMutex
+	cacheMtx       sync.RWMutex
+	mempoolMtx     sync.RWMutex
+	propagationMtx sync.RWMutex
 
 	DB        *badger.DB
 	dir       string
@@ -774,6 +777,149 @@ func (charts *Manager) Lengthen(tags ...string) error {
 	}
 
 	return nil
+}
+
+func generateDayBin(dates, heights ChartUints) (days, dayHeights ChartUints, dayIntervals [][2]int) {
+	if dates.Length() != heights.Length() {
+		log.Criticalf("generateHourBin: length mismatch")
+		return
+	}
+
+	// Get the current first and last midnight stamps.
+	var start = midnight(dates[0])
+	end := midnight(dates[len(dates)-1])
+
+	// the index that begins new data.
+	offset := 0
+	// If there is day or more worth of new data, append to the Days zoomSet by
+	// finding the first and last+1 blocks of each new day, and taking averages
+	// or sums of the blocks in the interval.  0.06096031
+	if end > start+aDay {
+		next := start + aDay
+		startIdx := 0
+		for i, t := range dates[offset:] {
+			if t >= next {
+				// Once passed the next midnight, prepare a day window by
+				// storing the range of indices. 0, 1, 2, 3, 4, 5
+				dayIntervals = append(dayIntervals, [2]int{startIdx + offset, i + offset})
+				// check for records b/4 appending.
+				days = append(days, start)
+				dayHeights = append(dayHeights, heights[i])
+				next = midnight(t)
+				start = next
+				next += aDay
+				startIdx = i
+				if t > end {
+					break
+				}
+			}
+		}
+	}
+	return
+}
+
+func generateHourBin(dates, heights ChartUints) (hours, hourHeights ChartUints, hourIntervals [][2]int) {
+	if dates.Length() != heights.Length() {
+		log.Criticalf("generateHourBin: length mismatch")
+		return
+	}
+	// Get the current first and last hour stamps.
+	start := hourStamp(dates[0])
+	end := hourStamp(dates[len(dates)-1])
+
+	// the index that begins new data.
+	offset := 0
+	// If there is day or more worth of new data, append to the Days zoomSet by
+	// finding the first and last+1 blocks of each new day, and taking averages
+	// or sums of the blocks in the interval.
+	if end > start+anHour {
+		next := start + anHour
+		startIdx := 0
+		for i, t := range dates[offset:] {
+			if t >= next {
+				// Once passed the next hour, prepare a day window by storing
+				// the range of indices.
+				hourIntervals = append(hourIntervals, [2]int{startIdx + offset, i + offset})
+				hours = append(hours, start)
+				hourHeights = append(hourHeights, heights[i])
+				next = hourStamp(t)
+				start = next
+				next += anHour
+				startIdx = i
+				if t > end {
+					break
+				}
+			}
+		}
+	}
+
+	return
+}
+
+func (charts *Manager) lengthenChartUintsx(data ChartUints, dayIntervals [][2]int,
+	hourIntervals [][2]int) (dayData, hourData ChartUints) {
+
+	// day bin
+	for _, interval := range dayIntervals {
+		// For each new day, take an appropriate snapshot.
+		dayData = append(dayData, data.Avg(interval[0], interval[1]))
+	}
+
+	// hour bin
+	for _, interval := range hourIntervals {
+		// For each new day, take an appropriate snapshot.
+		hourData = append(hourData, data.Avg(interval[0], interval[1]))
+	}
+	return
+}
+
+func (charts *Manager) NormalizeLength(tags ...string) error {
+	txn := charts.DB.NewTransaction(true)
+	defer txn.Discard()
+
+	for _, chartID := range tags {
+		if cerr := charts.normalizeLength(chartID, txn); cerr != nil {
+			return errors.Wrap(cerr, "Normalize failed for "+chartID)
+		}
+	}
+	if err := txn.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// length correction
+func (charts *Manager) normalizeLength(chartID string, txn *badger.Txn) error {
+	// TODO: use transaction
+	switch chartID {
+	case Mempool:
+		return charts.normalizeMempoolLength()
+
+	case Propagation:
+		return charts.normalizePropagationLength()
+
+	case PowChart:
+		return charts.normalizePowChartLength(txn)
+
+	case VSP:
+		return charts.normalizeVSPLength(txn)
+
+	case Exchange:
+		return charts.normalizeExchangeLength(txn)
+
+	case Snapshot:
+		return charts.normalizeSnapshotLength(txn)
+	case Community:
+		return nil
+
+	}
+
+	return nil
+}
+
+func isFileExists(filePath string) bool {
+	_, err := os.Stat(filePath)
+	return !os.IsNotExist(err)
 }
 
 // Load loads chart data from the gob file at the specified path and performs an
@@ -933,11 +1079,11 @@ func cacheKey(chartID string, axis axisType) string {
 func (charts *Manager) cacheID(chartID string) uint64 {
 	switch chartID {
 	case Mempool:
-		return charts.MempoolTimeTip()
+		return charts.MempoolTip()
 	case BlockPropagation:
 	case BlockTimestamp:
 	case VotesReceiveTime:
-		return charts.PropagationHeightTip()
+		return charts.PropagationTip()
 	case PowChart:
 		return charts.PowTimeTip()
 	case VSP:
@@ -951,7 +1097,7 @@ func (charts *Manager) cacheID(chartID string) uint64 {
 		}
 		return version
 	}
-	return charts.MempoolTimeTip()
+	return charts.MempoolTip()
 }
 
 // Grab the cached data, if it exists. The cacheID is returned as a convenience.
@@ -1154,8 +1300,11 @@ func (charts *Manager) trim(sets ...Lengther) []Lengther {
 }
 
 func mempool(ctx context.Context, charts *Manager, dataType, axis axisType, bin binLevel, _ ...string) ([]byte, error) {
-	
-	mempoolSet := charts.MempoolSet(bin)
+
+	mempoolSet, err := charts.MempoolSet(bin)
+	if err != nil {
+		return nil, err
+	}
 	var xAxis ChartUints
 	if axis == TimeAxis {
 		xAxis = mempoolSet.Time
@@ -1172,7 +1321,7 @@ func mempool(ctx context.Context, charts *Manager, dataType, axis axisType, bin 
 		return charts.Encode(nil, xAxis, mempoolSet.Fee)
 	}
 	return nil, UnknownChartErr
-	
+
 	// switch dataType {
 	// case MempoolSize:
 	// 	return mempoolSize(charts, axis, bin)
@@ -1264,91 +1413,28 @@ func mempoolFees(charts *Manager, axis axisType, bin binLevel) ([]byte, error) {
 }
 
 func propagation(ctx context.Context, charts *Manager, dataType, axis axisType, bin binLevel, syncSources ...string) ([]byte, error) {
+
+	mempoolSet := charts.PropagationSet(bin)
+	var xAxis ChartUints
+	if axis == TimeAxis {
+		xAxis = mempoolSet.Time
+	} else {
+		xAxis = mempoolSet.Heights
+	}
+
 	switch dataType {
 	case BlockPropagation:
-		return blockPropagation(charts, axis, bin, syncSources...)
+		var deviations = []Lengther{xAxis}
+		for _, source := range syncSources {
+			deviations = append(deviations, mempoolSet.BlockPropagation[source])
+		}
+		return charts.Encode(nil, deviations...)
 	case BlockTimestamp:
-		return blockTimestamp(charts, axis, bin)
+		return charts.Encode(nil, xAxis, mempoolSet.BlockDelay)
 	case VotesReceiveTime:
-		return votesReceiveTime(charts, axis, bin)
+		return charts.Encode(nil, xAxis, mempoolSet.VoteReceiveTimeDeviations)
 	}
 	return nil, UnknownChartErr
-}
-
-func blockPropagation(charts *Manager, axis axisType, bin binLevel, syncSources ...string) ([]byte, error) {
-	var xData ChartUints
-	key := fmt.Sprintf("%s-%s", Propagation, HeightAxis)
-	if axis == TimeAxis {
-		key = fmt.Sprintf("%s-%s", Propagation, TimeAxis)
-	}
-	if bin != DefaultBin {
-		key = fmt.Sprintf("%s-%s", key, bin)
-	}
-	if err := charts.ReadVal(key, &xData); err != nil {
-		log.Info(err, key)
-		return nil, err
-	}
-	var deviations = []Lengther{xData}
-	for _, source := range syncSources {
-		var d ChartFloats
-		key = fmt.Sprintf("%s-%s-%s", Propagation, BlockPropagation, source)
-		if bin != DefaultBin {
-			key = fmt.Sprintf("%s-%s", key, bin)
-		}
-		if err := charts.ReadVal(key, &d); err != nil {
-			log.Info(err, key)
-			return nil, err
-		}
-		deviations = append(deviations, d)
-	}
-
-	return charts.encodeArr(nil, deviations)
-}
-
-func blockTimestamp(charts *Manager, axis axisType, bin binLevel) ([]byte, error) {
-	var xData ChartUints
-	key := fmt.Sprintf("%s-%s", Propagation, HeightAxis)
-	if axis == TimeAxis {
-		key = fmt.Sprintf("%s-%s", Propagation, TimeAxis)
-	}
-	if bin != DefaultBin {
-		key = fmt.Sprintf("%s-%s", key, bin)
-	}
-	if err := charts.ReadVal(key, &xData); err != nil {
-		return nil, err
-	}
-	var blockDelays ChartFloats
-	key = fmt.Sprintf("%s-%s", Propagation, BlockTimestamp)
-	if bin != DefaultBin {
-		key = fmt.Sprintf("%s-%s", key, bin)
-	}
-	if err := charts.ReadVal(key, &blockDelays); err != nil {
-		return nil, err
-	}
-	return charts.Encode(nil, xData, blockDelays)
-}
-
-func votesReceiveTime(charts *Manager, axis axisType, bin binLevel) ([]byte, error) {
-	var xData ChartUints
-	key := fmt.Sprintf("%s-%s", Propagation, HeightAxis)
-	if axis == TimeAxis {
-		key = fmt.Sprintf("%s-%s", Propagation, TimeAxis)
-	}
-	if bin != DefaultBin {
-		key = fmt.Sprintf("%s-%s", key, bin)
-	}
-	if err := charts.ReadVal(key, &xData); err != nil {
-		return nil, err
-	}
-	var votesReceiveTime ChartFloats
-	key = fmt.Sprintf("%s-%s", Propagation, VotesReceiveTime)
-	if bin != DefaultBin {
-		key = fmt.Sprintf("%s-%s", key, bin)
-	}
-	if err := charts.ReadVal(key, &votesReceiveTime); err != nil {
-		return nil, err
-	}
-	return charts.Encode(nil, xData, votesReceiveTime)
 }
 
 func powChart(ctx context.Context, charts *Manager, dataType, axis axisType, bin binLevel, pools ...string) ([]byte, error) {

@@ -559,19 +559,15 @@ func appendChartMempool(charts *cache.Manager, mempoolSliceInt interface{}) erro
 		return nil
 	}
 
-	mempoolSet := charts.MempoolSet(cache.DefaultBin)
+	mempoolSet, err := charts.MempoolSet(cache.DefaultBin)
+	if err != nil && err != cache.UnknownChartErr {
+		return err
+	}
 
 	var chartsMempoolTime, chartsMempoolTxCount, chartsMempoolSize cache.ChartUints
 	var chartsMempoolFees cache.ChartFloats
 
-	var min, max int64
 	for _, mempoolData := range mempoolSlice {
-		if min == 0 || min > mempoolData.Time.UTC().Unix() {
-			min = mempoolData.Time.UTC().Unix()
-		}
-		if min == 0 || max < mempoolData.Time.UTC().Unix() {
-			max = mempoolData.Time.UTC().Unix()
-		}
 		chartsMempoolTime = append(chartsMempoolTime, uint64(mempoolData.Time.UTC().Unix()))
 		chartsMempoolFees = append(chartsMempoolFees, mempoolData.TotalFee.Float64)
 		chartsMempoolTxCount = append(chartsMempoolTxCount, uint64(mempoolData.NumberOfTransactions.Int))
@@ -684,7 +680,7 @@ func (pg *PgDb) fetchBlockPropagationChart(ctx context.Context, charts *cache.Ma
 	emptyCancelFunc := func() {}
 	var propagationSet propagationSet
 
-	chartsBlockHeight := int32(charts.PropagationHeightTip())
+	chartsBlockHeight := int32(charts.PropagationTip())
 	blockDelays, err := pg.propagationBlockChartData(ctx, int(chartsBlockHeight))
 	if err != nil && err != sql.ErrNoRows {
 		return nil, emptyCancelFunc, false, err
@@ -754,33 +750,26 @@ func (pg *PgDb) fetchBlockPropagationChart(ctx context.Context, charts *cache.Ma
 }
 
 func appendBlockPropagationChart(charts *cache.Manager, data interface{}) error {
-	propagationSet := data.(propagationSet)
+	set := data.(propagationSet)
 
-	if len(propagationSet.height) == 0 {
+	if len(set.height) == 0 {
 		return nil
 	}
 
-	key := fmt.Sprintf("%s-%s", cache.Propagation, cache.HeightAxis)
-	if err := charts.AppendChartUintsAxis(key, propagationSet.height); err != nil {
-		return err
-	}
-	key = fmt.Sprintf("%s-%s", cache.Propagation, cache.TimeAxis)
-	if err := charts.AppendChartUintsAxis(key, propagationSet.time); err != nil {
-		return err
-	}
-	key = fmt.Sprintf("%s-%s", cache.Propagation, cache.BlockTimestamp)
-	if err := charts.AppendChartFloatsAxis(key, propagationSet.blockDelay); err != nil {
-		return err
-	}
-	key = fmt.Sprintf("%s-%s", cache.Propagation, cache.VotesReceiveTime)
-	if err := charts.AppendChartFloatsAxis(key, propagationSet.voteReceiveTimeDeviations); err != nil {
-		return err
-	}
-	for source, deviations := range propagationSet.blockPropagation {
-		key = fmt.Sprintf("%s-%s-%s", cache.Propagation, cache.BlockPropagation, source)
-		if err := charts.AppendChartFloatsAxis(key, deviations); err != nil {
-			return err
+	propagationChart := charts.PropagationSet(cache.DefaultBin)
+	propagationChart.Heights = append(propagationChart.Heights, set.height...)
+	propagationChart.Time = append(propagationChart.Time, set.time...)
+	propagationChart.BlockDelay = append(propagationChart.BlockDelay, set.blockDelay...)
+	propagationChart.VoteReceiveTimeDeviations = append(propagationChart.VoteReceiveTimeDeviations, set.voteReceiveTimeDeviations...)
+
+	for source, deviations := range set.blockPropagation {
+		if _, f := propagationChart.BlockPropagation[source]; f {
+			propagationChart.BlockPropagation[source] = append(propagationChart.BlockPropagation[source], deviations...)
 		}
 	}
+	if propagationChart.Heights.Length() > 0 {
+		charts.SetPropagationTip(propagationChart.Heights[propagationChart.Heights.Length()-1])
+	}
+	propagationChart.Save(charts)
 	return nil
 }

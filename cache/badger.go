@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/dgraph-io/badger"
-	"github.com/friendsofgo/errors"
 )
 
 const (
@@ -179,174 +178,6 @@ func (charts *Manager) AppendChartNullFloatsAxisTx(key string, set ChartNullFloa
 	}
 	data = data.Append(set)
 	return charts.SaveValTx(key, data, txn)
-}
-
-func (charts *Manager) NormalizeLength(tags ...string) error {
-	txn := charts.DB.NewTransaction(true)
-	defer txn.Discard()
-
-	for _, chartID := range tags {
-		if cerr := charts.normalizeLength(chartID, txn); cerr != nil {
-			return errors.Wrap(cerr, "Normalize failed for "+chartID)
-		}
-	}
-	if err := txn.Commit(); err != nil {
-		return err
-	}
-	return nil
-}
-
-// length correction
-func (charts *Manager) normalizeLength(chartID string, txn *badger.Txn) error {
-	// TODO: use transaction
-	switch chartID {
-	case Mempool:
-		return charts.normalizeMempoolLength(txn)
-
-	case Propagation:
-		return charts.normalizePropagationLength(txn)
-
-	case PowChart:
-		return charts.normalizePowChartLength(txn)
-
-	case VSP:
-		return charts.normalizeVSPLength(txn)
-
-	case Exchange:
-		return charts.normalizeExchangeLength(txn)
-
-	case Snapshot:
-		return charts.normalizeSnapshotLength(txn)
-	case Community:
-		return nil
-
-	}
-
-	return nil
-}
-
-func (charts *Manager) normalizeMempoolLength(txn *badger.Txn) error {
-	var firstLen, shortest, longest int
-	key := Mempool + "-" + string(TimeAxis)
-	firstLen, err := charts.chartUintsLength(key, txn)
-	if err != nil {
-		return err
-	}
-	shortest, longest = firstLen, firstLen
-
-	key = Mempool + "-" + string(MempoolFees)
-	dLen, err := charts.chartFloatsLength(key, txn)
-	if err != nil {
-		return err
-	}
-	if dLen != firstLen {
-		log.Warnf("charts.normalizeMempoolLength: dataset for %s axis has mismatched length %d != %d", key, dLen, firstLen)
-		if dLen < shortest {
-			shortest = dLen
-		} else if dLen > longest {
-			longest = dLen
-		}
-	}
-
-	key = Mempool + "-" + string(MempoolSize)
-	dLen, err = charts.chartUintsLength(key, txn)
-	if err != nil {
-		return err
-	}
-	if dLen != firstLen {
-		log.Warnf("charts.normalizeMempoolLength: dataset for %s axis has mismatched length %d != %d", key, dLen, firstLen)
-		if dLen < shortest {
-			shortest = dLen
-		} else if dLen > longest {
-			longest = dLen
-		}
-	}
-
-	key = Mempool + "-" + string(MempoolTxCount)
-	dLen, err = charts.chartUintsLength(key, txn)
-	if err != nil {
-		return err
-	}
-	if dLen != firstLen {
-		log.Warnf("charts.normalizeMempoolLength: dataset for %s axis has mismatched length %d != %d", key, dLen, firstLen)
-		if dLen < shortest {
-			shortest = dLen
-		} else if dLen > longest {
-			longest = dLen
-		}
-	}
-
-	if longest != shortest {
-		return charts.snipMempool(shortest, txn)
-	}
-	return nil
-}
-
-func (charts *Manager) normalizePropagationLength(txn *badger.Txn) error {
-	var firstLen, shortest, longest int
-	key := Propagation + "-" + string(HeightAxis)
-	firstLen, err := charts.chartUintsLength(key, txn)
-	if err != nil {
-		return err
-	}
-	shortest, longest = firstLen, firstLen
-
-	key = Propagation + "-" + string(BlockTimestamp)
-	dLen, err := charts.chartFloatsLength(key, txn)
-	if err != nil {
-		return err
-	}
-	if dLen != firstLen {
-		log.Warnf("charts.normalizePropagationLength: dataset for %s axis has mismatched length %d != %d", key, dLen, firstLen)
-		if dLen < shortest {
-			shortest = dLen
-		} else if dLen > longest {
-			longest = dLen
-		}
-	}
-
-	key = Propagation + "-" + string(VotesReceiveTime)
-	dLen, err = charts.chartFloatsLength(key, txn)
-	if err != nil {
-		return err
-	}
-	if dLen != firstLen {
-		log.Warnf("charts.normalizePropagationLength: dataset for %s axis has mismatched length %d != %d", key, dLen, firstLen)
-		if dLen < shortest {
-			shortest = dLen
-		} else if dLen > longest {
-			longest = dLen
-		}
-	}
-
-	if longest != shortest {
-		if err = charts.snipPropagationChart(shortest, BlockTimestamp, txn); err != nil {
-			log.Warn(err)
-		}
-	}
-
-	for _, source := range charts.syncSource {
-		key = Propagation + "-" + string(BlockPropagation) + "-" + source
-		dLen, err = charts.chartFloatsLength(key, txn)
-		if err != nil {
-			return err
-		}
-		if dLen != firstLen {
-			log.Warnf("charts.normalizePropagationLength: dataset for %s axis has mismatched length %d != %d", key, dLen, firstLen)
-			if dLen < shortest {
-				shortest = dLen
-			} else if dLen > longest {
-				longest = dLen
-			}
-		}
-	}
-	if longest != shortest {
-		if err = charts.snipPropagationChart(shortest, BlockPropagation, txn); err != nil {
-			log.Warn(err)
-		}
-	}
-
-	return nil
 }
 
 func (charts *Manager) normalizePowChartLength(txn *badger.Txn) error {
@@ -1001,112 +832,6 @@ func (charts *Manager) snipChartFloatsAxis(key string, length int, txn *badger.T
 	return charts.SaveValTx(key, data, txn)
 }
 
-func (charts *Manager) MempoolTimeTip() uint64 {
-	var dates ChartUints
-	err := charts.ReadVal(Mempool+"-"+string(TimeAxis), &dates)
-	if err != nil {
-		return 0
-	}
-	if len(dates) == 0 {
-		return 0
-	}
-	return dates[dates.Length()-1]
-}
-
-func (charts *Manager) lengthenMempool() error {
-	txn := charts.DB.NewTransaction(true)
-	defer txn.Discard()
-
-	if err := charts.updateMempoolHeights(txn); err != nil {
-		log.Errorf("Unable to update mempool heights, %s", err.Error())
-		return err
-	}
-
-	dayIntervals, hourIntervals, err := charts.lengthenTimeAndHeight(
-		fmt.Sprintf("%s-%s", Mempool, TimeAxis),
-		fmt.Sprintf("%s-%s", Mempool, HeightAxis), txn)
-	if err != nil {
-		return err
-	}
-
-	keys := []string{
-		fmt.Sprintf("%s-%s", Mempool, MempoolSize),
-		fmt.Sprintf("%s-%s", Mempool, MempoolTxCount),
-	}
-
-	for _, key := range keys {
-		if err := charts.lengthenChartUints(key, dayIntervals, hourIntervals, txn); err != nil {
-			return err
-		}
-	}
-
-	key := fmt.Sprintf("%s-%s", Mempool, MempoolFees)
-	if err := charts.lengthenChartFloats(key, dayIntervals, hourIntervals, txn); err != nil {
-		return err
-	}
-
-	if err := txn.Commit(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (charts *Manager) updateMempoolHeights(txn *badger.Txn) error {
-	var mempoolDates, propagationDates, mempoolHeights, propagationHeights ChartUints
-	if err := charts.ReadValTx(fmt.Sprintf("%s-%s", Mempool, TimeAxis), &mempoolDates, txn); err != nil {
-		if err == badger.ErrKeyNotFound {
-			log.Warn("Mempool height not updated, mempool dates has no value")
-			return nil
-		}
-		return err
-	}
-
-	if mempoolDates.Length() == 0 {
-		log.Warn("Mempool height not updated, mempool dates has no value")
-		return nil
-	}
-
-	if err := charts.ReadValTx(fmt.Sprintf("%s-%s", Propagation, TimeAxis), &propagationDates, txn); err != nil {
-		if err == badger.ErrKeyNotFound {
-			log.Warn("Mempool height not updated, propagation dates has no value")
-			return nil
-		}
-		return err
-	}
-
-	if propagationDates.Length() == 0 {
-		log.Warn("Mempool height not updated, propagation dates has no value")
-		return nil
-	}
-
-	if err := charts.ReadValTx(fmt.Sprintf("%s-%s", Propagation, HeightAxis), &propagationHeights, txn); err != nil {
-		if err == badger.ErrKeyNotFound {
-			log.Warn("Mempool height not updated, propagation heights has no value")
-			return nil
-		}
-		return err
-	}
-
-	if propagationHeights.Length() == 0 {
-		log.Warn("Mempool height not updated, propagation heights has no value")
-		return nil
-	}
-
-	pIndex := 0
-	for _, date := range mempoolDates {
-		if pIndex+1 < propagationDates.Length() && date >= propagationDates[pIndex+1] {
-			pIndex += 1
-		}
-		mempoolHeights = append(mempoolHeights, propagationHeights[pIndex])
-	}
-
-	if err := charts.SaveValTx(fmt.Sprintf("%s-%s", Mempool, HeightAxis), mempoolHeights, txn); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (charts *Manager) lengthenPropagation() error {
 	txn := charts.DB.NewTransaction(true)
 	defer txn.Discard()
@@ -1359,6 +1084,7 @@ func (charts *Manager) lengthenTime(key string, txn *badger.Txn) (dayIntervals [
 	return
 }
 
+
 func (charts *Manager) lengthenTimeAndHeight(timeKey, heightKey string, txn *badger.Txn) (dayIntervals [][2]int, hourIntervals [][2]int, err error) {
 	var dates, heights ChartUints
 	if err = charts.ReadValTx(timeKey, &dates, txn); err != nil {
@@ -1610,18 +1336,6 @@ func hourStamp(t uint64) (hour uint64) {
 		hour = t - t%anHour
 	}
 	return
-}
-
-func (charts *Manager) PropagationHeightTip() uint64 {
-	var heights ChartUints
-	err := charts.ReadVal(Propagation+"-"+string(HeightAxis), &heights)
-	if err != nil {
-		return 0
-	}
-	if len(heights) == 0 {
-		return 0
-	}
-	return heights[heights.Length()-1]
 }
 
 func (charts *Manager) PowTimeTip() uint64 {

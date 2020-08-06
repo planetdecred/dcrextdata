@@ -18,7 +18,11 @@ type propagationSet struct {
 }
 
 func (m propagationSet) Save(cacheManage *Manager) error {
-	filename := filepath.Join(cacheManage.dir, fmt.Sprintf("%s-%s.gob", Mempool, m.bin))
+
+	cacheManage.propagationMtx.Lock()
+	defer cacheManage.propagationMtx.Unlock()
+
+	filename := filepath.Join(cacheManage.dir, fmt.Sprintf("%s-%s.gob", Propagation, m.bin))
 	if isFileExists(filename) {
 		// delete the old dump files before creating new ones.
 		os.RemoveAll(filename)
@@ -32,8 +36,6 @@ func (m propagationSet) Save(cacheManage *Manager) error {
 	defer file.Close()
 
 	encoder := gob.NewEncoder(file)
-	cacheManage.cacheMtx.Lock()
-	defer cacheManage.cacheMtx.Unlock()
 	return encoder.Encode(m)
 }
 
@@ -88,8 +90,10 @@ func (charts *Manager) normalizePropagationLength() error {
 	set := charts.PropagationSet(DefaultBin)
 	if dLen, err := ValidateLengths(set.Time, set.Heights, set.BlockDelay, set.VoteReceiveTimeDeviations); err != nil {
 		log.Warnf("Propagation length validation failed for %s bin - %s. Check previous warnings", DefaultBin, err.Error())
-		set.snip(dLen)
-		set.Save(charts)
+		set = set.snip(dLen)
+		if err = set.Save(charts); err != nil {
+			log.Errorf("normalizePropagationLength - %s", err.Error())
+		}
 	}
 
 	return nil
