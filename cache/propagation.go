@@ -48,7 +48,7 @@ func (m propagationSet) snip(max int) propagationSet {
 	return m
 }
 
-func (charts *Manager) PropagationSet(bin binLevel) (data propagationSet) {
+func (charts *Manager) PropagationSet(bin binLevel) (data propagationSet, err error) {
 	data.bin = bin
 	data.BlockPropagation = make(map[string]ChartFloats)
 	filename := filepath.Join(charts.dir, fmt.Sprintf("%s-%s.gob", Propagation, bin))
@@ -56,7 +56,8 @@ func (charts *Manager) PropagationSet(bin binLevel) (data propagationSet) {
 		return
 	}
 
-	file, err := os.Open(filename)
+	var file *os.File
+	file, err = os.Open(filename)
 	if err != nil {
 		log.Errorf("Error in opening mempool cache file - %s", err.Error())
 		return
@@ -70,7 +71,7 @@ func (charts *Manager) PropagationSet(bin binLevel) (data propagationSet) {
 	err = decoder.Decode(&data)
 	if err != nil {
 		log.Errorf("Error in opening mempool cache file - %s", err.Error())
-		return data
+		return
 	}
 
 	return
@@ -87,7 +88,10 @@ func (charts *Manager) SetPropagationTip(time uint64) {
 }
 
 func (charts *Manager) normalizePropagationLength() error {
-	set := charts.PropagationSet(DefaultBin)
+	set, err := charts.PropagationSet(DefaultBin)
+	if err != nil && err != UnknownChartErr {
+		return err
+	}
 	if dLen, err := ValidateLengths(set.Time, set.Heights, set.BlockDelay, set.VoteReceiveTimeDeviations); err != nil {
 		log.Warnf("Propagation length validation failed for %s bin - %s. Check previous warnings", DefaultBin, err.Error())
 		set = set.snip(dLen)
@@ -96,5 +100,88 @@ func (charts *Manager) normalizePropagationLength() error {
 		}
 	}
 
+	return nil
+}
+
+func (charts *Manager) lengthenPropagation() error {
+	set, err := charts.PropagationSet(DefaultBin)
+	if err != nil {
+		log.Errorf("Unable to update mempool heights, %s", err.Error())
+		return err
+	}
+
+	hourSet, err := charts.PropagationSet(HourBin)
+	if err != nil && err != UnknownChartErr {
+		return err
+	}
+
+	// Continue if there at least, an hour of new data
+	if dLen := hourSet.Time.Length(); dLen > 0 && charts.MempoolTip() < hourSet.Time[dLen-1]+anHour {
+		return nil
+	}
+
+	hours, hourHeights, hourIntervals := generateHourBin(set.Time, set.Heights)
+
+	hourSet = propagationSet{
+		bin:              HourBin,
+		Time:             hours,
+		Heights:          hourHeights,
+		BlockPropagation: make(map[string]ChartFloats),
+	}
+	for _, interval := range hourIntervals {
+		hourSet.BlockDelay = append(hourSet.BlockDelay, set.BlockDelay.Avg(interval[0], interval[1]))
+	}
+	for _, interval := range hourIntervals {
+		hourSet.VoteReceiveTimeDeviations = append(hourSet.VoteReceiveTimeDeviations, set.VoteReceiveTimeDeviations.Avg(interval[0], interval[1]))
+	}
+	for _, source := range charts.syncSource {
+		for _, interval := range hourIntervals {
+			hourSet.BlockPropagation[source] = append(
+				hourSet.BlockPropagation[source],
+				set.BlockPropagation[source].Avg(interval[0], interval[1]),
+			)
+		}
+	}
+
+	if err := hourSet.Save(charts); err != nil {
+		return err
+	}
+
+	daySet, err := charts.PropagationSet(DayBin)
+	if err != nil && err != UnknownChartErr {
+		return err
+	}
+
+	// Continue if there at least, an hour of new data
+	if dLen := daySet.Time.Length(); dLen > 0 && charts.MempoolTip() < daySet.Time[dLen-1]+anHour {
+		return nil
+	}
+
+	days, dayHeights, dayIntervals := generateDayBin(set.Time, set.Heights)
+
+	daySet = propagationSet{
+		bin:              DayBin,
+		Time:             days,
+		Heights:          dayHeights,
+		BlockPropagation: make(map[string]ChartFloats),
+	}
+	for _, interval := range dayIntervals {
+		daySet.BlockDelay = append(daySet.BlockDelay, set.BlockDelay.Avg(interval[0], interval[1]))
+	}
+	for _, interval := range dayIntervals {
+		daySet.VoteReceiveTimeDeviations = append(daySet.VoteReceiveTimeDeviations, set.VoteReceiveTimeDeviations.Avg(interval[0], interval[1]))
+	}
+	for _, source := range charts.syncSource {
+		for _, interval := range dayIntervals {
+			daySet.BlockPropagation[source] = append(
+				daySet.BlockPropagation[source],
+				set.BlockPropagation[source].Avg(interval[0], interval[1]),
+			)
+		}
+	}
+
+	if err := daySet.Save(charts); err != nil {
+		return err
+	}
 	return nil
 }

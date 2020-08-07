@@ -832,36 +832,6 @@ func (charts *Manager) snipChartFloatsAxis(key string, length int, txn *badger.T
 	return charts.SaveValTx(key, data, txn)
 }
 
-func (charts *Manager) lengthenPropagation() error {
-	txn := charts.DB.NewTransaction(true)
-	defer txn.Discard()
-
-	key := fmt.Sprintf("%s-%s", Propagation, TimeAxis)
-	dayIntervals, hourIntervals, err := charts.lengthenTimeAndHeight(key, fmt.Sprintf("%s-%s", Propagation, HeightAxis), txn)
-	if err != nil {
-		return err
-	}
-
-	keys := []string{
-		fmt.Sprintf("%s-%s", Propagation, BlockTimestamp),
-		fmt.Sprintf("%s-%s", Propagation, VotesReceiveTime),
-	}
-	for _, source := range charts.syncSource {
-		keys = append(keys, fmt.Sprintf("%s-%s-%s", Propagation, BlockPropagation, source))
-	}
-
-	for _, key := range keys {
-		if err := charts.lengthenChartFloats(key, dayIntervals, hourIntervals, txn); err != nil {
-			return err
-		}
-	}
-
-	if err := txn.Commit(); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (charts *Manager) lengthenVsp() error {
 	txn := charts.DB.NewTransaction(true)
 	defer txn.Discard()

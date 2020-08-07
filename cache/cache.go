@@ -781,7 +781,7 @@ func (charts *Manager) Lengthen(tags ...string) error {
 
 func generateDayBin(dates, heights ChartUints) (days, dayHeights ChartUints, dayIntervals [][2]int) {
 	if dates.Length() != heights.Length() {
-		log.Criticalf("generateDayBin: length mismatch")
+		log.Criticalf("generateHourBin: length mismatch %d != %d", dates.Length(), heights.Length())
 		return
 	}
 
@@ -820,7 +820,7 @@ func generateDayBin(dates, heights ChartUints) (days, dayHeights ChartUints, day
 
 func generateHourBin(dates, heights ChartUints) (hours, hourHeights ChartUints, hourIntervals [][2]int) {
 	if dates.Length() != heights.Length() {
-		log.Criticalf("generateHourBin: length mismatch")
+		log.Criticalf("generateHourBin: length mismatch %d != %d", dates.Length(), heights.Length())
 		return
 	}
 	// Get the current first and last hour stamps.
@@ -1414,7 +1414,10 @@ func mempoolFees(charts *Manager, axis axisType, bin binLevel) ([]byte, error) {
 
 func propagation(ctx context.Context, charts *Manager, dataType, axis axisType, bin binLevel, syncSources ...string) ([]byte, error) {
 
-	mempoolSet := charts.PropagationSet(bin)
+	mempoolSet, err := charts.PropagationSet(bin)
+	if err != nil {
+		return nil, err
+	}
 	var xAxis ChartUints
 	if axis == TimeAxis {
 		xAxis = mempoolSet.Time

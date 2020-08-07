@@ -756,20 +756,21 @@ func appendBlockPropagationChart(charts *cache.Manager, data interface{}) error 
 		return nil
 	}
 
-	propagationChart := charts.PropagationSet(cache.DefaultBin)
+	propagationChart, err := charts.PropagationSet(cache.DefaultBin)
+	if err != nil && err != cache.UnknownChartErr {
+		return err
+	}
 	propagationChart.Heights = append(propagationChart.Heights, set.height...)
 	propagationChart.Time = append(propagationChart.Time, set.time...)
 	propagationChart.BlockDelay = append(propagationChart.BlockDelay, set.blockDelay...)
 	propagationChart.VoteReceiveTimeDeviations = append(propagationChart.VoteReceiveTimeDeviations, set.voteReceiveTimeDeviations...)
 
 	for source, deviations := range set.blockPropagation {
-		if _, f := propagationChart.BlockPropagation[source]; f {
-			propagationChart.BlockPropagation[source] = append(propagationChart.BlockPropagation[source], deviations...)
-		}
+		propagationChart.BlockPropagation[source] = append(propagationChart.BlockPropagation[source], deviations...)
 	}
 	if propagationChart.Heights.Length() > 0 {
 		charts.SetPropagationTip(propagationChart.Heights[propagationChart.Heights.Length()-1])
 	}
-	propagationChart.Save(charts)
-	return nil
+
+	return propagationChart.Save(charts)
 }

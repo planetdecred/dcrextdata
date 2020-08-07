@@ -164,6 +164,7 @@ func (charts *Manager) lengthenMempool() error {
 		return err
 	}
 
+	// day bin
 	mempoolDaySet, err := charts.MempoolSet(DayBin)
 	if err != nil && err != UnknownChartErr {
 		return err
@@ -210,7 +211,11 @@ func (charts *Manager) updateMempoolHeights() (mempoolSet, error) {
 		return mempoolSet, nil
 	}
 
-	propagationSet := charts.PropagationSet(DefaultBin)
+	propagationSet, err := charts.PropagationSet(DefaultBin)
+	if err != nil {
+		log.Warn("Mempool height not updated, propagation has no value")
+		return mempoolSet, nil
+	}
 	if propagationSet.Time.Length() == 0 {
 		log.Warn("Mempool height not updated, propagation dates has no value")
 		return mempoolSet, nil
