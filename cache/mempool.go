@@ -38,11 +38,11 @@ func (m mempoolSet) Save(cacheManage *Manager) error {
 }
 
 func (m mempoolSet) snip(max int) mempoolSet {
-	m.Time.snip(max)
-	m.Heights.snip(max)
-	m.Size.snip(max)
-	m.Fee.snip(max)
-	m.TxCount.snip(max)
+	m.Time = m.Time.snip(max)
+	m.Heights = m.Heights.snip(max)
+	m.Size = m.Size.snip(max)
+	m.Fee = m.Fee.snip(max)
+	m.TxCount = m.TxCount.snip(max)
 
 	return m
 }

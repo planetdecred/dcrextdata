@@ -35,7 +35,7 @@ func (m powSet) Save(cacheManage *Manager) error {
 }
 
 func (m powSet) snip(max int) powSet {
-	m.Time.snip(max)
+	m.Time = m.Time.snip(max)
 
 	for s, w := range m.Workers {
 		m.Workers[s] = w.snip(max)
