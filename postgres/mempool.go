@@ -579,10 +579,15 @@ func appendChartMempool(charts *cache.Manager, mempoolSliceInt interface{}) erro
 	mempoolSet.TxCount = append(mempoolSet.TxCount, chartsMempoolTxCount...)
 	mempoolSet.Size = append(mempoolSet.Size, chartsMempoolSize...)
 
+	if err := mempoolSet.Save(charts); err != nil {
+		return err
+	}
+
 	if len := mempoolSet.Time.Length(); len > 0 {
 		charts.SetMempoolTip(mempoolSet.Time[len-1])
 	}
-	return mempoolSet.Save(charts)
+
+	return nil
 }
 
 type propagationSet struct {
@@ -768,9 +773,14 @@ func appendBlockPropagationChart(charts *cache.Manager, data interface{}) error 
 	for source, deviations := range set.blockPropagation {
 		propagationChart.BlockPropagation[source] = append(propagationChart.BlockPropagation[source], deviations...)
 	}
+
+	if err := propagationChart.Save(charts); err != nil {
+		return err
+	}
+
 	if propagationChart.Heights.Length() > 0 {
 		charts.SetPropagationTip(propagationChart.Heights[propagationChart.Heights.Length()-1])
 	}
 
-	return propagationChart.Save(charts)
+	return nil
 }

@@ -364,7 +364,7 @@ func (pg *PgDb) fetchEncodePowChart(ctx context.Context, charts *cache.Manager, 
 }
 
 func (pg *PgDb) fetchCachePowChart(ctx context.Context, charts *cache.Manager, _ int) (interface{}, func(), bool, error) {
-	data, err := pg.fetchPowChart(ctx, charts.PowTimeTip())
+	data, err := pg.fetchPowChart(ctx, charts.PowTip())
 	return data, func() {}, true, err
 }
 
@@ -437,35 +437,12 @@ func appendPowChart(charts *cache.Manager, data interface{}) error {
 		return nil
 	}
 
-	if err := charts.AppendChartUintsAxis(cache.PowChart+"-"+string(cache.TimeAxis),
-		powDataSet.time); err != nil {
+	if err := charts.AppendPowSet(cache.DefaultBin, powDataSet.time, powDataSet.workers, powDataSet.hashrate); err != nil {
 		return err
 	}
 
-	keyExists := func(arr []string, key string) bool {
-		for _, s := range arr {
-			if s == key {
-				return true
-			}
-		}
-		return false
-	}
-
-	for pool, workers := range powDataSet.workers {
-		if !keyExists(charts.PowSources, pool) {
-			charts.PowSources = append(charts.PowSources, pool)
-		}
-		if err := charts.AppendChartNullUintsAxis(cache.PowChart+"-"+string(cache.WorkerAxis)+"-"+pool,
-			workers); err != nil {
-			return err
-		}
-	}
-
-	for pool, hashrate := range powDataSet.hashrate {
-		if err := charts.AppendChartNullUintsAxis(cache.PowChart+"-"+string(cache.HashrateAxis)+"-"+pool,
-			hashrate); err != nil {
-			return err
-		}
+	if len(powDataSet.time) > 0 {
+		charts.SetPowTip(powDataSet.time[len(powDataSet.time)-1])
 	}
 
 	return nil

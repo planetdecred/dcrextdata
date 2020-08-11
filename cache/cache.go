@@ -707,6 +707,7 @@ type Manager struct {
 	cacheMtx       sync.RWMutex
 	mempoolMtx     sync.RWMutex
 	propagationMtx sync.RWMutex
+	powMtx         sync.RWMutex
 
 	DB        *badger.DB
 	dir       string
@@ -723,6 +724,7 @@ type Manager struct {
 
 	mempooTip      uint64
 	propagationTip uint64
+	powTip         uint64
 }
 
 // Check that the length of all arguments is equal.
@@ -780,7 +782,7 @@ func (charts *Manager) Lengthen(tags ...string) error {
 }
 
 func generateDayBin(dates, heights ChartUints) (days, dayHeights ChartUints, dayIntervals [][2]int) {
-	if dates.Length() != heights.Length() {
+	if heights != nil && dates.Length() != heights.Length() {
 		log.Criticalf("generateHourBin: length mismatch %d != %d", dates.Length(), heights.Length())
 		return
 	}
@@ -804,7 +806,9 @@ func generateDayBin(dates, heights ChartUints) (days, dayHeights ChartUints, day
 				dayIntervals = append(dayIntervals, [2]int{startIdx + offset, i + offset})
 				// check for records b/4 appending.
 				days = append(days, start)
-				dayHeights = append(dayHeights, heights[i])
+				if heights != nil {
+					dayHeights = append(dayHeights, heights[i])
+				}
 				next = midnight(t)
 				start = next
 				next += aDay
@@ -819,7 +823,7 @@ func generateDayBin(dates, heights ChartUints) (days, dayHeights ChartUints, day
 }
 
 func generateHourBin(dates, heights ChartUints) (hours, hourHeights ChartUints, hourIntervals [][2]int) {
-	if dates.Length() != heights.Length() {
+	if heights != nil && dates.Length() != heights.Length() {
 		log.Criticalf("generateHourBin: length mismatch %d != %d", dates.Length(), heights.Length())
 		return
 	}
@@ -841,7 +845,9 @@ func generateHourBin(dates, heights ChartUints) (hours, hourHeights ChartUints, 
 				// the range of indices.
 				hourIntervals = append(hourIntervals, [2]int{startIdx + offset, i + offset})
 				hours = append(hours, start)
-				hourHeights = append(hourHeights, heights[i])
+				if heights != nil {
+					hourHeights = append(hourHeights, heights[i])
+				}
 				next = hourStamp(t)
 				start = next
 				next += anHour
@@ -853,23 +859,6 @@ func generateHourBin(dates, heights ChartUints) (hours, hourHeights ChartUints, 
 		}
 	}
 
-	return
-}
-
-func (charts *Manager) lengthenChartUintsx(data ChartUints, dayIntervals [][2]int,
-	hourIntervals [][2]int) (dayData, hourData ChartUints) {
-
-	// day bin
-	for _, interval := range dayIntervals {
-		// For each new day, take an appropriate snapshot.
-		dayData = append(dayData, data.Avg(interval[0], interval[1]))
-	}
-
-	// hour bin
-	for _, interval := range hourIntervals {
-		// For each new day, take an appropriate snapshot.
-		hourData = append(hourData, data.Avg(interval[0], interval[1]))
-	}
 	return
 }
 
@@ -1085,7 +1074,7 @@ func (charts *Manager) cacheID(chartID string) uint64 {
 	case VotesReceiveTime:
 		return charts.PropagationTip()
 	case PowChart:
-		return charts.PowTimeTip()
+		return charts.PowTip()
 	case VSP:
 		return charts.VSPTimeTip()
 	case Exchange:
@@ -1321,95 +1310,6 @@ func mempool(ctx context.Context, charts *Manager, dataType, axis axisType, bin 
 		return charts.Encode(nil, xAxis, mempoolSet.Fee)
 	}
 	return nil, UnknownChartErr
-
-	// switch dataType {
-	// case MempoolSize:
-	// 	return mempoolSize(charts, axis, bin)
-	// case MempoolTxCount:
-	// 	return mempoolTxCount(charts, axis, bin)
-	// case MempoolFees:
-	// 	return mempoolFees(charts, axis, bin)
-	// }
-	// return nil, UnknownChartErr
-}
-
-func mempoolSize(charts *Manager, axis axisType, bin binLevel) ([]byte, error) {
-	var dates, sizes ChartUints
-
-	key := fmt.Sprintf("%s-%s", Mempool, HeightAxis)
-	if axis == TimeAxis {
-		key = fmt.Sprintf("%s-%s", Mempool, TimeAxis)
-	}
-	if bin != DefaultBin {
-		key = fmt.Sprintf("%s-%s", key, bin)
-	}
-	if err := charts.ReadVal(key, &dates); err != nil {
-		log.Info(key)
-		return nil, err
-	}
-
-	key = fmt.Sprintf("%s-%s", Mempool, MempoolSize)
-	if bin != DefaultBin {
-		key = fmt.Sprintf("%s-%s", key, bin)
-	}
-	if err := charts.ReadVal(key, &sizes); err != nil {
-		return nil, err
-	}
-
-	return charts.Encode(nil, dates, sizes)
-}
-
-func mempoolTxCount(charts *Manager, axis axisType, bin binLevel) ([]byte, error) {
-	var dates, txCounts ChartUints
-
-	key := fmt.Sprintf("%s-%s", Mempool, HeightAxis)
-	if axis == TimeAxis {
-		key = fmt.Sprintf("%s-%s", Mempool, TimeAxis)
-	}
-	if bin != DefaultBin {
-		key = fmt.Sprintf("%s-%s", key, bin)
-	}
-
-	if err := charts.ReadVal(key, &dates); err != nil {
-		log.Info(key)
-		return nil, err
-	}
-
-	key = fmt.Sprintf("%s-%s", Mempool, MempoolTxCount)
-	if bin != DefaultBin {
-		key = fmt.Sprintf("%s-%s", key, bin)
-	}
-	if err := charts.ReadVal(key, &txCounts); err != nil {
-		return nil, err
-	}
-
-	return charts.Encode(nil, dates, txCounts)
-}
-
-func mempoolFees(charts *Manager, axis axisType, bin binLevel) ([]byte, error) {
-	var dates ChartUints
-	var fees ChartFloats
-
-	key := fmt.Sprintf("%s-%s", Mempool, HeightAxis)
-	if axis == TimeAxis {
-		key = fmt.Sprintf("%s-%s", Mempool, TimeAxis)
-	}
-	if bin != DefaultBin {
-		key = fmt.Sprintf("%s-%s", key, bin)
-	}
-
-	if err := charts.ReadVal(key, &dates); err != nil {
-		return nil, err
-	}
-
-	key = fmt.Sprintf("%s-%s", Mempool, MempoolFees)
-	if bin != DefaultBin {
-		key = fmt.Sprintf("%s-%s", key, bin)
-	}
-	if err := charts.ReadVal(key, &fees); err != nil {
-		return nil, err
-	}
-	return charts.Encode(nil, dates, fees)
 }
 
 func propagation(ctx context.Context, charts *Manager, dataType, axis axisType, bin binLevel, syncSources ...string) ([]byte, error) {
@@ -1441,39 +1341,26 @@ func propagation(ctx context.Context, charts *Manager, dataType, axis axisType, 
 }
 
 func powChart(ctx context.Context, charts *Manager, dataType, axis axisType, bin binLevel, pools ...string) ([]byte, error) {
-	var dates ChartUints
-	key := PowChart + "-" + string(TimeAxis)
-	if bin != DefaultBin {
-		key = fmt.Sprintf("%s-%s", key, bin)
-	}
-	if err := charts.ReadVal(key, &dates); err != nil {
+	set, err := charts.PowSet(bin)
+	if err != nil {
 		return nil, err
 	}
-
 	var deviations = make([]ChartNullUints, len(pools))
 
 	for i, s := range pools {
-		key = fmt.Sprintf("%s-%s-%s", PowChart, dataType, s)
-		if bin != DefaultBin {
-			key = fmt.Sprintf("%s-%s", key, bin)
-		}
 		var data chartNullIntsPointer
-		if err := charts.ReadVal(key, &data); err != nil {
-			return nil, err
+		switch dataType {
+		case WorkerAxis:
+			data = set.Workers[s]
+		case HashrateAxis:
+			data = set.Hashrate[s]
+		default:
+			return nil, UnknownChartErr
 		}
 		deviations[i] = data.toChartNullUint()
-
 	}
 
-	return MakePowChart(charts, dates, deviations, pools)
-}
-
-func powCharta(ctx context.Context, charts *Manager, dataType, axis axisType, bin binLevel, pools ...string) ([]byte, error) {
-	retriever, hasRetriever := charts.retrivers[PowChart]
-	if !hasRetriever {
-		return nil, UnknownChartErr
-	}
-	return retriever(ctx, charts, string(dataType), string(axis), string(bin), pools...)
+	return MakePowChart(charts, set.Time, deviations, pools)
 }
 
 func MakePowChart(charts *Manager, dates ChartUints, deviations []ChartNullUints, pools []string) ([]byte, error) {

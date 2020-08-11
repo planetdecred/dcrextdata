@@ -34,7 +34,7 @@ func (m mempoolSet) Save(cacheManage *Manager) error {
 	defer file.Close()
 
 	encoder := gob.NewEncoder(file)
-	return encoder.Encode(&m)
+	return encoder.Encode(m)
 }
 
 func (m mempoolSet) snip(max int) mempoolSet {

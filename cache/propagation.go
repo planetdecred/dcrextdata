@@ -105,8 +105,8 @@ func (charts *Manager) normalizePropagationLength() error {
 
 func (charts *Manager) lengthenPropagation() error {
 	set, err := charts.PropagationSet(DefaultBin)
-	if err != nil {
-		log.Errorf("Unable to update mempool heights, %s", err.Error())
+	if err != nil && err != UnknownChartErr {
+		log.Errorf("Error in lengthenPropagation, %s", err.Error())
 		return err
 	}
 

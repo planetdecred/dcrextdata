@@ -876,36 +876,6 @@ func (charts *Manager) lengthenVsp() error {
 	return nil
 }
 
-func (charts *Manager) lengthenPow() error {
-	txn := charts.DB.NewTransaction(true)
-	defer txn.Discard()
-
-	key := fmt.Sprintf("%s-%s", PowChart, TimeAxis)
-	dayIntervals, hourIntervals, err := charts.lengthenTime(key, txn)
-	if err != nil {
-		return err
-	}
-
-	var keys []string
-
-	for _, source := range charts.PowSources {
-		keys = append(keys, fmt.Sprintf("%s-%s-%s", PowChart, WorkerAxis, source))
-		keys = append(keys, fmt.Sprintf("%s-%s-%s", PowChart, HashrateAxis, source))
-	}
-
-	for _, key := range keys {
-		if err := charts.lengthenChartNullUints(key, dayIntervals, hourIntervals, txn); err != nil {
-			return err
-		}
-	}
-
-	if err := txn.Commit(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (charts *Manager) lengthenSnapshot() error {
 	txn := charts.DB.NewTransaction(true)
 	defer txn.Discard()
@@ -1053,7 +1023,6 @@ func (charts *Manager) lengthenTime(key string, txn *badger.Txn) (dayIntervals [
 
 	return
 }
-
 
 func (charts *Manager) lengthenTimeAndHeight(timeKey, heightKey string, txn *badger.Txn) (dayIntervals [][2]int, hourIntervals [][2]int, err error) {
 	var dates, heights ChartUints
@@ -1306,18 +1275,6 @@ func hourStamp(t uint64) (hour uint64) {
 		hour = t - t%anHour
 	}
 	return
-}
-
-func (charts *Manager) PowTimeTip() uint64 {
-	var dates ChartUints
-	err := charts.ReadVal(PowChart+"-"+string(TimeAxis), &dates)
-	if err != nil {
-		return 0
-	}
-	if len(dates) == 0 {
-		return 0
-	}
-	return dates[dates.Length()-1]
 }
 
 func (charts *Manager) VSPTimeTip() uint64 {
