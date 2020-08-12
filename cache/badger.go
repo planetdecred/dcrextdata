@@ -832,50 +832,6 @@ func (charts *Manager) snipChartFloatsAxis(key string, length int, txn *badger.T
 	return charts.SaveValTx(key, data, txn)
 }
 
-func (charts *Manager) lengthenVsp() error {
-	txn := charts.DB.NewTransaction(true)
-	defer txn.Discard()
-
-	key := fmt.Sprintf("%s-%s", VSP, TimeAxis)
-	dayIntervals, hourIntervals, err := charts.lengthenTime(key, txn)
-	if err != nil {
-		return err
-	}
-
-	var uintAxisKeys, floatAxisKeys []string
-
-	for _, source := range charts.VSPSources {
-		uintAxisKeys = append(uintAxisKeys, fmt.Sprintf("%s-%s-%s", VSP, ImmatureAxis, source))
-		uintAxisKeys = append(uintAxisKeys, fmt.Sprintf("%s-%s-%s", VSP, LiveAxis, source))
-		uintAxisKeys = append(uintAxisKeys, fmt.Sprintf("%s-%s-%s", VSP, VotedAxis, source))
-		uintAxisKeys = append(uintAxisKeys, fmt.Sprintf("%s-%s-%s", VSP, MissedAxis, source))
-		uintAxisKeys = append(uintAxisKeys, fmt.Sprintf("%s-%s-%s", VSP, UserCountAxis, source))
-		uintAxisKeys = append(uintAxisKeys, fmt.Sprintf("%s-%s-%s", VSP, UsersActiveAxis, source))
-
-		floatAxisKeys = append(floatAxisKeys, fmt.Sprintf("%s-%s-%s", VSP, PoolFeesAxis, source))
-		floatAxisKeys = append(floatAxisKeys, fmt.Sprintf("%s-%s-%s", VSP, ProportionLiveAxis, source))
-		floatAxisKeys = append(floatAxisKeys, fmt.Sprintf("%s-%s-%s", VSP, ProportionMissedAxis, source))
-	}
-
-	for _, key := range uintAxisKeys {
-		if err := charts.lengthenChartNullUints(key, dayIntervals, hourIntervals, txn); err != nil {
-			return err
-		}
-	}
-
-	for _, key := range floatAxisKeys {
-		if err := charts.lengthenChartNullFloats(key, dayIntervals, hourIntervals, txn); err != nil {
-			return err
-		}
-	}
-
-	if err := txn.Commit(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (charts *Manager) lengthenSnapshot() error {
 	txn := charts.DB.NewTransaction(true)
 	defer txn.Discard()
@@ -1275,18 +1231,6 @@ func hourStamp(t uint64) (hour uint64) {
 		hour = t - t%anHour
 	}
 	return
-}
-
-func (charts *Manager) VSPTimeTip() uint64 {
-	var dates ChartUints
-	err := charts.ReadVal(VSP+"-"+string(TimeAxis), &dates)
-	if err != nil {
-		return 0
-	}
-	if len(dates) == 0 {
-		return 0
-	}
-	return dates[dates.Length()-1]
 }
 
 func (charts *Manager) SnapshotTip() uint64 {

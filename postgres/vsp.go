@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dgraph-io/badger"
 	"github.com/planetdecred/dcrextdata/app/helpers"
 	"github.com/planetdecred/dcrextdata/cache"
 	"github.com/planetdecred/dcrextdata/datasync"
@@ -561,181 +560,8 @@ func (pg *PgDb) fetchEncodeVspChart(ctx context.Context, charts *cache.Manager, 
 	return nil, cache.UnknownChartErr
 }
 
-func (pg *PgDb) fetchAndAppendVspChartAxis(ctx context.Context, charts *cache.Manager,
-	dates cache.ChartUints, dataType string, startDate uint64, txn *badger.Txn) error {
-
-	var keys []string
-	keyExists := func(key string) bool {
-		for _, k := range keys {
-			if key == k {
-				return true
-			}
-		}
-		return false
-	}
-
-	processUint := func(recMap map[int64]int, source string) error {
-		var chartData cache.ChartNullUints
-		var hasFoundOne bool
-		for _, date := range dates {
-			if date < startDate {
-				continue
-			}
-			var data *null.Uint64
-			if rec, f := recMap[int64(date)]; f {
-				data = &null.Uint64{
-					Uint64: uint64(rec), Valid: true,
-				}
-				hasFoundOne = true
-			} else if hasFoundOne {
-				data = &null.Uint64{}
-			}
-			chartData = append(chartData, data)
-		}
-		key := fmt.Sprintf("%s-%s-%s", cache.VSP, dataType, source)
-		var retryCount int
-	retry:
-		if err := charts.AppendChartNullUintsAxisTx(key, chartData, txn); err != nil {
-			if err == badger.ErrConflict && !keyExists(key) && retryCount < 3 {
-				retryCount++
-				goto retry
-			}
-			return fmt.Errorf("%s - ", key)
-		}
-		keys = append(keys, key)
-		return nil
-	}
-
-	processFloat := func(recMap map[int64]float64, source string) error {
-		var chartData cache.ChartNullFloats
-		var hasFoundOne bool
-		var fCount int
-		for _, date := range dates {
-			if date < startDate {
-				continue
-			}
-			var data *null.Float64
-			if rec, f := recMap[int64(date)]; f {
-				data = &null.Float64{
-					Float64: rec, Valid: true,
-				}
-				fCount++
-				hasFoundOne = true
-			} else if hasFoundOne {
-				data = &null.Float64{}
-			}
-			chartData = append(chartData, data)
-		}
-		key := fmt.Sprintf("%s-%s-%s", cache.VSP, dataType, source)
-		var retryCount int
-	retry:
-		if err := charts.AppendChartNullFloatsAxisTx(key, chartData, txn); err != nil {
-			if err == badger.ErrConflict && !keyExists(key) && retryCount < 3 {
-				retryCount++
-				goto retry
-			}
-			return err
-		}
-		keys = append(keys, key)
-		return nil
-	}
-
-	for _, source := range charts.VSPSources {
-		points, err := pg.fetchVSPChartData(ctx, source, helpers.UnixTime(int64(startDate)), 0, dataType)
-		if err != nil {
-			if err.Error() == sql.ErrNoRows.Error() {
-				continue
-			}
-			return fmt.Errorf("error in fetching records for %s: %s", source, err.Error())
-		}
-		switch strings.ToLower(dataType) {
-		case string(cache.ImmatureAxis):
-			recMap := map[int64]int{}
-			for _, p := range points {
-				recMap[p.Time.Unix()] = p.Immature
-			}
-			if err = processUint(recMap, source); err != nil {
-				return err
-			}
-		case string(cache.LiveAxis):
-			recMap := map[int64]int{}
-			for _, p := range points {
-				recMap[p.Time.Unix()] = p.Live
-			}
-			if err = processUint(recMap, source); err != nil {
-				return err
-			}
-
-		case string(cache.VotedAxis):
-			recMap := map[int64]int{}
-			for _, p := range points {
-				recMap[p.Time.Unix()] = p.Voted
-			}
-			if err = processUint(recMap, source); err != nil {
-				return err
-			}
-
-		case string(cache.MissedAxis):
-			recMap := map[int64]int{}
-			for _, p := range points {
-				recMap[p.Time.Unix()] = p.Missed
-			}
-			if err = processUint(recMap, source); err != nil {
-				return err
-			}
-
-		case string(cache.PoolFeesAxis):
-			recMap := map[int64]float64{}
-			for _, p := range points {
-				recMap[p.Time.Unix()] = p.PoolFees
-			}
-			if err = processFloat(recMap, source); err != nil {
-				return err
-			}
-
-		case string(cache.ProportionLiveAxis):
-			recMap := map[int64]float64{}
-			for _, p := range points {
-				recMap[p.Time.Unix()] = p.ProportionLive
-			}
-			if err = processFloat(recMap, source); err != nil {
-				return err
-			}
-
-		case string(cache.ProportionMissedAxis):
-			recMap := map[int64]float64{}
-			for _, p := range points {
-				recMap[p.Time.Unix()] = p.ProportionMissed
-			}
-			if err = processFloat(recMap, source); err != nil {
-				return err
-			}
-
-		case string(cache.UserCountAxis):
-			recMap := map[int64]int{}
-			for _, p := range points {
-				recMap[p.Time.Unix()] = p.UserCount
-			}
-			if err = processUint(recMap, source); err != nil {
-				return err
-			}
-
-		case string(cache.UsersActiveAxis):
-			recMap := map[int64]int{}
-			for _, p := range points {
-				recMap[p.Time.Unix()] = p.UsersActive
-			}
-			if err = processUint(recMap, source); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
 func (pg *PgDb) fetchCacheVspChart(ctx context.Context, charts *cache.Manager, page int) (interface{}, func(), bool, error) {
-	startDate := charts.VSPTimeTip()
+	startDate := charts.VSPTip()
 	// Get close to the nearest value after the start date to avoid continue loop for situations where there is a gap
 	var receiver time.Time
 	statement := fmt.Sprintf("SELECT %s FROM %s WHERE %s > '%s' ORDER BY %s LIMIT 1", models.VSPTickColumns.Time,
@@ -753,48 +579,8 @@ func (pg *PgDb) fetchCacheVspChart(ctx context.Context, charts *cache.Manager, p
 			startDate -= 1
 		}
 	}
-	//
-
-	dates, err := pg.allVspTickDates(ctx, helpers.UnixTime(int64(startDate)))
-	if err != nil && err != sql.ErrNoRows {
-		return nil, func() {}, true, err
-	}
-	var unixTimes cache.ChartUints
-	for _, d := range dates {
-		unixTimes = append(unixTimes, uint64(d.Unix()))
-	}
-
-	txn := charts.DB.NewTransaction(true)
-	defer txn.Discard()
-
-	key := fmt.Sprintf("%s-%s", cache.VSP, cache.TimeAxis)
-	if err := charts.AppendChartUintsAxisTx(key, unixTimes, txn); err != nil {
-		return nil, func() {}, true, err
-	}
-
-	axis := []string{
-		string(cache.ImmatureAxis),
-		string(cache.LiveAxis),
-		string(cache.VotedAxis),
-		string(cache.MissedAxis),
-		string(cache.PoolFeesAxis),
-		string(cache.ProportionLiveAxis),
-		string(cache.ProportionMissedAxis),
-		string(cache.UserCountAxis),
-		string(cache.UsersActiveAxis),
-	}
-	for _, ax := range axis {
-		if err := pg.fetchAndAppendVspChartAxis(ctx, charts, unixTimes, ax, startDate, txn); err != nil {
-			log.Error(err, ax)
-			return nil, func() {}, true, err
-		}
-	}
-
-	if err := txn.Commit(); err != nil {
-		return nil, func() {}, true, err
-	}
-
-	return &vspSet{}, func() {}, true, nil
+	vspSet, _, err := pg.fetchVspChart(ctx, startDate, 0, "")
+	return vspSet, func() {}, true, err
 }
 
 func (pg *PgDb) fetchVspChart(ctx context.Context, startDate uint64, endDate uint64, axisString string, vspSources ...string) (*vspSet, bool, error) {
@@ -899,95 +685,29 @@ func appendVspChart(charts *cache.Manager, data interface{}) error {
 		return nil
 	}
 
-	key := fmt.Sprintf("%s-%s", cache.VSP, cache.TimeAxis)
-	if err := charts.AppendChartUintsAxis(key,
-		vspDataSet.time); err != nil {
+	cachedVspSet, err := charts.VSPSet(cache.DefaultBin)
+	if err != nil && err != cache.UnknownChartErr {
 		return err
 	}
 
-	keyExists := func(arr []string, key string) bool {
-		for _, s := range arr {
-			if s == key {
-				return true
-			}
-		}
-		return false
+	cachedVspSet.Time = append(cachedVspSet.Time, vspDataSet.time...)
+	for _, s := range charts.VSPSources {
+		cachedVspSet.Immature[s] = cachedVspSet.Immature[s].Append(vspDataSet.immature[s])
+		cachedVspSet.Live[s] = cachedVspSet.Live[s].Append(vspDataSet.live[s])
+		cachedVspSet.Voted[s] = cachedVspSet.Voted[s].Append(vspDataSet.voted[s])
+		cachedVspSet.Missed[s] = cachedVspSet.Missed[s].Append(vspDataSet.missed[s])
+		cachedVspSet.PoolFees[s] = cachedVspSet.PoolFees[s].Append(vspDataSet.poolFees[s])
+		cachedVspSet.ProportionLive[s] = cachedVspSet.ProportionLive[s].Append(vspDataSet.proportionLive[s])
+		cachedVspSet.ProportionMissed[s] = cachedVspSet.ProportionMissed[s].Append(vspDataSet.proportionMissed[s])
+		cachedVspSet.UserCount[s] = cachedVspSet.UserCount[s].Append(vspDataSet.userCount[s])
+		cachedVspSet.UsersActive[s] = cachedVspSet.UsersActive[s].Append(vspDataSet.usersActive[s])
 	}
 
-	for vspSource, record := range vspDataSet.immature {
-		if !keyExists(charts.VSPSources, vspSource) {
-			charts.VSPSources = append(charts.VSPSources, vspSource)
-		}
-		key := fmt.Sprintf("%s-%s-%s", cache.VSP, cache.ImmatureAxis, vspSource)
-		if err := charts.AppendChartNullUintsAxis(key,
-			record); err != nil {
-			return err
-		}
+	if err = cachedVspSet.Save(charts); err != nil {
+		return err
 	}
-
-	for vspSource, record := range vspDataSet.live {
-		key := fmt.Sprintf("%s-%s-%s", cache.VSP, cache.LiveAxis, vspSource)
-		if err := charts.AppendChartNullUintsAxis(key,
-			record); err != nil {
-			return err
-		}
+	if len(vspDataSet.time) > 0 {
+		charts.SetVSPTip(vspDataSet.time[len(vspDataSet.time)-1])
 	}
-
-	for vspSource, record := range vspDataSet.voted {
-		key := fmt.Sprintf("%s-%s-%s", cache.VSP, cache.VotedAxis, vspSource)
-		if err := charts.AppendChartNullUintsAxis(key,
-			record); err != nil {
-			return err
-		}
-	}
-
-	for vspSource, record := range vspDataSet.missed {
-		key := fmt.Sprintf("%s-%s-%s", cache.VSP, cache.MissedAxis, vspSource)
-		if err := charts.AppendChartNullUintsAxis(key,
-			record); err != nil {
-			return err
-		}
-	}
-
-	for vspSource, record := range vspDataSet.poolFees {
-		key := fmt.Sprintf("%s-%s-%s", cache.VSP, cache.PoolFeesAxis, vspSource)
-		if err := charts.AppendChartNullFloatsAxis(key,
-			record); err != nil {
-			return err
-		}
-	}
-
-	for vspSource, record := range vspDataSet.proportionLive {
-		key := fmt.Sprintf("%s-%s-%s", cache.VSP, cache.ProportionLiveAxis, vspSource)
-		if err := charts.AppendChartNullFloatsAxis(key,
-			record); err != nil {
-			return err
-		}
-	}
-
-	for vspSource, record := range vspDataSet.proportionMissed {
-		key := fmt.Sprintf("%s-%s-%s", cache.VSP, cache.ProportionMissedAxis, vspSource)
-		if err := charts.AppendChartNullFloatsAxis(key,
-			record); err != nil {
-			return err
-		}
-	}
-
-	for vspSource, record := range vspDataSet.usersActive {
-		key := fmt.Sprintf("%s-%s-%s", cache.VSP, cache.UsersActiveAxis, vspSource)
-		if err := charts.AppendChartNullUintsAxis(key,
-			record); err != nil {
-			return err
-		}
-	}
-
-	for vspSource, record := range vspDataSet.userCount {
-		key := fmt.Sprintf("%s-%s-%s", cache.VSP, cache.UserCountAxis, vspSource)
-		if err := charts.AppendChartNullUintsAxis(key,
-			record); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }

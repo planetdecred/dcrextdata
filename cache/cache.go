@@ -708,6 +708,7 @@ type Manager struct {
 	mempoolMtx     sync.RWMutex
 	propagationMtx sync.RWMutex
 	powMtx         sync.RWMutex
+	vspMtx         sync.RWMutex
 
 	DB        *badger.DB
 	dir       string
@@ -725,6 +726,7 @@ type Manager struct {
 	mempooTip      uint64
 	propagationTip uint64
 	powTip         uint64
+	vspTip         uint64
 }
 
 // Check that the length of all arguments is equal.
@@ -1005,9 +1007,6 @@ func (charts *Manager) Update(ctx context.Context, tags ...string) error {
 				}
 			}
 			completed = done
-			if updater.Tag != VSP {
-				completed = true
-			}
 			cancel()
 			if err != nil {
 				return err
@@ -1076,7 +1075,7 @@ func (charts *Manager) cacheID(chartID string) uint64 {
 	case PowChart:
 		return charts.PowTip()
 	case VSP:
-		return charts.VSPTimeTip()
+		return charts.VSPTip()
 	case Exchange:
 		var version uint64
 		for _, key := range charts.ExchangeKeys {
@@ -1374,45 +1373,49 @@ func MakePowChart(charts *Manager, dates ChartUints, deviations []ChartNullUints
 }
 
 func makeVspChart(ctx context.Context, charts *Manager, dataType, axis axisType, bin binLevel, vsps ...string) ([]byte, error) {
-	var dates ChartUints
-	key := VSP + "-" + string(TimeAxis)
-	if bin != DefaultBin {
-		key = fmt.Sprintf("%s-%s", key, bin)
-	}
-	if err := charts.ReadVal(key, &dates); err != nil {
+	vspSet, err := charts.VSPSet(bin)
+	if err != nil {
 		return nil, err
 	}
 
 	var deviations = make([]ChartNullData, len(vsps))
 
 	for i, s := range vsps {
-		key = fmt.Sprintf("%s-%s-%s", VSP, dataType, s)
-		if bin != DefaultBin {
-			key = fmt.Sprintf("%s-%s", key, bin)
-		}
 		switch dataType {
-		case ImmatureAxis, LiveAxis, VotedAxis, MissedAxis, UserCountAxis, UsersActiveAxis:
-			var data chartNullIntsPointer
-			if err := charts.ReadVal(key, &data); err != nil {
-				return nil, err
-			}
+		case ImmatureAxis:
+			data := vspSet.Immature[s]
+			deviations[i] = data.toChartNullUint()
+		case LiveAxis:
+			data := vspSet.Live[s]
+			deviations[i] = data.toChartNullUint()
+		case VotedAxis:
+			data := vspSet.Voted[s]
+			deviations[i] = data.toChartNullUint()
+		case MissedAxis:
+			data := vspSet.Missed[s]
+			deviations[i] = data.toChartNullUint()
+		case UserCountAxis:
+			data := vspSet.UserCount[s]
+			deviations[i] = data.toChartNullUint()
+		case UsersActiveAxis:
+			data := vspSet.UsersActive[s]
 			deviations[i] = data.toChartNullUint()
 
-		case ProportionLiveAxis, ProportionMissedAxis, PoolFeesAxis:
-			var data chartNullFloatsPointer
-			if err := charts.ReadVal(key, &data); err != nil {
-				return nil, err
-			}
+		case ProportionLiveAxis:
+			data := vspSet.ProportionLive[s]
+			deviations[i] = data.toChartNullFloats()
+		case ProportionMissedAxis:
+			data := vspSet.ProportionMissed[s]
+			deviations[i] = data.toChartNullFloats()
+		case PoolFeesAxis:
+			data := vspSet.PoolFees[s]
 			deviations[i] = data.toChartNullFloats()
 		}
 
 	}
 
-	return MakeVspChart(charts, dates, deviations, vsps)
+	return MakeVspChart(charts, vspSet.Time, deviations, vsps)
 }
-
-// ImmatureAxis, LiveAxis, VotedAxis, MissedAxis, UserCountAxis, UsersActiveAxis
-// PoolFeesAxis, ProportionLiveAxis, ProportionMissedAxis,
 
 func MakeVspChart(charts *Manager, dates ChartUints, deviations []ChartNullData, vsps []string) ([]byte, error) {
 	var recs = []Lengther{dates}
