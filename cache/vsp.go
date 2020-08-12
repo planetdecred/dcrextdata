@@ -162,6 +162,7 @@ func (charts *Manager) lengthenVsp() error {
 
 		for _, interval := range hourIntervals {
 			immature.Items = append(immature.Items, set.Immature[s].Avg(interval[0], interval[1]))
+			live.Items = append(live.Items, set.Live[s].Avg(interval[0], interval[1]))
 			missed.Items = append(missed.Items, set.Missed[s].Avg(interval[0], interval[1]))
 			voted.Items = append(voted.Items, set.Voted[s].Avg(interval[0], interval[1]))
 			poolFees.Items = append(poolFees.Items, set.PoolFees[s].Avg(interval[0], interval[1]))
@@ -211,6 +212,7 @@ func (charts *Manager) lengthenVsp() error {
 
 		for _, interval := range dayIntervals {
 			immature.Items = append(immature.Items, set.Immature[s].Avg(interval[0], interval[1]))
+			live.Items = append(live.Items, set.Live[s].Avg(interval[0], interval[1]))
 			missed.Items = append(missed.Items, set.Missed[s].Avg(interval[0], interval[1]))
 			voted.Items = append(voted.Items, set.Voted[s].Avg(interval[0], interval[1]))
 			poolFees.Items = append(poolFees.Items, set.PoolFees[s].Avg(interval[0], interval[1]))
