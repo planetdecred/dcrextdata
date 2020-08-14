@@ -441,50 +441,6 @@ func (pg *PgDb) exchangeTicksChartData(ctx context.Context, currencyPair string,
 	return exchangeFilterResult, nil
 }
 
-// FetchExchangeTicks fetches a slice exchange ticks for the sync operation
-func (pg *PgDb) FetchExchangeTicksForSync(ctx context.Context, date time.Time, skip, take int) ([]ticks.TickSyncDto, int64, error) {
-	query := []qm.QueryMod{
-		qm.Load("Exchange"),
-		models.ExchangeTickWhere.Time.GTE(date),
-	}
-
-	exchangeTickSliceCount, err := models.ExchangeTicks(query...).Count(ctx, pg.db)
-
-	if err != nil {
-		return nil, 0, err
-	}
-
-	query = append(query,
-		qm.Limit(take),
-		qm.Offset(skip),
-		qm.OrderBy(fmt.Sprintf("%s DESC", models.ExchangeTickColumns.Time)),
-	)
-
-	exchangeTickSlice, err := models.ExchangeTicks(query...).All(ctx, pg.db)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	var tickDtos []ticks.TickSyncDto
-	for _, tick := range exchangeTickSlice {
-		tickDtos = append(tickDtos, ticks.TickSyncDto{
-			ID:           tick.ID,
-			ExchangeID:   tick.ExchangeID,
-			Interval:     tick.Interval,
-			CurrencyPair: tick.CurrencyPair,
-			Time:         tick.Time,
-			Close:        tick.Close,
-			ExchangeName: tick.R.Exchange.Name,
-			High:         tick.High,
-			Low:          tick.Low,
-			Open:         tick.Open,
-			Volume:       tick.Volume,
-		})
-	}
-
-	return tickDtos, exchangeTickSliceCount, err
-}
-
 func (pg *PgDb) SaveExchangeTickFromSync(ctx context.Context, tickData interface{}) error {
 	tick := tickData.(ticks.TickSyncDto)
 
@@ -637,20 +593,22 @@ func appendExchangeChart(charts *cache.Manager, data interface{}) error {
 		if len(tickSet.time) == 0 {
 			continue
 		}
-		if err := charts.AppendChartUintsAxis(key+"-"+string(cache.TimeAxis), tickSet.time); err != nil {
-			log.Errorf("Error in append exchange time, %s", err.Error())
+		set, err := charts.ExchangeTickSet(key, cache.DefaultBin)
+		if err != nil && err != cache.UnknownChartErr {
+			log.Errorf("Error in append exchange set for %s, %s", key, err.Error())
+			continue
 		}
-		if err := charts.AppendChartFloatsAxis(key+"-"+string(cache.ExchangeOpenAxis), tickSet.open); err != nil {
-			log.Errorf("Error in append exchange open axis, %s", err.Error())
+		set.Time = append(set.Time, tickSet.time...)
+		set.Open = append(set.Open, tickSet.open...)
+		set.Close = append(set.Close, tickSet.close...)
+		set.High = append(set.High, tickSet.high...)
+		set.Low = append(set.Low, tickSet.low...)
+		if err := set.Save(charts); err != nil {
+			log.Errorf("Error in append exchange set for %s, %s", key, err.Error())
+			continue
 		}
-		if err := charts.AppendChartFloatsAxis(key+"-"+string(cache.ExchangeCloseAxis), tickSet.close); err != nil {
-			log.Errorf("Error in append exchange close axis, %s", err.Error())
-		}
-		if err := charts.AppendChartFloatsAxis(key+"-"+string(cache.ExchangeHighAxis), tickSet.high); err != nil {
-			log.Errorf("Error in append exchange high axis, %s", err.Error())
-		}
-		if err := charts.AppendChartFloatsAxis(key+"-"+string(cache.ExchangeLowAxis), tickSet.low); err != nil {
-			log.Errorf("Error in append exchange low axis, %s", err.Error())
+		if set.Time.Length() > 0 {
+			charts.SetExchangeSetTime(key, set.Time[set.Time.Length()-1])
 		}
 	}
 

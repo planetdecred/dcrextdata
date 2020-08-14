@@ -25,7 +25,6 @@ type Store interface {
 	FetchExchangeForSync(ctx context.Context, lastID int, skip, take int) ([]ExchangeData, int64, error)
 	StoreExchangeTicks(ctx context.Context, exchange string, interval int, pair string, data []Tick) (time.Time, error)
 	LastExchangeTickEntryTime() (time time.Time)
-	FetchExchangeTicksForSync(ctx context.Context, date time.Time, skip, take int) ([]TickSyncDto, int64, error)
 }
 
 type urlRequester func(time.Time, time.Duration, string) (string, error)

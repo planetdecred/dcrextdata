@@ -700,15 +700,15 @@ type Retriver func(ctx context.Context, charts *Manager, dataType, axisString st
 
 // Manager is the entry point chart cache
 type Manager struct {
-	mtx         sync.RWMutex
-	ctx         context.Context
-	EnableCache bool
+	mtx sync.RWMutex
+	ctx context.Context
 
 	cacheMtx       sync.RWMutex
 	mempoolMtx     sync.RWMutex
 	propagationMtx sync.RWMutex
 	powMtx         sync.RWMutex
 	vspMtx         sync.RWMutex
+	exchangeMtx    sync.RWMutex
 
 	DB        *badger.DB
 	dir       string
@@ -723,10 +723,13 @@ type Manager struct {
 	NodeVersion   []string
 	NodeLocations []string
 
-	mempooTip      uint64
-	propagationTip uint64
-	powTip         uint64
-	vspTip         uint64
+	exchangeTickSetTip map[string]uint64
+	mempooTip          uint64
+	propagationTip     uint64
+	powTip             uint64
+	vspTip             uint64
+
+	EnableCache bool
 }
 
 // Check that the length of all arguments is equal.
@@ -1042,18 +1045,19 @@ func NewChartData(ctx context.Context, enableCache bool, syncSources,
 	// create cache dir if not existing
 
 	return &Manager{
-		ctx:           ctx,
-		EnableCache:   enableCache,
-		DB:            db,
-		dir:           dir,
-		cache:         make(map[string]*cachedChart),
-		updaters:      make(map[string]ChartUpdater),
-		retrivers:     make(map[string]Retriver),
-		syncSource:    syncSources,
-		PowSources:    poolSources,
-		VSPSources:    vsps,
-		NodeLocations: locations,
-		NodeVersion:   versions,
+		ctx:                ctx,
+		EnableCache:        enableCache,
+		DB:                 db,
+		dir:                dir,
+		cache:              make(map[string]*cachedChart),
+		updaters:           make(map[string]ChartUpdater),
+		retrivers:          make(map[string]Retriver),
+		exchangeTickSetTip: make(map[string]uint64),
+		syncSource:         syncSources,
+		PowSources:         poolSources,
+		VSPSources:         vsps,
+		NodeLocations:      locations,
+		NodeVersion:        versions,
 	}
 }
 

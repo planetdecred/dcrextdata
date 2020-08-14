@@ -102,7 +102,7 @@ func (charts *Manager) VSPSet(bin binLevel) (data vspSet, err error) {
 	var file *os.File
 	file, err = os.Open(filename)
 	if err != nil {
-		log.Errorf("Error in opening mempool cache file - %s", err.Error())
+		log.Errorf("Error in opening VSP cache file - %s", err.Error())
 		return
 	}
 
@@ -113,7 +113,7 @@ func (charts *Manager) VSPSet(bin binLevel) (data vspSet, err error) {
 	decoder := gob.NewDecoder(file)
 	err = decoder.Decode(&data)
 	if err != nil {
-		log.Errorf("Error in opening mempool cache file - %s", err.Error())
+		log.Errorf("Error in opening VSP cache file - %s", err.Error())
 		return
 	}
 
