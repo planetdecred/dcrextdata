@@ -881,71 +881,28 @@ func appendSnapshotChart(charts *cache.Manager, data interface{}) error {
 		return nil
 	}
 
-	txn := charts.DB.NewTransaction(true)
-	defer txn.Discard()
-
-	key := fmt.Sprintf("%s-%s", cache.Snapshot, cache.TimeAxis)
-	if err := charts.AppendChartUintsAxisTx(key, tickSets.time, txn); err != nil {
+	set, err := charts.SnapshotSet(cache.DefaultBin)
+	if err != nil && err != cache.UnknownChartErr {
 		return err
 	}
 
-	key = fmt.Sprintf("%s-%s", cache.Snapshot, cache.SnapshotNodes)
-	if err := charts.AppendChartUintsAxisTx(key, tickSets.nodes, txn); err != nil {
-		return err
-	}
-
-	key = fmt.Sprintf("%s-%s", cache.Snapshot, cache.SnapshotReachableNodes)
-	if err := charts.AppendChartUintsAxisTx(key, tickSets.reachableNodes, txn); err != nil {
-		return err
-	}
-
-	keyExists := func(arr []string, key string) bool {
-		for _, item := range arr {
-			if item == key {
-				return true
-			}
-		}
-		return false
-	}
-
-	key = fmt.Sprintf("%s-%s-%s", cache.Snapshot, cache.SnapshotLocations, cache.TimeAxis)
-	if err := charts.AppendChartUintsAxisTx(key, tickSets.locationDates, txn); err != nil {
-		return err
-	}
-
+	set.Time = append(set.Time, tickSets.time...)
+	set.Nodes = append(set.Nodes, tickSets.nodes...)
+	set.ReachableNodes = append(set.ReachableNodes, tickSets.reachableNodes...)
+	set.LocationDates = append(set.LocationDates, tickSets.locationDates...)
 	for country, record := range tickSets.locations {
-		if country == "" {
-			country = "Unknown"
-		}
-		if !keyExists(charts.NodeLocations, country) {
-			charts.NodeLocations = append(charts.NodeLocations, country)
-		}
-		key = fmt.Sprintf("%s-%s-%s", cache.Snapshot, cache.SnapshotLocations, country)
-		if err := charts.AppendChartUintsAxisTx(key, record, txn); err != nil {
-			return err
-		}
+		set.Locations[country] = append(set.Locations[country], record...)
 	}
-
-	key = fmt.Sprintf("%s-%s-%s", cache.Snapshot, cache.SnapshotNodeVersions, cache.TimeAxis)
-	if err := charts.AppendChartUintsAxisTx(key, tickSets.versionDates, txn); err != nil {
-		return err
-	}
-
+	set.VersionDates = append(set.VersionDates, tickSets.versionDates...)
 	for userAgent, record := range tickSets.versions {
-		if userAgent == "" {
-			userAgent = "Unknown"
-		}
-		if !keyExists(charts.NodeVersion, userAgent) {
-			charts.NodeVersion = append(charts.NodeVersion, userAgent)
-		}
-		key = fmt.Sprintf("%s-%s-%s", cache.Snapshot, cache.SnapshotNodeVersions, userAgent)
-		if err := charts.AppendChartUintsAxisTx(key, record, txn); err != nil {
-			return err
-		}
+		set.Versions[userAgent] = append(set.Versions[userAgent], record...)
+	}
+	if err := set.Save(charts); err != nil {
+		return err
 	}
 
-	if err := txn.Commit(); err != nil {
-		return err
+	if set.Time.Length() > 0 {
+		charts.SetSnapshotTip(set.Time[set.Time.Length()-1])
 	}
 
 	return nil

@@ -10,9 +10,6 @@ import (
 
 const (
 	versionKey = "CURRENT_VERSION"
-	// aDay defines the number of seconds in a day.
-	aDay   = 86400
-	anHour = aDay / 24
 )
 
 // chart version
@@ -832,66 +829,6 @@ func (charts *Manager) snipChartFloatsAxis(key string, length int, txn *badger.T
 	return charts.SaveValTx(key, data, txn)
 }
 
-func (charts *Manager) lengthenSnapshot() error {
-	txn := charts.DB.NewTransaction(true)
-	defer txn.Discard()
-
-	dayIntervals, hourIntervals, err := charts.lengthenTime(fmt.Sprintf("%s-%s", Snapshot, TimeAxis), txn)
-	if err != nil {
-		return err
-	}
-
-	keys := []string{
-		fmt.Sprintf("%s-%s", Snapshot, SnapshotNodes),
-		fmt.Sprintf("%s-%s", Snapshot, SnapshotReachableNodes),
-	}
-	for _, key := range keys {
-		if err := charts.lengthenChartUints(key, dayIntervals, hourIntervals, txn); err != nil {
-			return err
-		}
-	}
-
-	// version
-	key := fmt.Sprintf("%s-%s-%s", Snapshot, SnapshotNodeVersions, TimeAxis)
-	dayIntervals, hourIntervals, err = charts.lengthenTime(key, txn)
-	if err != nil {
-		return err
-	}
-
-	keys = []string{}
-	for _, userAgent := range charts.NodeVersion {
-		keys = append(keys, fmt.Sprintf("%s-%s-%s", Snapshot, SnapshotNodeVersions, userAgent))
-	}
-	for _, key := range keys {
-		if err := charts.lengthenChartUints(key, dayIntervals, hourIntervals, txn); err != nil {
-			return err
-		}
-	}
-
-	// location
-	key = fmt.Sprintf("%s-%s-%s", Snapshot, SnapshotLocations, TimeAxis)
-	dayIntervals, hourIntervals, err = charts.lengthenTime(key, txn)
-	if err != nil {
-		return err
-	}
-
-	keys = []string{}
-	for _, country := range charts.NodeLocations {
-		keys = append(keys, fmt.Sprintf("%s-%s-%s", Snapshot, SnapshotLocations, country))
-	}
-	for _, key := range keys {
-		if err := charts.lengthenChartUints(key, dayIntervals, hourIntervals, txn); err != nil {
-			return err
-		}
-	}
-
-	if err := txn.Commit(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (charts *Manager) lengthenTime(key string, txn *badger.Txn) (dayIntervals [][2]int, hourIntervals [][2]int, err error) {
 	var dates ChartUints
 	if err = charts.ReadValTx(key, &dates, txn); err != nil {
@@ -1215,32 +1152,4 @@ func (charts *Manager) lengthenChartNullFloats(key string, dayIntervals [][2]int
 	}
 
 	return nil
-}
-
-// Reduce the timestamp to the previous midnight.
-func midnight(t uint64) (mid uint64) {
-	if t > 0 {
-		mid = t - t%aDay
-	}
-	return
-}
-
-// Reduce the timestamp to the previous hour
-func hourStamp(t uint64) (hour uint64) {
-	if t > 0 {
-		hour = t - t%anHour
-	}
-	return
-}
-
-func (charts *Manager) SnapshotTip() uint64 {
-	var dates ChartUints
-	err := charts.ReadVal(Snapshot+"-"+string(TimeAxis), &dates)
-	if err != nil {
-		return 0
-	}
-	if len(dates) == 0 {
-		return 0
-	}
-	return dates[dates.Length()-1]
 }

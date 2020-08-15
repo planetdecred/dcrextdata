@@ -29,6 +29,10 @@ const (
 	Exchange      = "exchange"
 	Snapshot      = "snapshot"
 	SnapshotTable = Snapshot + "_table"
+
+	// aDay defines the number of seconds in a day.
+	aDay   = 86400
+	anHour = aDay / 24
 )
 
 // binLevel specifies the granularity of data.
@@ -709,6 +713,7 @@ type Manager struct {
 	powMtx         sync.RWMutex
 	vspMtx         sync.RWMutex
 	exchangeMtx    sync.RWMutex
+	snapshotMtx    sync.RWMutex
 
 	DB        *badger.DB
 	dir       string
@@ -728,6 +733,7 @@ type Manager struct {
 	propagationTip     uint64
 	powTip             uint64
 	vspTip             uint64
+	snapshotTip        uint64
 
 	EnableCache bool
 }
@@ -792,6 +798,10 @@ func generateDayBin(dates, heights ChartUints) (days, dayHeights ChartUints, day
 		return
 	}
 
+	if dates.Length() == 0 {{
+		return
+	}}
+
 	// Get the current first and last midnight stamps.
 	var start = midnight(dates[0])
 	end := midnight(dates[len(dates)-1])
@@ -832,6 +842,9 @@ func generateHourBin(dates, heights ChartUints) (hours, hourHeights ChartUints, 
 		log.Criticalf("generateHourBin: length mismatch %d != %d", dates.Length(), heights.Length())
 		return
 	}
+	if dates.Length() == 0 {
+		return
+	}
 	// Get the current first and last hour stamps.
 	start := hourStamp(dates[0])
 	end := hourStamp(dates[len(dates)-1])
@@ -864,6 +877,22 @@ func generateHourBin(dates, heights ChartUints) (hours, hourHeights ChartUints, 
 		}
 	}
 
+	return
+}
+
+// Reduce the timestamp to the previous midnight.
+func midnight(t uint64) (mid uint64) {
+	if t > 0 {
+		mid = t - t%aDay
+	}
+	return
+}
+
+// Reduce the timestamp to the previous hour
+func hourStamp(t uint64) (hour uint64) {
+	if t > 0 {
+		hour = t - t%anHour
+	}
 	return
 }
 
@@ -1445,94 +1474,44 @@ func networkSnapshorChart(ctx context.Context, charts *Manager, dataType, _ axis
 }
 
 func networkSnapshotNodesChart(charts *Manager, bin binLevel) ([]byte, error) {
-	var dates, nodes, reachableNodes ChartUints
-
-	var key = fmt.Sprintf("%s-%s", Snapshot, TimeAxis)
-	if bin != DefaultBin {
-		key = fmt.Sprintf("%s-%s", key, bin)
-	}
-	if err := charts.ReadVal(key, &dates); err != nil {
-		log.Info(key)
+	set, err := charts.SnapshotSet(bin)
+	if err != nil {
 		return nil, err
 	}
 
-	key = fmt.Sprintf("%s-%s", Snapshot, SnapshotNodes)
-	if bin != DefaultBin {
-		key = fmt.Sprintf("%s-%s", key, bin)
-	}
-	if err := charts.ReadVal(key, &nodes); err != nil {
-		return nil, err
-	}
-
-	key = fmt.Sprintf("%s-%s", Snapshot, SnapshotReachableNodes)
-	if bin != DefaultBin {
-		key = fmt.Sprintf("%s-%s", key, bin)
-	}
-	if err := charts.ReadVal(key, &reachableNodes); err != nil {
-		return nil, err
-	}
-
-	return charts.Encode(nil, dates, nodes, reachableNodes)
+	return charts.Encode(nil, set.Time, set.Nodes, set.ReachableNodes)
 }
 
 func networkSnapshotLocationsChart(charts *Manager, bin binLevel, countries ...string) ([]byte, error) {
-	var recs = make([]Lengther, len(countries)+1)
-	var dates ChartUints
-	key := fmt.Sprintf("%s-%s-%s", Snapshot, SnapshotLocations, TimeAxis)
-	if bin != DefaultBin {
-		key = fmt.Sprintf("%s-%s", key, bin)
-	}
-	if err := charts.ReadVal(key, &dates); err != nil {
+	set, err := charts.SnapshotSet(bin)
+	if err != nil {
 		return nil, err
 	}
-	recs[0] = dates
+	var recs = make([]Lengther, len(countries)+1)
+	recs[0] = set.LocationDates
 
 	for i, country := range countries {
 		if country == "" {
 			continue
 		}
-		var key = fmt.Sprintf("%s-%s-%s", Snapshot, SnapshotLocations, country)
-		if bin != DefaultBin {
-			key = fmt.Sprintf("%s-%s", key, bin)
-		}
-		var rec ChartUints
-		if err := charts.ReadVal(key, &rec); err != nil {
-			log.Criticalf("%s - %s", err.Error(), key)
-			return nil, err
-		}
-		recs[i+1] = rec
+		recs[i+1] = set.Locations[country]
 	}
 	return charts.Encode(nil, recs...)
 }
 
 func networkSnapshotNodeVersionsChart(charts *Manager, bin binLevel, userAgents ...string) ([]byte, error) {
-	var recs = make([]Lengther, len(userAgents)+1)
-	var dates ChartUints
-	key := fmt.Sprintf("%s-%s-%s", Snapshot, SnapshotNodeVersions, TimeAxis)
-	if bin != DefaultBin {
-		key = fmt.Sprintf("%s-%s", key, bin)
-	}
-	if err := charts.ReadVal(key, &dates); err != nil {
-		log.Info(key)
+	set, err := charts.SnapshotSet(bin)
+	if err != nil {
 		return nil, err
 	}
-	recs[0] = dates
+	var recs = make([]Lengther, len(userAgents)+1)
+	recs[0] = set.VersionDates
 
 	for i, userAgent := range userAgents {
 		if userAgent == "" {
 			continue
 		}
-
-		var key = fmt.Sprintf("%s-%s-%s", Snapshot, SnapshotNodeVersions, userAgent)
-		if bin != DefaultBin {
-			key = fmt.Sprintf("%s-%s", key, bin)
-		}
-		var rec ChartUints
-		if err := charts.ReadVal(key, &rec); err != nil {
-			log.Criticalf("%s - %s", err.Error(), key)
-			return nil, err
-		}
-		recs[i+1] = rec
+		recs[i+1] = set.Versions[userAgent]
 	}
 	return charts.Encode(nil, recs...)
 }
