@@ -1202,7 +1202,8 @@ func (s *Server) communityChat(resp http.ResponseWriter, req *http.Request) {
 	platform := req.FormValue("platform")
 	dataType := req.FormValue("data-type")
 
-	var yLabel, subAccount string
+	filters := map[string]string{}
+	yLabel := ""
 	switch platform {
 	case githubPlatform:
 		if dataType == models.GithubColumns.Folks {
@@ -1210,25 +1211,31 @@ func (s *Server) communityChat(resp http.ResponseWriter, req *http.Request) {
 		} else {
 			yLabel = "Stars"
 		}
-		subAccount = req.FormValue("repository")
+		platform = models.TableNames.Github
+		filters[models.GithubColumns.Repository] = fmt.Sprintf("'%s'", req.FormValue("repository"))
+		break
 	case twitterPlatform:
 		yLabel = "Followers"
 		dataType = models.TwitterColumns.Followers
-		subAccount = req.FormValue("twitter-handle")
+		platform = models.TableNames.Twitter
+		break
 	case redditPlatform:
 		if dataType == models.RedditColumns.ActiveAccounts {
 			yLabel = "Active Accounts"
 		} else if dataType == models.RedditColumns.Subscribers {
 			yLabel = "Subscribers"
 		}
-		subAccount = req.FormValue("subreddit")
+		platform = models.TableNames.Reddit
+		filters[models.RedditColumns.Subreddit] = fmt.Sprintf("'%s'", req.FormValue("subreddit"))
 	case youtubePlatform:
+		platform = models.TableNames.Youtube
 		if dataType == models.YoutubeColumns.ViewCount {
 			yLabel = "View Count"
 		} else if dataType == models.YoutubeColumns.Subscribers {
 			yLabel = "Subscribers"
 		}
-		subAccount = req.FormValue("channel")
+		filters[models.YoutubeColumns.Channel] = fmt.Sprintf("'%s'", req.FormValue("channel"))
+		break
 	}
 
 	if dataType == "" {
@@ -1236,17 +1243,15 @@ func (s *Server) communityChat(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var dates, records cache.ChartUints
-	dateKey := fmt.Sprintf("%s-%s-%s-%s", cache.Community, platform, subAccount, cache.TimeAxis)
-	if err := s.charts.ReadVal(dateKey, &dates); err != nil {
-		s.renderErrorJSON(fmt.Sprintf("Cannot fetch chart data, %s, %s", err.Error(), dateKey), resp)
+	data, err := s.db.CommunityChart(req.Context(), platform, dataType, filters)
+	if err != nil {
+		s.renderErrorJSON(fmt.Sprintf("Cannot fetch chart data, %s", err.Error()), resp)
 		return
 	}
-
-	dataKey := fmt.Sprintf("%s-%s-%s-%s", cache.Community, platform, subAccount, dataType)
-	if err := s.charts.ReadVal(dataKey, &records); err != nil {
-		s.renderErrorJSON(fmt.Sprintf("Cannot fetch chart data, %s, %s", err.Error(), dataKey), resp)
-		return
+	var dates, records cache.ChartUints
+	for _, record := range data {
+		dates = append(dates, uint64(record.Date.Unix()))
+		records = append(records, uint64(record.Record))
 	}
 
 	s.renderJSON(map[string]interface{}{
