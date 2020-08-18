@@ -21,24 +21,24 @@ var (
 	_ = queries.Equal
 )
 
-func testBlocks(t *testing.T) {
+func testMempoolBins(t *testing.T) {
 	t.Parallel()
 
-	query := Blocks()
+	query := MempoolBins()
 
 	if query.Query == nil {
 		t.Error("expected a query, got nothing")
 	}
 }
 
-func testBlocksDelete(t *testing.T) {
+func testMempoolBinsDelete(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Block{}
-	if err = randomize.Struct(seed, o, blockDBTypes, true, blockColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	o := &MempoolBin{}
+	if err = randomize.Struct(seed, o, mempoolBinDBTypes, true, mempoolBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -54,7 +54,7 @@ func testBlocksDelete(t *testing.T) {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := Blocks().Count(ctx, tx)
+	count, err := MempoolBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -64,14 +64,14 @@ func testBlocksDelete(t *testing.T) {
 	}
 }
 
-func testBlocksQueryDeleteAll(t *testing.T) {
+func testMempoolBinsQueryDeleteAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Block{}
-	if err = randomize.Struct(seed, o, blockDBTypes, true, blockColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	o := &MempoolBin{}
+	if err = randomize.Struct(seed, o, mempoolBinDBTypes, true, mempoolBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -81,13 +81,13 @@ func testBlocksQueryDeleteAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	if rowsAff, err := Blocks().DeleteAll(ctx, tx); err != nil {
+	if rowsAff, err := MempoolBins().DeleteAll(ctx, tx); err != nil {
 		t.Error(err)
 	} else if rowsAff != 1 {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := Blocks().Count(ctx, tx)
+	count, err := MempoolBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -97,14 +97,14 @@ func testBlocksQueryDeleteAll(t *testing.T) {
 	}
 }
 
-func testBlocksSliceDeleteAll(t *testing.T) {
+func testMempoolBinsSliceDeleteAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Block{}
-	if err = randomize.Struct(seed, o, blockDBTypes, true, blockColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	o := &MempoolBin{}
+	if err = randomize.Struct(seed, o, mempoolBinDBTypes, true, mempoolBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -114,7 +114,7 @@ func testBlocksSliceDeleteAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice := BlockSlice{o}
+	slice := MempoolBinSlice{o}
 
 	if rowsAff, err := slice.DeleteAll(ctx, tx); err != nil {
 		t.Error(err)
@@ -122,7 +122,7 @@ func testBlocksSliceDeleteAll(t *testing.T) {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := Blocks().Count(ctx, tx)
+	count, err := MempoolBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -132,14 +132,14 @@ func testBlocksSliceDeleteAll(t *testing.T) {
 	}
 }
 
-func testBlocksExists(t *testing.T) {
+func testMempoolBinsExists(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Block{}
-	if err = randomize.Struct(seed, o, blockDBTypes, true, blockColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	o := &MempoolBin{}
+	if err = randomize.Struct(seed, o, mempoolBinDBTypes, true, mempoolBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -149,23 +149,23 @@ func testBlocksExists(t *testing.T) {
 		t.Error(err)
 	}
 
-	e, err := BlockExists(ctx, tx, o.Height)
+	e, err := MempoolBinExists(ctx, tx, o.Time, o.Bin)
 	if err != nil {
-		t.Errorf("Unable to check if Block exists: %s", err)
+		t.Errorf("Unable to check if MempoolBin exists: %s", err)
 	}
 	if !e {
-		t.Errorf("Expected BlockExists to return true, but got false.")
+		t.Errorf("Expected MempoolBinExists to return true, but got false.")
 	}
 }
 
-func testBlocksFind(t *testing.T) {
+func testMempoolBinsFind(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Block{}
-	if err = randomize.Struct(seed, o, blockDBTypes, true, blockColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	o := &MempoolBin{}
+	if err = randomize.Struct(seed, o, mempoolBinDBTypes, true, mempoolBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -175,24 +175,24 @@ func testBlocksFind(t *testing.T) {
 		t.Error(err)
 	}
 
-	blockFound, err := FindBlock(ctx, tx, o.Height)
+	mempoolBinFound, err := FindMempoolBin(ctx, tx, o.Time, o.Bin)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if blockFound == nil {
+	if mempoolBinFound == nil {
 		t.Error("want a record, got nil")
 	}
 }
 
-func testBlocksBind(t *testing.T) {
+func testMempoolBinsBind(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Block{}
-	if err = randomize.Struct(seed, o, blockDBTypes, true, blockColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	o := &MempoolBin{}
+	if err = randomize.Struct(seed, o, mempoolBinDBTypes, true, mempoolBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -202,19 +202,19 @@ func testBlocksBind(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err = Blocks().Bind(ctx, tx, o); err != nil {
+	if err = MempoolBins().Bind(ctx, tx, o); err != nil {
 		t.Error(err)
 	}
 }
 
-func testBlocksOne(t *testing.T) {
+func testMempoolBinsOne(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Block{}
-	if err = randomize.Struct(seed, o, blockDBTypes, true, blockColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	o := &MempoolBin{}
+	if err = randomize.Struct(seed, o, mempoolBinDBTypes, true, mempoolBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -224,38 +224,38 @@ func testBlocksOne(t *testing.T) {
 		t.Error(err)
 	}
 
-	if x, err := Blocks().One(ctx, tx); err != nil {
+	if x, err := MempoolBins().One(ctx, tx); err != nil {
 		t.Error(err)
 	} else if x == nil {
 		t.Error("expected to get a non nil record")
 	}
 }
 
-func testBlocksAll(t *testing.T) {
+func testMempoolBinsAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	blockOne := &Block{}
-	blockTwo := &Block{}
-	if err = randomize.Struct(seed, blockOne, blockDBTypes, false, blockColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	mempoolBinOne := &MempoolBin{}
+	mempoolBinTwo := &MempoolBin{}
+	if err = randomize.Struct(seed, mempoolBinOne, mempoolBinDBTypes, false, mempoolBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
-	if err = randomize.Struct(seed, blockTwo, blockDBTypes, false, blockColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	if err = randomize.Struct(seed, mempoolBinTwo, mempoolBinDBTypes, false, mempoolBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = blockOne.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = mempoolBinOne.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
-	if err = blockTwo.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = mempoolBinTwo.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	slice, err := Blocks().All(ctx, tx)
+	slice, err := MempoolBins().All(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -265,31 +265,31 @@ func testBlocksAll(t *testing.T) {
 	}
 }
 
-func testBlocksCount(t *testing.T) {
+func testMempoolBinsCount(t *testing.T) {
 	t.Parallel()
 
 	var err error
 	seed := randomize.NewSeed()
-	blockOne := &Block{}
-	blockTwo := &Block{}
-	if err = randomize.Struct(seed, blockOne, blockDBTypes, false, blockColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	mempoolBinOne := &MempoolBin{}
+	mempoolBinTwo := &MempoolBin{}
+	if err = randomize.Struct(seed, mempoolBinOne, mempoolBinDBTypes, false, mempoolBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
-	if err = randomize.Struct(seed, blockTwo, blockDBTypes, false, blockColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	if err = randomize.Struct(seed, mempoolBinTwo, mempoolBinDBTypes, false, mempoolBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = blockOne.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = mempoolBinOne.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
-	if err = blockTwo.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = mempoolBinTwo.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	count, err := Blocks().Count(ctx, tx)
+	count, err := MempoolBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -299,14 +299,14 @@ func testBlocksCount(t *testing.T) {
 	}
 }
 
-func testBlocksInsert(t *testing.T) {
+func testMempoolBinsInsert(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Block{}
-	if err = randomize.Struct(seed, o, blockDBTypes, true, blockColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	o := &MempoolBin{}
+	if err = randomize.Struct(seed, o, mempoolBinDBTypes, true, mempoolBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -316,7 +316,7 @@ func testBlocksInsert(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := Blocks().Count(ctx, tx)
+	count, err := MempoolBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -326,24 +326,24 @@ func testBlocksInsert(t *testing.T) {
 	}
 }
 
-func testBlocksInsertWhitelist(t *testing.T) {
+func testMempoolBinsInsertWhitelist(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Block{}
-	if err = randomize.Struct(seed, o, blockDBTypes, true); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	o := &MempoolBin{}
+	if err = randomize.Struct(seed, o, mempoolBinDBTypes, true); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = o.Insert(ctx, tx, boil.Whitelist(blockColumnsWithoutDefault...)); err != nil {
+	if err = o.Insert(ctx, tx, boil.Whitelist(mempoolBinColumnsWithoutDefault...)); err != nil {
 		t.Error(err)
 	}
 
-	count, err := Blocks().Count(ctx, tx)
+	count, err := MempoolBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -353,14 +353,14 @@ func testBlocksInsertWhitelist(t *testing.T) {
 	}
 }
 
-func testBlocksReload(t *testing.T) {
+func testMempoolBinsReload(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Block{}
-	if err = randomize.Struct(seed, o, blockDBTypes, true, blockColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	o := &MempoolBin{}
+	if err = randomize.Struct(seed, o, mempoolBinDBTypes, true, mempoolBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -375,14 +375,14 @@ func testBlocksReload(t *testing.T) {
 	}
 }
 
-func testBlocksReloadAll(t *testing.T) {
+func testMempoolBinsReloadAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Block{}
-	if err = randomize.Struct(seed, o, blockDBTypes, true, blockColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	o := &MempoolBin{}
+	if err = randomize.Struct(seed, o, mempoolBinDBTypes, true, mempoolBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -392,21 +392,21 @@ func testBlocksReloadAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice := BlockSlice{o}
+	slice := MempoolBinSlice{o}
 
 	if err = slice.ReloadAll(ctx, tx); err != nil {
 		t.Error(err)
 	}
 }
 
-func testBlocksSelect(t *testing.T) {
+func testMempoolBinsSelect(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Block{}
-	if err = randomize.Struct(seed, o, blockDBTypes, true, blockColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	o := &MempoolBin{}
+	if err = randomize.Struct(seed, o, mempoolBinDBTypes, true, mempoolBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -416,7 +416,7 @@ func testBlocksSelect(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice, err := Blocks().All(ctx, tx)
+	slice, err := MempoolBins().All(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -427,25 +427,25 @@ func testBlocksSelect(t *testing.T) {
 }
 
 var (
-	blockDBTypes = map[string]string{`Height`: `integer`, `ReceiveTime`: `timestamp without time zone`, `InternalTimestamp`: `timestamp without time zone`, `Hash`: `character varying`}
-	_            = bytes.MinRead
+	mempoolBinDBTypes = map[string]string{`Time`: `timestamp without time zone`, `Bin`: `character varying`, `NumberOfTransactions`: `integer`, `Size`: `integer`, `TotalFee`: `double precision`}
+	_                 = bytes.MinRead
 )
 
-func testBlocksUpdate(t *testing.T) {
+func testMempoolBinsUpdate(t *testing.T) {
 	t.Parallel()
 
-	if 0 == len(blockPrimaryKeyColumns) {
+	if 0 == len(mempoolBinPrimaryKeyColumns) {
 		t.Skip("Skipping table with no primary key columns")
 	}
-	if len(blockAllColumns) == len(blockPrimaryKeyColumns) {
+	if len(mempoolBinAllColumns) == len(mempoolBinPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Block{}
-	if err = randomize.Struct(seed, o, blockDBTypes, true, blockColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	o := &MempoolBin{}
+	if err = randomize.Struct(seed, o, mempoolBinDBTypes, true, mempoolBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -455,7 +455,7 @@ func testBlocksUpdate(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := Blocks().Count(ctx, tx)
+	count, err := MempoolBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -464,8 +464,8 @@ func testBlocksUpdate(t *testing.T) {
 		t.Error("want one record, got:", count)
 	}
 
-	if err = randomize.Struct(seed, o, blockDBTypes, true, blockPrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	if err = randomize.Struct(seed, o, mempoolBinDBTypes, true, mempoolBinPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	if rowsAff, err := o.Update(ctx, tx, boil.Infer()); err != nil {
@@ -475,18 +475,18 @@ func testBlocksUpdate(t *testing.T) {
 	}
 }
 
-func testBlocksSliceUpdateAll(t *testing.T) {
+func testMempoolBinsSliceUpdateAll(t *testing.T) {
 	t.Parallel()
 
-	if len(blockAllColumns) == len(blockPrimaryKeyColumns) {
+	if len(mempoolBinAllColumns) == len(mempoolBinPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Block{}
-	if err = randomize.Struct(seed, o, blockDBTypes, true, blockColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	o := &MempoolBin{}
+	if err = randomize.Struct(seed, o, mempoolBinDBTypes, true, mempoolBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -496,7 +496,7 @@ func testBlocksSliceUpdateAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := Blocks().Count(ctx, tx)
+	count, err := MempoolBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -505,18 +505,18 @@ func testBlocksSliceUpdateAll(t *testing.T) {
 		t.Error("want one record, got:", count)
 	}
 
-	if err = randomize.Struct(seed, o, blockDBTypes, true, blockPrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	if err = randomize.Struct(seed, o, mempoolBinDBTypes, true, mempoolBinPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	// Remove Primary keys and unique columns from what we plan to update
 	var fields []string
-	if strmangle.StringSliceMatch(blockAllColumns, blockPrimaryKeyColumns) {
-		fields = blockAllColumns
+	if strmangle.StringSliceMatch(mempoolBinAllColumns, mempoolBinPrimaryKeyColumns) {
+		fields = mempoolBinAllColumns
 	} else {
 		fields = strmangle.SetComplement(
-			blockAllColumns,
-			blockPrimaryKeyColumns,
+			mempoolBinAllColumns,
+			mempoolBinPrimaryKeyColumns,
 		)
 	}
 
@@ -534,7 +534,7 @@ func testBlocksSliceUpdateAll(t *testing.T) {
 		}
 	}
 
-	slice := BlockSlice{o}
+	slice := MempoolBinSlice{o}
 	if rowsAff, err := slice.UpdateAll(ctx, tx, updateMap); err != nil {
 		t.Error(err)
 	} else if rowsAff != 1 {
@@ -542,29 +542,29 @@ func testBlocksSliceUpdateAll(t *testing.T) {
 	}
 }
 
-func testBlocksUpsert(t *testing.T) {
+func testMempoolBinsUpsert(t *testing.T) {
 	t.Parallel()
 
-	if len(blockAllColumns) == len(blockPrimaryKeyColumns) {
+	if len(mempoolBinAllColumns) == len(mempoolBinPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
 	// Attempt the INSERT side of an UPSERT
-	o := Block{}
-	if err = randomize.Struct(seed, &o, blockDBTypes, true); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	o := MempoolBin{}
+	if err = randomize.Struct(seed, &o, mempoolBinDBTypes, true); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 	if err = o.Upsert(ctx, tx, false, nil, boil.Infer(), boil.Infer()); err != nil {
-		t.Errorf("Unable to upsert Block: %s", err)
+		t.Errorf("Unable to upsert MempoolBin: %s", err)
 	}
 
-	count, err := Blocks().Count(ctx, tx)
+	count, err := MempoolBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -573,15 +573,15 @@ func testBlocksUpsert(t *testing.T) {
 	}
 
 	// Attempt the UPDATE side of an UPSERT
-	if err = randomize.Struct(seed, &o, blockDBTypes, false, blockPrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize Block struct: %s", err)
+	if err = randomize.Struct(seed, &o, mempoolBinDBTypes, false, mempoolBinPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize MempoolBin struct: %s", err)
 	}
 
 	if err = o.Upsert(ctx, tx, true, nil, boil.Infer(), boil.Infer()); err != nil {
-		t.Errorf("Unable to upsert Block: %s", err)
+		t.Errorf("Unable to upsert MempoolBin: %s", err)
 	}
 
-	count, err = Blocks().Count(ctx, tx)
+	count, err = MempoolBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}

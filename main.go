@@ -419,6 +419,14 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 		log.Info("Mempool table created successfully.")
 	}
 
+	if !db.MempoolBinDataTableExits() {
+		if err := db.CreateMempoolDayBinTable(); err != nil {
+			log.Error("Error creating mempool_bin table: ", err)
+			return err
+		}
+		log.Info("Mempool bin table created successfully.")
+	}
+
 	if !db.BlockTableExits() {
 		if err := db.CreateBlockTable(); err != nil {
 			log.Error("Error creating block table: ", err)
