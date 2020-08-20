@@ -854,8 +854,8 @@ func (charts *Manager) lengthenTime(key string, txn *badger.Txn) (dayIntervals [
 	// If there is day or more worth of new data, append to the Days zoomSet by
 	// finding the first and last+1 blocks of each new day, and taking averages
 	// or sums of the blocks in the interval.  0.06096031
-	if end > start+aDay {
-		next := start + aDay
+	if end > start+ADay {
+		next := start + ADay
 		startIdx := 0
 		for i, t := range dates[offset:] {
 			if t >= next {
@@ -866,7 +866,7 @@ func (charts *Manager) lengthenTime(key string, txn *badger.Txn) (dayIntervals [
 				days = append(days, start)
 				next = midnight(t)
 				start = next
-				next += aDay
+				next += ADay
 				startIdx = i
 				if t > end {
 					break
@@ -890,8 +890,8 @@ func (charts *Manager) lengthenTime(key string, txn *badger.Txn) (dayIntervals [
 	// If there is day or more worth of new data, append to the Days zoomSet by
 	// finding the first and last+1 blocks of each new day, and taking averages
 	// or sums of the blocks in the interval.
-	if end > start+anHour {
-		next := start + anHour
+	if end > start+AnHour {
+		next := start + AnHour
 		startIdx := 0
 		for i, t := range dates[offset:] {
 			if t >= next {
@@ -901,7 +901,7 @@ func (charts *Manager) lengthenTime(key string, txn *badger.Txn) (dayIntervals [
 				hours = append(hours, start)
 				next = hourStamp(t)
 				start = next
-				next += anHour
+				next += AnHour
 				startIdx = i
 				if t > end {
 					break
@@ -950,8 +950,8 @@ func (charts *Manager) lengthenTimeAndHeight(timeKey, heightKey string, txn *bad
 	// If there is day or more worth of new data, append to the Days zoomSet by
 	// finding the first and last+1 blocks of each new day, and taking averages
 	// or sums of the blocks in the interval.  0.06096031
-	if end > start+aDay {
-		next := start + aDay
+	if end > start+ADay {
+		next := start + ADay
 		startIdx := 0
 		for i, t := range dates[offset:] {
 			if t >= next {
@@ -963,7 +963,7 @@ func (charts *Manager) lengthenTimeAndHeight(timeKey, heightKey string, txn *bad
 				dayHeights = append(dayHeights, heights[i])
 				next = midnight(t)
 				start = next
-				next += aDay
+				next += ADay
 				startIdx = i
 				if t > end {
 					break
@@ -991,8 +991,8 @@ func (charts *Manager) lengthenTimeAndHeight(timeKey, heightKey string, txn *bad
 	// If there is day or more worth of new data, append to the Days zoomSet by
 	// finding the first and last+1 blocks of each new day, and taking averages
 	// or sums of the blocks in the interval.
-	if end > start+anHour {
-		next := start + anHour
+	if end > start+AnHour {
+		next := start + AnHour
 		startIdx := 0
 		for i, t := range dates[offset:] {
 			if t >= next {
@@ -1003,7 +1003,7 @@ func (charts *Manager) lengthenTimeAndHeight(timeKey, heightKey string, txn *bad
 				hourHeights = append(hourHeights, heights[i])
 				next = hourStamp(t)
 				start = next
-				next += anHour
+				next += AnHour
 				startIdx = i
 				if t > end {
 					break

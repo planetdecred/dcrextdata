@@ -133,11 +133,11 @@ func (charts *Manager) lengthenPow() error {
 	}
 
 	// Do not continue if we don't have at least, an hour of new data
-	if dLen := hourSet.Time.Length(); dLen > 0 && charts.PowTip() < hourSet.Time[dLen-1]+anHour {
+	if dLen := hourSet.Time.Length(); dLen > 0 && charts.PowTip() < hourSet.Time[dLen-1]+AnHour {
 		return nil
 	}
 
-	hours, _, hourIntervals := generateHourBin(set.Time, nil)
+	hours, _, hourIntervals := GenerateHourBin(set.Time, nil)
 
 	hourWorkers := make(map[string]ChartNullUints)
 	hourHashrates := make(map[string]ChartNullUints)
@@ -169,11 +169,11 @@ func (charts *Manager) lengthenPow() error {
 	}
 
 	// Continue if there at least, an hour of new data
-	if dLen := daySet.Time.Length(); dLen > 0 && charts.PowTip() < daySet.Time[dLen-1]+anHour {
+	if dLen := daySet.Time.Length(); dLen > 0 && charts.PowTip() < daySet.Time[dLen-1]+AnHour {
 		return nil
 	}
 
-	days, _, dayIntervals := generateDayBin(set.Time, nil)
+	days, _, dayIntervals := GenerateDayBin(set.Time, nil)
 
 	dayWorkers := make(map[string]ChartNullUints)
 	dayHashrates := make(map[string]ChartNullUints)

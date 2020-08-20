@@ -140,11 +140,11 @@ func (charts *Manager) lengthenMempool() error {
 	}
 
 	// Continue if there at least, an hour of new data
-	if dLen := mempoolHourSet.Time.Length(); dLen > 0 && charts.MempoolTip() < mempoolHourSet.Time[dLen-1]+anHour {
+	if dLen := mempoolHourSet.Time.Length(); dLen > 0 && charts.MempoolTip() < mempoolHourSet.Time[dLen-1]+AnHour {
 		return nil
 	}
 
-	hours, hourHeights, hourIntervals := generateHourBin(mempoolDefaultSet.Time, mempoolDefaultSet.Heights)
+	hours, hourHeights, hourIntervals := GenerateHourBin(mempoolDefaultSet.Time, mempoolDefaultSet.Heights)
 
 	mempoolHourSet = mempoolSet{
 		bin:     HourBin,
@@ -171,11 +171,11 @@ func (charts *Manager) lengthenMempool() error {
 	}
 
 	// Continue if there at least, a day of new data
-	if dLen := mempoolDaySet.Time.Length(); dLen > 0 && charts.MempoolTip() < mempoolDaySet.Time[dLen-1]+aDay {
+	if dLen := mempoolDaySet.Time.Length(); dLen > 0 && charts.MempoolTip() < mempoolDaySet.Time[dLen-1]+ADay {
 		return nil
 	}
 
-	days, dayHeights, dayIntervals := generateDayBin(mempoolDefaultSet.Time, mempoolDefaultSet.Heights)
+	days, dayHeights, dayIntervals := GenerateDayBin(mempoolDefaultSet.Time, mempoolDefaultSet.Heights)
 
 	mempoolDaySet = mempoolSet{
 		bin:     DayBin,

@@ -40,6 +40,9 @@ func (pg PgDb) StoreMempool(ctx context.Context, mempoolDto mempool.Mempool) err
 	//  tx count 76, total size 54205 B, fees 0.00367100
 	log.Infof("Added mempool entry at %s, tx count %2d, total size: %6d B, Total Fee: %010.8f",
 		mempoolDto.Time.Format(dateTemplate), mempoolDto.NumberOfTransactions, mempoolDto.Size, mempoolDto.TotalFee)
+	if err = pg.UpdateMempoolAggregateData(ctx); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -487,10 +490,23 @@ func (pg *PgDb) fetchBlockReceiveTimeByHeight(ctx context.Context, height int32)
 
 // *****CHARTS******* //
 
-func (pg *PgDb) fetchEncodeMempoolChart(ctx context.Context, charts *cache.Manager, dataType, _ string, binString string, extras ...string) ([]byte, error) {
+func (pg *PgDb) fetchEncodeMempoolChart(ctx context.Context, charts *cache.Manager, dataType,
+	_ string, binString string, _ ...string) ([]byte, error) {
 
 	switch dataType {
 	case cache.MempoolSize:
+		return pg.fetchEncodeMempoolSize(ctx, charts, binString)
+	case cache.MempoolFees:
+		return pg.fetchEncodeMempoolFee(ctx, charts, binString)
+
+	case cache.MempoolTxCount:
+		return pg.fetchEncodeMempoolTxCount(ctx, charts, binString)
+	}
+	return nil, cache.UnknownChartErr
+}
+
+func (pg *PgDb) fetchEncodeMempoolSize(ctx context.Context, charts *cache.Manager, binString string) ([]byte, error) {
+	if binString == string(cache.DefaultBin) {
 		mempoolSlice, err := models.Mempools(
 			qm.Select(models.MempoolColumns.Time, models.MempoolColumns.Size),
 			qm.OrderBy(models.MempoolColumns.Time),
@@ -505,8 +521,27 @@ func (pg *PgDb) fetchEncodeMempoolChart(ctx context.Context, charts *cache.Manag
 			data[i] = uint64(m.Size.Int)
 		}
 		return charts.Encode(nil, time, data)
+	}
 
-	case cache.MempoolFees:
+	mempoolSlice, err := models.MempoolBins(
+		models.MempoolBinWhere.Bin.EQ(binString),
+		qm.Select(models.MempoolBinColumns.Time, models.MempoolBinColumns.Size),
+		qm.OrderBy(models.MempoolBinColumns.Time),
+	).All(ctx, pg.db)
+	if err != nil {
+		return nil, err
+	}
+	var time = make(cache.ChartUints, len(mempoolSlice))
+	var data = make(cache.ChartUints, len(mempoolSlice))
+	for i, m := range mempoolSlice {
+		time[i] = uint64(m.Time.UTC().Unix())
+		data[i] = uint64(m.Size.Int)
+	}
+	return charts.Encode(nil, time, data)
+}
+
+func (pg *PgDb) fetchEncodeMempoolFee(ctx context.Context, charts *cache.Manager, binString string) ([]byte, error) {
+	if binString == string(cache.DefaultBin) {
 		mempoolSlice, err := models.Mempools(
 			qm.Select(models.MempoolColumns.Time, models.MempoolColumns.TotalFee),
 			qm.OrderBy(models.MempoolColumns.Time),
@@ -521,8 +556,27 @@ func (pg *PgDb) fetchEncodeMempoolChart(ctx context.Context, charts *cache.Manag
 			data[i] = m.TotalFee.Float64
 		}
 		return charts.Encode(nil, time, data)
+	}
 
-	case cache.MempoolTxCount:
+	mempoolSlice, err := models.MempoolBins(
+		models.MempoolBinWhere.Bin.EQ(binString),
+		qm.Select(models.MempoolBinColumns.Time, models.MempoolBinColumns.TotalFee),
+		qm.OrderBy(models.MempoolBinColumns.Time),
+	).All(ctx, pg.db)
+	if err != nil {
+		return nil, err
+	}
+	var time = make(cache.ChartUints, len(mempoolSlice))
+	var data = make(cache.ChartFloats, len(mempoolSlice))
+	for i, m := range mempoolSlice {
+		time[i] = uint64(m.Time.UTC().Unix())
+		data[i] = m.TotalFee.Float64
+	}
+	return charts.Encode(nil, time, data)
+}
+
+func (pg *PgDb) fetchEncodeMempoolTxCount(ctx context.Context, charts *cache.Manager, binString string) ([]byte, error) {
+	if binString == string(cache.DefaultBin) {
 		mempoolSlice, err := models.Mempools(
 			qm.Select(models.MempoolColumns.Time, models.MempoolColumns.NumberOfTransactions),
 			qm.OrderBy(models.MempoolColumns.Time),
@@ -538,7 +592,22 @@ func (pg *PgDb) fetchEncodeMempoolChart(ctx context.Context, charts *cache.Manag
 		}
 		return charts.Encode(nil, time, data)
 	}
-	return nil, cache.UnknownChartErr
+
+	mempoolSlice, err := models.MempoolBins(
+		models.MempoolBinWhere.Bin.EQ(binString),
+		qm.Select(models.MempoolBinColumns.Time, models.MempoolBinColumns.NumberOfTransactions),
+		qm.OrderBy(models.MempoolBinColumns.Time),
+	).All(ctx, pg.db)
+	if err != nil {
+		return nil, err
+	}
+	var time = make(cache.ChartUints, len(mempoolSlice))
+	var data = make(cache.ChartUints, len(mempoolSlice))
+	for i, m := range mempoolSlice {
+		time[i] = uint64(m.Time.UTC().Unix())
+		data[i] = uint64(m.NumberOfTransactions.Int)
+	}
+	return charts.Encode(nil, time, data)
 }
 
 func (pg *PgDb) retrieveChartMempool(ctx context.Context, charts *cache.Manager, _ int) (interface{}, func(), bool, error) {
@@ -782,5 +851,121 @@ func appendBlockPropagationChart(charts *cache.Manager, data interface{}) error 
 		charts.SetPropagationTip(propagationChart.Heights[propagationChart.Heights.Length()-1])
 	}
 
+	return nil
+}
+
+func (pg PgDb) UpdateMempoolAggregateData(ctx context.Context) error {
+	log.Info("Updating mempool bin data")
+	// hour bin
+	lastHourEntry, err := models.MempoolBins(
+		models.MempoolBinWhere.Bin.EQ(string(cache.HourBin)),
+		qm.OrderBy(fmt.Sprintf("%s desc", models.MempoolBinColumns.Time)),
+	).One(ctx, pg.db)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+
+	var lastHour = time.Time{}
+	if lastHourEntry != nil {
+		lastHour = lastHourEntry.Time
+	}
+	if time.Now().Before(lastHour.Add(cache.AnHour * time.Second)) {
+		return nil
+	}
+
+	mempoolSlice, err := models.Mempools(
+		models.MempoolWhere.Time.GT(lastHour),
+		qm.OrderBy(models.MempoolColumns.Time),
+	).All(ctx, pg.db)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+
+	dLen := len(mempoolSlice)
+	dates, txCounts, sizes := make(cache.ChartUints, dLen), make(cache.ChartUints, dLen), make(cache.ChartUints, dLen)
+	fees := make(cache.ChartFloats, dLen)
+	for i, m := range mempoolSlice {
+		dates[i] = uint64(m.Time.Unix())
+		txCounts[i] = uint64(m.NumberOfTransactions.Int)
+		sizes[i] = uint64(m.Size.Int)
+		fees[i] = m.TotalFee.Float64
+	}
+
+	tx, err := pg.db.Begin()
+	if err != nil {
+		return err
+	}
+	hours, _, hourIntervals := cache.GenerateHourBin(dates, nil)
+	for i, interval := range hourIntervals {
+		mempoolBin := models.MempoolBin{
+			Time:                 time.Unix(int64(hours[i]), 0),
+			Bin:                  string(cache.HourBin),
+			Size:                 null.IntFrom(int(sizes.Avg(interval[0], interval[1]))),
+			TotalFee:             null.Float64From(fees.Avg(interval[0], interval[1])),
+			NumberOfTransactions: null.IntFrom(int(txCounts.Avg(interval[0], interval[1]))),
+		}
+		if err = mempoolBin.Insert(ctx, tx, boil.Infer()); err != nil {
+			_ = tx.Rollback()
+			return err
+		}
+	}
+
+	// day bin
+	lastDayEntry, err := models.MempoolBins(
+		models.MempoolBinWhere.Bin.EQ(string(cache.DayBin)),
+		qm.OrderBy(fmt.Sprintf("%s desc", models.MempoolBinColumns.Time)),
+	).One(ctx, tx)
+	if err != nil && err != sql.ErrNoRows {
+		_ = tx.Rollback()
+		return err
+	}
+
+	var lastDay = time.Time{}
+	if lastDayEntry != nil {
+		lastDay = lastDayEntry.Time
+	}
+	if time.Now().Before(lastDay.Add(cache.ADay * time.Second)) {
+		_ = tx.Rollback()
+		return nil
+	}
+
+	mempoolSlice, err = models.Mempools(
+		models.MempoolWhere.Time.GT(lastDay),
+		qm.OrderBy(models.MempoolColumns.Time),
+	).All(ctx, pg.db)
+	if err != nil && err != sql.ErrNoRows {
+		_ = tx.Rollback()
+		return err
+	}
+
+	dLen = len(mempoolSlice)
+	dates, txCounts, sizes = make(cache.ChartUints, dLen), make(cache.ChartUints, dLen), make(cache.ChartUints, dLen)
+	fees = make(cache.ChartFloats, dLen)
+	for i, m := range mempoolSlice {
+		dates[i] = uint64(m.Time.Unix())
+		txCounts[i] = uint64(m.NumberOfTransactions.Int)
+		sizes[i] = uint64(m.Size.Int)
+		fees[i] = m.TotalFee.Float64
+	}
+
+	days, _, dayIntervals := cache.GenerateDayBin(dates, nil)
+	for i, interval := range dayIntervals {
+		mempoolBin := models.MempoolBin{
+			Time:                 time.Unix(int64(days[i]), 0),
+			Bin:                  string(cache.DayBin),
+			Size:                 null.IntFrom(int(sizes.Avg(interval[0], interval[1]))),
+			TotalFee:             null.Float64From(fees.Avg(interval[0], interval[1])),
+			NumberOfTransactions: null.IntFrom(int(txCounts.Avg(interval[0], interval[1]))),
+		}
+		if err = mempoolBin.Insert(ctx, tx, boil.Infer()); err != nil {
+			_ = tx.Rollback()
+			return err
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	log.Info("Mempool bin data updated")
 	return nil
 }

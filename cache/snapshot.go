@@ -116,18 +116,18 @@ func (charts *Manager) lengthenSnapshot() error {
 	}
 
 	// Do not continue if we don't have at least, an hour of new data
-	if dLen := hourSet.Time.Length(); dLen > 0 && charts.PowTip() < hourSet.Time[dLen-1]+anHour {
+	if dLen := hourSet.Time.Length(); dLen > 0 && charts.PowTip() < hourSet.Time[dLen-1]+AnHour {
 		return nil
 	}
 
-	hours, _, hourIntervals := generateHourBin(set.Time, nil)
+	hours, _, hourIntervals := GenerateHourBin(set.Time, nil)
 	hourSet.Time = hours
 	for _, interval := range hourIntervals {
 		hourSet.Nodes = append(hourSet.Nodes, set.Nodes.Avg(interval[0], interval[1]))
 		hourSet.ReachableNodes = append(hourSet.ReachableNodes, set.ReachableNodes.Avg(interval[0], interval[1]))
 	}
 
-	hourSet.LocationDates, _, hourIntervals = generateHourBin(set.LocationDates, nil)
+	hourSet.LocationDates, _, hourIntervals = GenerateHourBin(set.LocationDates, nil)
 
 	for _, interval := range hourIntervals {
 		for c := range set.Locations {
@@ -138,7 +138,7 @@ func (charts *Manager) lengthenSnapshot() error {
 		}
 	}
 
-	hourSet.VersionDates, _, hourIntervals = generateHourBin(set.VersionDates, nil)
+	hourSet.VersionDates, _, hourIntervals = GenerateHourBin(set.VersionDates, nil)
 	for _, interval := range hourIntervals {
 		for c := range set.Versions {
 			hourSet.Versions[c] = append(hourSet.Versions[c], set.Versions[c].Avg(interval[0], interval[1]))
@@ -155,18 +155,18 @@ func (charts *Manager) lengthenSnapshot() error {
 	}
 
 	// Continue if there at least, an hour of new data
-	if dLen := daySet.Time.Length(); dLen > 0 && charts.PowTip() < daySet.Time[dLen-1]+anHour {
+	if dLen := daySet.Time.Length(); dLen > 0 && charts.PowTip() < daySet.Time[dLen-1]+AnHour {
 		return nil
 	}
 
-	days, _, dayIntervals := generateDayBin(set.Time, nil)
+	days, _, dayIntervals := GenerateDayBin(set.Time, nil)
 	daySet.Time = days
 	for _, interval := range dayIntervals {
 		daySet.Nodes = append(daySet.Nodes, set.Nodes.Avg(interval[0], interval[1]))
 		daySet.ReachableNodes = append(daySet.ReachableNodes, set.ReachableNodes.Avg(interval[0], interval[1]))
 	}
 
-	daySet.LocationDates, _, dayIntervals = generateDayBin(set.LocationDates, nil)
+	daySet.LocationDates, _, dayIntervals = GenerateDayBin(set.LocationDates, nil)
 
 	for _, interval := range dayIntervals {
 		for c := range set.Locations {
@@ -177,7 +177,7 @@ func (charts *Manager) lengthenSnapshot() error {
 		}
 	}
 
-	daySet.VersionDates, _, dayIntervals = generateDayBin(set.VersionDates, nil)
+	daySet.VersionDates, _, dayIntervals = GenerateDayBin(set.VersionDates, nil)
 	for _, interval := range dayIntervals {
 		for c := range set.Versions {
 			daySet.Versions[c] = append(daySet.Versions[c], set.Versions[c].Avg(interval[0], interval[1]))

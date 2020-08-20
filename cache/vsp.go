@@ -143,11 +143,11 @@ func (charts *Manager) lengthenVsp() error {
 	}
 
 	// Do not continue if we don't have at least, an hour of new data
-	if dLen := hourSet.Time.Length(); dLen > 0 && charts.PowTip() < hourSet.Time[dLen-1]+anHour {
+	if dLen := hourSet.Time.Length(); dLen > 0 && charts.PowTip() < hourSet.Time[dLen-1]+AnHour {
 		return nil
 	}
 
-	hours, _, hourIntervals := generateHourBin(set.Time, nil)
+	hours, _, hourIntervals := GenerateHourBin(set.Time, nil)
 	hourSet.Time = append(hourSet.Time, hours...)
 	for _, s := range charts.VSPSources {
 		var immature = hourSet.Immature[s]
@@ -193,11 +193,11 @@ func (charts *Manager) lengthenVsp() error {
 	}
 
 	// Continue if there at least, an hour of new data
-	if dLen := daySet.Time.Length(); dLen > 0 && charts.PowTip() < daySet.Time[dLen-1]+anHour {
+	if dLen := daySet.Time.Length(); dLen > 0 && charts.PowTip() < daySet.Time[dLen-1]+AnHour {
 		return nil
 	}
 
-	days, _, dayIntervals := generateDayBin(set.Time, nil)
+	days, _, dayIntervals := GenerateDayBin(set.Time, nil)
 	daySet.Time = append(daySet.Time, days...)
 	for _, s := range charts.VSPSources {
 		var immature = daySet.Immature[s]

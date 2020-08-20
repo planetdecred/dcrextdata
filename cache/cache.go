@@ -30,9 +30,9 @@ const (
 	Snapshot      = "snapshot"
 	SnapshotTable = Snapshot + "_table"
 
-	// aDay defines the number of seconds in a day.
-	aDay   = 86400
-	anHour = aDay / 24
+	// ADay defines the number of seconds in a day.
+	ADay   = 86400
+	AnHour = ADay / 24
 )
 
 // binLevel specifies the granularity of data.
@@ -792,7 +792,7 @@ func (charts *Manager) Lengthen(tags ...string) error {
 	return nil
 }
 
-func generateDayBin(dates, heights ChartUints) (days, dayHeights ChartUints, dayIntervals [][2]int) {
+func GenerateDayBin(dates, heights ChartUints) (days, dayHeights ChartUints, dayIntervals [][2]int) {
 	if heights != nil && dates.Length() != heights.Length() {
 		log.Criticalf("generateHourBin: length mismatch %d != %d", dates.Length(), heights.Length())
 		return
@@ -811,8 +811,8 @@ func generateDayBin(dates, heights ChartUints) (days, dayHeights ChartUints, day
 	// If there is day or more worth of new data, append to the Days zoomSet by
 	// finding the first and last+1 blocks of each new day, and taking averages
 	// or sums of the blocks in the interval.  0.06096031
-	if end > start+aDay {
-		next := start + aDay
+	if end > start+ADay {
+		next := start + ADay
 		startIdx := 0
 		for i, t := range dates[offset:] {
 			if t >= next {
@@ -826,7 +826,7 @@ func generateDayBin(dates, heights ChartUints) (days, dayHeights ChartUints, day
 				}
 				next = midnight(t)
 				start = next
-				next += aDay
+				next += ADay
 				startIdx = i
 				if t > end {
 					break
@@ -837,7 +837,7 @@ func generateDayBin(dates, heights ChartUints) (days, dayHeights ChartUints, day
 	return
 }
 
-func generateHourBin(dates, heights ChartUints) (hours, hourHeights ChartUints, hourIntervals [][2]int) {
+func GenerateHourBin(dates, heights ChartUints) (hours, hourHeights ChartUints, hourIntervals [][2]int) {
 	if heights != nil && dates.Length() != heights.Length() {
 		log.Criticalf("generateHourBin: length mismatch %d != %d", dates.Length(), heights.Length())
 		return
@@ -854,8 +854,8 @@ func generateHourBin(dates, heights ChartUints) (hours, hourHeights ChartUints, 
 	// If there is day or more worth of new data, append to the Days zoomSet by
 	// finding the first and last+1 blocks of each new day, and taking averages
 	// or sums of the blocks in the interval.
-	if end > start+anHour {
-		next := start + anHour
+	if end > start+AnHour {
+		next := start + AnHour
 		startIdx := 0
 		for i, t := range dates[offset:] {
 			if t >= next {
@@ -868,7 +868,7 @@ func generateHourBin(dates, heights ChartUints) (hours, hourHeights ChartUints, 
 				}
 				next = hourStamp(t)
 				start = next
-				next += anHour
+				next += AnHour
 				startIdx = i
 				if t > end {
 					break
@@ -883,7 +883,7 @@ func generateHourBin(dates, heights ChartUints) (hours, hourHeights ChartUints, 
 // Reduce the timestamp to the previous midnight.
 func midnight(t uint64) (mid uint64) {
 	if t > 0 {
-		mid = t - t%aDay
+		mid = t - t%ADay
 	}
 	return
 }
@@ -891,7 +891,7 @@ func midnight(t uint64) (mid uint64) {
 // Reduce the timestamp to the previous hour
 func hourStamp(t uint64) (hour uint64) {
 	if t > 0 {
-		hour = t - t%anHour
+		hour = t - t%AnHour
 	}
 	return
 }

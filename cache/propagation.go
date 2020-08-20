@@ -116,11 +116,11 @@ func (charts *Manager) lengthenPropagation() error {
 	}
 
 	// Continue if there at least, an hour of new data
-	if dLen := hourSet.Time.Length(); dLen > 0 && charts.MempoolTip() < hourSet.Time[dLen-1]+anHour {
+	if dLen := hourSet.Time.Length(); dLen > 0 && charts.MempoolTip() < hourSet.Time[dLen-1]+AnHour {
 		return nil
 	}
 
-	hours, hourHeights, hourIntervals := generateHourBin(set.Time, set.Heights)
+	hours, hourHeights, hourIntervals := GenerateHourBin(set.Time, set.Heights)
 
 	hourSet = propagationSet{
 		bin:              HourBin,
@@ -153,11 +153,11 @@ func (charts *Manager) lengthenPropagation() error {
 	}
 
 	// Continue if there at least, an hour of new data
-	if dLen := daySet.Time.Length(); dLen > 0 && charts.MempoolTip() < daySet.Time[dLen-1]+anHour {
+	if dLen := daySet.Time.Length(); dLen > 0 && charts.MempoolTip() < daySet.Time[dLen-1]+AnHour {
 		return nil
 	}
 
-	days, dayHeights, dayIntervals := generateDayBin(set.Time, set.Heights)
+	days, dayHeights, dayIntervals := GenerateDayBin(set.Time, set.Heights)
 
 	daySet = propagationSet{
 		bin:              DayBin,
