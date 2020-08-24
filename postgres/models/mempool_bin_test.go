@@ -427,7 +427,7 @@ func testMempoolBinsSelect(t *testing.T) {
 }
 
 var (
-	mempoolBinDBTypes = map[string]string{`Time`: `timestamp without time zone`, `Bin`: `character varying`, `NumberOfTransactions`: `integer`, `Size`: `integer`, `TotalFee`: `double precision`}
+	mempoolBinDBTypes = map[string]string{`Time`: `bigint`, `Bin`: `character varying`, `NumberOfTransactions`: `integer`, `Size`: `integer`, `TotalFee`: `double precision`}
 	_                 = bytes.MinRead
 )
 

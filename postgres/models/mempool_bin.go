@@ -24,7 +24,7 @@ import (
 
 // MempoolBin is an object representing the database table.
 type MempoolBin struct {
-	Time                 time.Time    `boil:"time" json:"time" toml:"time" yaml:"time"`
+	Time                 int64        `boil:"time" json:"time" toml:"time" yaml:"time"`
 	Bin                  string       `boil:"bin" json:"bin" toml:"bin" yaml:"bin"`
 	NumberOfTransactions null.Int     `boil:"number_of_transactions" json:"number_of_transactions,omitempty" toml:"number_of_transactions" yaml:"number_of_transactions,omitempty"`
 	Size                 null.Int     `boil:"size" json:"size,omitempty" toml:"size" yaml:"size,omitempty"`
@@ -51,13 +51,13 @@ var MempoolBinColumns = struct {
 // Generated where
 
 var MempoolBinWhere = struct {
-	Time                 whereHelpertime_Time
+	Time                 whereHelperint64
 	Bin                  whereHelperstring
 	NumberOfTransactions whereHelpernull_Int
 	Size                 whereHelpernull_Int
 	TotalFee             whereHelpernull_Float64
 }{
-	Time:                 whereHelpertime_Time{field: "\"mempool_bin\".\"time\""},
+	Time:                 whereHelperint64{field: "\"mempool_bin\".\"time\""},
 	Bin:                  whereHelperstring{field: "\"mempool_bin\".\"bin\""},
 	NumberOfTransactions: whereHelpernull_Int{field: "\"mempool_bin\".\"number_of_transactions\""},
 	Size:                 whereHelpernull_Int{field: "\"mempool_bin\".\"size\""},
@@ -186,7 +186,7 @@ func MempoolBins(mods ...qm.QueryMod) mempoolBinQuery {
 
 // FindMempoolBin retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindMempoolBin(ctx context.Context, exec boil.ContextExecutor, time time.Time, bin string, selectCols ...string) (*MempoolBin, error) {
+func FindMempoolBin(ctx context.Context, exec boil.ContextExecutor, time int64, bin string, selectCols ...string) (*MempoolBin, error) {
 	mempoolBinObj := &MempoolBin{}
 
 	sel := "*"
@@ -642,7 +642,7 @@ func (o *MempoolBinSlice) ReloadAll(ctx context.Context, exec boil.ContextExecut
 }
 
 // MempoolBinExists checks if the MempoolBin row exists.
-func MempoolBinExists(ctx context.Context, exec boil.ContextExecutor, time time.Time, bin string) (bool, error) {
+func MempoolBinExists(ctx context.Context, exec boil.ContextExecutor, time int64, bin string) (bool, error) {
 	var exists bool
 	sql := "select exists(select 1 from \"mempool_bin\" where \"time\"=$1 AND \"bin\"=$2 limit 1)"
 

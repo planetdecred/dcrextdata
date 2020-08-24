@@ -84,7 +84,7 @@ const (
 	);`
 
 	createMempoolDayBinTable = `CREATE TABLE IF NOT EXISTS mempool_bin (
-		time timestamp,
+		time INT8,
 		bin VARCHAR(25),
 		number_of_transactions INT,
 		size INT,

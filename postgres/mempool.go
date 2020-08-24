@@ -535,7 +535,7 @@ func (pg *PgDb) fetchEncodeMempoolSize(ctx context.Context, charts *cache.Manage
 	var time = make(cache.ChartUints, len(mempoolSlice))
 	var data = make(cache.ChartUints, len(mempoolSlice))
 	for i, m := range mempoolSlice {
-		time[i] = uint64(m.Time.UTC().Unix())
+		time[i] = uint64(m.Time)
 		data[i] = uint64(m.Size.Int)
 	}
 	return charts.Encode(nil, time, data)
@@ -570,7 +570,7 @@ func (pg *PgDb) fetchEncodeMempoolFee(ctx context.Context, charts *cache.Manager
 	var time = make(cache.ChartUints, len(mempoolSlice))
 	var data = make(cache.ChartFloats, len(mempoolSlice))
 	for i, m := range mempoolSlice {
-		time[i] = uint64(m.Time.UTC().Unix())
+		time[i] = uint64(m.Time)
 		data[i] = m.TotalFee.Float64
 	}
 	return charts.Encode(nil, time, data)
@@ -605,7 +605,7 @@ func (pg *PgDb) fetchEncodeMempoolTxCount(ctx context.Context, charts *cache.Man
 	var time = make(cache.ChartUints, len(mempoolSlice))
 	var data = make(cache.ChartUints, len(mempoolSlice))
 	for i, m := range mempoolSlice {
-		time[i] = uint64(m.Time.UTC().Unix())
+		time[i] = uint64(m.Time)
 		data[i] = uint64(m.NumberOfTransactions.Int)
 	}
 	return charts.Encode(nil, time, data)
@@ -868,7 +868,7 @@ func (pg PgDb) UpdateMempoolAggregateData(ctx context.Context) error {
 
 	var nextHour = time.Time{}
 	if lastHourEntry != nil {
-		nextHour = lastHourEntry.Time.Add(cache.AnHour * time.Second).UTC()
+		nextHour = time.Unix(lastHourEntry.Time, 0).Add(cache.AnHour * time.Second).UTC()
 	}
 	if time.Now().Before(nextHour) {
 		return nil
@@ -899,7 +899,7 @@ func (pg PgDb) UpdateMempoolAggregateData(ctx context.Context) error {
 	hours, _, hourIntervals := cache.GenerateHourBin(dates, nil)
 	for i, interval := range hourIntervals {
 		mempoolBin := models.MempoolBin{
-			Time:                 time.Unix(int64(hours[i]), 0).UTC(),
+			Time:                 int64(hours[i]),
 			Bin:                  string(cache.HourBin),
 			Size:                 null.IntFrom(int(sizes.Avg(interval[0], interval[1]))),
 			TotalFee:             null.Float64From(fees.Avg(interval[0], interval[1])),
@@ -927,7 +927,7 @@ func (pg PgDb) UpdateMempoolAggregateData(ctx context.Context) error {
 
 	var nextDay = time.Time{}
 	if lastDayEntry != nil {
-		nextDay = lastDayEntry.Time.Add(cache.ADay * time.Second).UTC()
+		nextDay = time.Unix(lastDayEntry.Time, 0).Add(cache.ADay * time.Second).UTC()
 	}
 	if time.Now().Before(nextDay) {
 		return nil
@@ -957,7 +957,7 @@ func (pg PgDb) UpdateMempoolAggregateData(ctx context.Context) error {
 	days, _, dayIntervals := cache.GenerateDayBin(dates, nil)
 	for i, interval := range dayIntervals {
 		mempoolBin := models.MempoolBin{
-			Time:                 time.Unix(int64(days[i]), 0).UTC(),
+			Time:                 int64(days[i]),
 			Bin:                  string(cache.DayBin),
 			Size:                 null.IntFrom(int(sizes.Avg(interval[0], interval[1]))),
 			TotalFee:             null.Float64From(fees.Avg(interval[0], interval[1])),
@@ -978,5 +978,6 @@ func (pg PgDb) UpdateMempoolAggregateData(ctx context.Context) error {
 }
 
 func (pg PgDb) UpdatePropagationData(ctx context.Context) error {
+	log.Info("Updating propagation data")
 	return nil
 }
