@@ -11,6 +11,7 @@
         "github",
         "mempool",
         "mempool_bin",
+        "propagation",
         "pow_data",
         "reddit",
         "twitter",

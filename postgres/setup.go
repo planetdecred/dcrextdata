@@ -92,6 +92,15 @@ const (
 		PRIMARY KEY (time,bin)
 	);`
 
+	createPropagationTable = `CREATE TABLE IF NOT EXISTS propagation (
+		height INT,
+		time timestamp,
+		bin VARCHAR(25),
+		source VARCHAR(255),
+		deviation FLOAT8,
+		PRIMARY KEY (height, source, bin)
+	);`
+
 	lastMempoolBlockHeight = `SELECT last_block_height FROM mempool ORDER BY last_block_height DESC LIMIT 1`
 	lastMempoolEntryTime   = `SELECT time FROM mempool ORDER BY time DESC LIMIT 1`
 
@@ -272,6 +281,16 @@ func (pg *PgDb) MempoolBinDataTableExits() bool {
 	return exists
 }
 
+func (pg *PgDb) CreatePropagationTable() error {
+	_, err := pg.db.Exec(createPropagationTable)
+	return err
+}
+
+func (pg *PgDb) PropagationTableExists() bool {
+	exists, _ := pg.tableExists("propagation")
+	return exists
+}
+
 // block table
 func (pg *PgDb) CreateBlockTable() error {
 	_, err := pg.db.Exec(createBlockTable)
@@ -425,6 +444,11 @@ func (pg *PgDb) DropAllTables() error {
 
 	// mempool_bin
 	if err := pg.dropTable("mempool_bin"); err != nil {
+		return err
+	}
+
+	// propagation
+	if err := pg.dropTable("propagation"); err != nil {
 		return err
 	}
 

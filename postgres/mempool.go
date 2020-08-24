@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/planetdecred/dcrextdata/app/helpers"
 	"github.com/planetdecred/dcrextdata/cache"
 	"github.com/planetdecred/dcrextdata/mempool"
@@ -865,16 +866,16 @@ func (pg PgDb) UpdateMempoolAggregateData(ctx context.Context) error {
 		return err
 	}
 
-	var lastHour = time.Time{}
+	var nextHour = time.Time{}
 	if lastHourEntry != nil {
-		lastHour = lastHourEntry.Time
+		nextHour = lastHourEntry.Time.Add(cache.AnHour * time.Second).UTC()
 	}
-	if time.Now().Before(lastHour.Add(cache.AnHour * time.Second)) {
+	if time.Now().Before(nextHour) {
 		return nil
 	}
 
 	mempoolSlice, err := models.Mempools(
-		models.MempoolWhere.Time.GT(lastHour),
+		models.MempoolWhere.Time.GTE(nextHour),
 		qm.OrderBy(models.MempoolColumns.Time),
 	).All(ctx, pg.db)
 	if err != nil && err != sql.ErrNoRows {
@@ -898,7 +899,7 @@ func (pg PgDb) UpdateMempoolAggregateData(ctx context.Context) error {
 	hours, _, hourIntervals := cache.GenerateHourBin(dates, nil)
 	for i, interval := range hourIntervals {
 		mempoolBin := models.MempoolBin{
-			Time:                 time.Unix(int64(hours[i]), 0),
+			Time:                 time.Unix(int64(hours[i]), 0).UTC(),
 			Bin:                  string(cache.HourBin),
 			Size:                 null.IntFrom(int(sizes.Avg(interval[0], interval[1]))),
 			TotalFee:             null.Float64From(fees.Avg(interval[0], interval[1])),
@@ -906,35 +907,37 @@ func (pg PgDb) UpdateMempoolAggregateData(ctx context.Context) error {
 		}
 		if err = mempoolBin.Insert(ctx, tx, boil.Infer()); err != nil {
 			_ = tx.Rollback()
+			spew.Dump(mempoolBin)
 			return err
 		}
+	}
+	if err = tx.Commit(); err != nil {
+		return err
 	}
 
 	// day bin
 	lastDayEntry, err := models.MempoolBins(
 		models.MempoolBinWhere.Bin.EQ(string(cache.DayBin)),
 		qm.OrderBy(fmt.Sprintf("%s desc", models.MempoolBinColumns.Time)),
-	).One(ctx, tx)
+	).One(ctx, pg.db)
 	if err != nil && err != sql.ErrNoRows {
 		_ = tx.Rollback()
 		return err
 	}
 
-	var lastDay = time.Time{}
+	var nextDay = time.Time{}
 	if lastDayEntry != nil {
-		lastDay = lastDayEntry.Time
+		nextDay = lastDayEntry.Time.Add(cache.ADay * time.Second).UTC()
 	}
-	if time.Now().Before(lastDay.Add(cache.ADay * time.Second)) {
-		_ = tx.Rollback()
+	if time.Now().Before(nextDay) {
 		return nil
 	}
 
 	mempoolSlice, err = models.Mempools(
-		models.MempoolWhere.Time.GT(lastDay),
+		models.MempoolWhere.Time.GTE(nextDay),
 		qm.OrderBy(models.MempoolColumns.Time),
 	).All(ctx, pg.db)
 	if err != nil && err != sql.ErrNoRows {
-		_ = tx.Rollback()
 		return err
 	}
 
@@ -948,10 +951,13 @@ func (pg PgDb) UpdateMempoolAggregateData(ctx context.Context) error {
 		fees[i] = m.TotalFee.Float64
 	}
 
+	if tx, err = pg.db.Begin(); err != nil {
+		return err
+	}
 	days, _, dayIntervals := cache.GenerateDayBin(dates, nil)
 	for i, interval := range dayIntervals {
 		mempoolBin := models.MempoolBin{
-			Time:                 time.Unix(int64(days[i]), 0),
+			Time:                 time.Unix(int64(days[i]), 0).UTC(),
 			Bin:                  string(cache.DayBin),
 			Size:                 null.IntFrom(int(sizes.Avg(interval[0], interval[1]))),
 			TotalFee:             null.Float64From(fees.Avg(interval[0], interval[1])),
@@ -959,6 +965,7 @@ func (pg PgDb) UpdateMempoolAggregateData(ctx context.Context) error {
 		}
 		if err = mempoolBin.Insert(ctx, tx, boil.Infer()); err != nil {
 			_ = tx.Rollback()
+			spew.Dump(mempoolBin, nextDay)
 			return err
 		}
 	}
@@ -967,5 +974,9 @@ func (pg PgDb) UpdateMempoolAggregateData(ctx context.Context) error {
 		return err
 	}
 	log.Info("Mempool bin data updated")
+	return nil
+}
+
+func (pg PgDb) UpdatePropagationData(ctx context.Context) error {
 	return nil
 }

@@ -26,6 +26,8 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("PowData", testPowDataUpsert)
 
+	t.Run("Propagations", testPropagationsUpsert)
+
 	t.Run("Reddits", testRedditsUpsert)
 
 	t.Run("Twitters", testTwittersUpsert)

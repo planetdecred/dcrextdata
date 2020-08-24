@@ -14,6 +14,7 @@ var TableNames = struct {
 	NetworkSnapshot string
 	Node            string
 	PowData         string
+	Propagation     string
 	Reddit          string
 	Twitter         string
 	Vote            string
@@ -31,6 +32,7 @@ var TableNames = struct {
 	NetworkSnapshot: "network_snapshot",
 	Node:            "node",
 	PowData:         "pow_data",
+	Propagation:     "propagation",
 	Reddit:          "reddit",
 	Twitter:         "twitter",
 	Vote:            "vote",
