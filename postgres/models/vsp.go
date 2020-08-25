@@ -123,14 +123,17 @@ var VSPWhere = struct {
 
 // VSPRels is where relationship names are stored.
 var VSPRels = struct {
-	VSPTicks string
+	VSPTicks    string
+	VSPTickBins string
 }{
-	VSPTicks: "VSPTicks",
+	VSPTicks:    "VSPTicks",
+	VSPTickBins: "VSPTickBins",
 }
 
 // vspR is where relationships are stored.
 type vspR struct {
-	VSPTicks VSPTickSlice
+	VSPTicks    VSPTickSlice
+	VSPTickBins VSPTickBinSlice
 }
 
 // NewStruct creates a new relationship struct
@@ -260,6 +263,27 @@ func (o *VSP) VSPTicks(mods ...qm.QueryMod) vspTickQuery {
 	return query
 }
 
+// VSPTickBins retrieves all the vsp_tick_bin's VSPTickBins with an executor.
+func (o *VSP) VSPTickBins(mods ...qm.QueryMod) vspTickBinQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"vsp_tick_bin\".\"vsp_id\"=?", o.ID),
+	)
+
+	query := VSPTickBins(queryMods...)
+	queries.SetFrom(query.Query, "\"vsp_tick_bin\"")
+
+	if len(queries.GetSelect(query.Query)) == 0 {
+		queries.SetSelect(query.Query, []string{"\"vsp_tick_bin\".*"})
+	}
+
+	return query
+}
+
 // LoadVSPTicks allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
 func (vspL) LoadVSPTicks(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVSP interface{}, mods queries.Applicator) error {
@@ -348,6 +372,94 @@ func (vspL) LoadVSPTicks(ctx context.Context, e boil.ContextExecutor, singular b
 	return nil
 }
 
+// LoadVSPTickBins allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (vspL) LoadVSPTickBins(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVSP interface{}, mods queries.Applicator) error {
+	var slice []*VSP
+	var object *VSP
+
+	if singular {
+		object = maybeVSP.(*VSP)
+	} else {
+		slice = *maybeVSP.(*[]*VSP)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &vspR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &vspR{}
+			}
+
+			for _, a := range args {
+				if a == obj.ID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(qm.From(`vsp_tick_bin`), qm.WhereIn(`vsp_tick_bin.vsp_id in ?`, args...))
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load vsp_tick_bin")
+	}
+
+	var resultSlice []*VSPTickBin
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice vsp_tick_bin")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on vsp_tick_bin")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for vsp_tick_bin")
+	}
+
+	if singular {
+		object.R.VSPTickBins = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &vspTickBinR{}
+			}
+			foreign.R.VSP = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.VSPID {
+				local.R.VSPTickBins = append(local.R.VSPTickBins, foreign)
+				if foreign.R == nil {
+					foreign.R = &vspTickBinR{}
+				}
+				foreign.R.VSP = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // AddVSPTicks adds the given related objects to the existing relationships
 // of the vsp, optionally inserting them as new records.
 // Appends related to o.R.VSPTicks.
@@ -392,6 +504,59 @@ func (o *VSP) AddVSPTicks(ctx context.Context, exec boil.ContextExecutor, insert
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &vspTickR{
+				VSP: o,
+			}
+		} else {
+			rel.R.VSP = o
+		}
+	}
+	return nil
+}
+
+// AddVSPTickBins adds the given related objects to the existing relationships
+// of the vsp, optionally inserting them as new records.
+// Appends related to o.R.VSPTickBins.
+// Sets related.R.VSP appropriately.
+func (o *VSP) AddVSPTickBins(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*VSPTickBin) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.VSPID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"vsp_tick_bin\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"vsp_id"}),
+				strmangle.WhereClause("\"", "\"", 2, vspTickBinPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.VSPID, rel.Time, rel.Bin}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.VSPID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &vspR{
+			VSPTickBins: related,
+		}
+	} else {
+		o.R.VSPTickBins = append(o.R.VSPTickBins, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &vspTickBinR{
 				VSP: o,
 			}
 		} else {

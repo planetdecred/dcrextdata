@@ -52,6 +52,22 @@ const (
 		time TIMESTAMPTZ NOT NULL
 	);`
 
+	createVSPTickBinTable = `CREATE TABLE IF NOT EXISTS vsp_tick_bin (
+		vsp_id INT REFERENCES vsp(id) NOT NULL,
+		bin VARCHAR(25), 
+		immature INT NOT NULL,
+		live INT NOT NULL,
+		voted INT NOT NULL,
+		missed INT NOT NULL,
+		pool_fees FLOAT NOT NULL,
+		proportion_live FLOAT NOT NULL,
+		proportion_missed FLOAT NOT NULL,
+		user_count INT NOT NULL,
+		users_active INT NOT NULL,
+		time INT8 NOT NULL,
+		PRIMARY KEY (vsp_id, time, bin)
+	);`
+
 	createVSPTickIndex = `CREATE UNIQUE INDEX IF NOT EXISTS vsp_tick_idx ON vsp_tick (vsp_id,immature,live,voted,missed,pool_fees,proportion_live,proportion_missed,user_count,users_active, time);`
 
 	lastVspTickEntryTime = `SELECT time FROM vsp_tick ORDER BY time DESC LIMIT 1`
@@ -249,6 +265,16 @@ func (pg *PgDb) CreateVSPTickTables() error {
 	return err
 }
 
+func (pg *PgDb) CreateVSPTickBinTable() error {
+	_, err := pg.db.Exec(createVSPTickBinTable)
+	return err
+}
+
+func (pg *PgDb) VSPTickBinTableExits() bool {
+	exists, _ := pg.tableExists("vsp_tick_bin")
+	return exists
+}
+
 func (pg *PgDb) CreateVSPTickIndex() error {
 	_, err := pg.db.Exec(createVSPTickIndex)
 
@@ -429,6 +455,10 @@ func (pg *PgDb) DropAllTables() error {
 	}
 
 	if err := pg.dropTable("vsp_tick"); err != nil {
+		return err
+	}
+
+	if err := pg.dropTable("vsp_tick_bin"); err != nil {
 		return err
 	}
 

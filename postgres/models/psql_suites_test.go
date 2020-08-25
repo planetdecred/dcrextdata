@@ -42,5 +42,7 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("VSPTicks", testVSPTicksUpsert)
 
+	t.Run("VSPTickBins", testVSPTickBinsUpsert)
+
 	t.Run("Youtubes", testYoutubesUpsert)
 }

@@ -482,6 +482,14 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 		}
 	}
 
+	if exists := db.VSPTickBinTableExits(); !exists {
+		if err := db.CreateVSPTickBinTable(); err != nil {
+			log.Error("Error creating vsp tick bin table: ", err)
+			return err
+		}
+		log.Info("VSPTicks bin table created successfully.")
+	}
+
 	if exists := db.ExchangeTableExits(); !exists {
 		if err := db.CreateExchangeTable(); err != nil {
 			log.Error("Error creating exchange table: ", err)

@@ -19,6 +19,7 @@
         "vote",
         "vsp",
         "vsp_tick",
+        "vsp_tick_bin",
         "youtube",
         "node",
         "network_snapshot",

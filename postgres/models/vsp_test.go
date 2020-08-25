@@ -431,6 +431,84 @@ func testVSPToManyVSPTicks(t *testing.T) {
 	}
 }
 
+func testVSPToManyVSPTickBins(t *testing.T) {
+	var err error
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a VSP
+	var b, c VSPTickBin
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, vspDBTypes, true, vspColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize VSP struct: %s", err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = randomize.Struct(seed, &b, vspTickBinDBTypes, false, vspTickBinColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, vspTickBinDBTypes, false, vspTickBinColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+
+	b.VSPID = a.ID
+	c.VSPID = a.ID
+
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := a.VSPTickBins().All(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bFound, cFound := false, false
+	for _, v := range check {
+		if v.VSPID == b.VSPID {
+			bFound = true
+		}
+		if v.VSPID == c.VSPID {
+			cFound = true
+		}
+	}
+
+	if !bFound {
+		t.Error("expected to find b")
+	}
+	if !cFound {
+		t.Error("expected to find c")
+	}
+
+	slice := VSPSlice{&a}
+	if err = a.L.LoadVSPTickBins(ctx, tx, false, (*[]*VSP)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.VSPTickBins); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	a.R.VSPTickBins = nil
+	if err = a.L.LoadVSPTickBins(ctx, tx, true, &a, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.VSPTickBins); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	if t.Failed() {
+		t.Logf("%#v", check)
+	}
+}
+
 func testVSPToManyAddOpVSPTicks(t *testing.T) {
 	var err error
 
@@ -498,6 +576,81 @@ func testVSPToManyAddOpVSPTicks(t *testing.T) {
 		}
 
 		count, err := a.VSPTicks().Count(ctx, tx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := int64((i + 1) * 2); count != want {
+			t.Error("want", want, "got", count)
+		}
+	}
+}
+func testVSPToManyAddOpVSPTickBins(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a VSP
+	var b, c, d, e VSPTickBin
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, vspDBTypes, false, strmangle.SetComplement(vspPrimaryKeyColumns, vspColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*VSPTickBin{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, vspTickBinDBTypes, false, strmangle.SetComplement(vspTickBinPrimaryKeyColumns, vspTickBinColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	foreignersSplitByInsertion := [][]*VSPTickBin{
+		{&b, &c},
+		{&d, &e},
+	}
+
+	for i, x := range foreignersSplitByInsertion {
+		err = a.AddVSPTickBins(ctx, tx, i != 0, x...)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		first := x[0]
+		second := x[1]
+
+		if a.ID != first.VSPID {
+			t.Error("foreign key was wrong value", a.ID, first.VSPID)
+		}
+		if a.ID != second.VSPID {
+			t.Error("foreign key was wrong value", a.ID, second.VSPID)
+		}
+
+		if first.R.VSP != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+		if second.R.VSP != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+
+		if a.R.VSPTickBins[i*2] != first {
+			t.Error("relationship struct slice not set to correct value")
+		}
+		if a.R.VSPTickBins[i*2+1] != second {
+			t.Error("relationship struct slice not set to correct value")
+		}
+
+		count, err := a.VSPTickBins().Count(ctx, tx)
 		if err != nil {
 			t.Fatal(err)
 		}

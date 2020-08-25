@@ -30,6 +30,7 @@ func TestParent(t *testing.T) {
 	t.Run("Votes", testVotes)
 	t.Run("VSPS", testVSPS)
 	t.Run("VSPTicks", testVSPTicks)
+	t.Run("VSPTickBins", testVSPTickBins)
 	t.Run("Youtubes", testYoutubes)
 }
 
@@ -52,6 +53,7 @@ func TestDelete(t *testing.T) {
 	t.Run("Votes", testVotesDelete)
 	t.Run("VSPS", testVSPSDelete)
 	t.Run("VSPTicks", testVSPTicksDelete)
+	t.Run("VSPTickBins", testVSPTickBinsDelete)
 	t.Run("Youtubes", testYoutubesDelete)
 }
 
@@ -74,6 +76,7 @@ func TestQueryDeleteAll(t *testing.T) {
 	t.Run("Votes", testVotesQueryDeleteAll)
 	t.Run("VSPS", testVSPSQueryDeleteAll)
 	t.Run("VSPTicks", testVSPTicksQueryDeleteAll)
+	t.Run("VSPTickBins", testVSPTickBinsQueryDeleteAll)
 	t.Run("Youtubes", testYoutubesQueryDeleteAll)
 }
 
@@ -96,6 +99,7 @@ func TestSliceDeleteAll(t *testing.T) {
 	t.Run("Votes", testVotesSliceDeleteAll)
 	t.Run("VSPS", testVSPSSliceDeleteAll)
 	t.Run("VSPTicks", testVSPTicksSliceDeleteAll)
+	t.Run("VSPTickBins", testVSPTickBinsSliceDeleteAll)
 	t.Run("Youtubes", testYoutubesSliceDeleteAll)
 }
 
@@ -118,6 +122,7 @@ func TestExists(t *testing.T) {
 	t.Run("Votes", testVotesExists)
 	t.Run("VSPS", testVSPSExists)
 	t.Run("VSPTicks", testVSPTicksExists)
+	t.Run("VSPTickBins", testVSPTickBinsExists)
 	t.Run("Youtubes", testYoutubesExists)
 }
 
@@ -140,6 +145,7 @@ func TestFind(t *testing.T) {
 	t.Run("Votes", testVotesFind)
 	t.Run("VSPS", testVSPSFind)
 	t.Run("VSPTicks", testVSPTicksFind)
+	t.Run("VSPTickBins", testVSPTickBinsFind)
 	t.Run("Youtubes", testYoutubesFind)
 }
 
@@ -162,6 +168,7 @@ func TestBind(t *testing.T) {
 	t.Run("Votes", testVotesBind)
 	t.Run("VSPS", testVSPSBind)
 	t.Run("VSPTicks", testVSPTicksBind)
+	t.Run("VSPTickBins", testVSPTickBinsBind)
 	t.Run("Youtubes", testYoutubesBind)
 }
 
@@ -184,6 +191,7 @@ func TestOne(t *testing.T) {
 	t.Run("Votes", testVotesOne)
 	t.Run("VSPS", testVSPSOne)
 	t.Run("VSPTicks", testVSPTicksOne)
+	t.Run("VSPTickBins", testVSPTickBinsOne)
 	t.Run("Youtubes", testYoutubesOne)
 }
 
@@ -206,6 +214,7 @@ func TestAll(t *testing.T) {
 	t.Run("Votes", testVotesAll)
 	t.Run("VSPS", testVSPSAll)
 	t.Run("VSPTicks", testVSPTicksAll)
+	t.Run("VSPTickBins", testVSPTickBinsAll)
 	t.Run("Youtubes", testYoutubesAll)
 }
 
@@ -228,6 +237,7 @@ func TestCount(t *testing.T) {
 	t.Run("Votes", testVotesCount)
 	t.Run("VSPS", testVSPSCount)
 	t.Run("VSPTicks", testVSPTicksCount)
+	t.Run("VSPTickBins", testVSPTickBinsCount)
 	t.Run("Youtubes", testYoutubesCount)
 }
 
@@ -268,6 +278,8 @@ func TestInsert(t *testing.T) {
 	t.Run("VSPS", testVSPSInsertWhitelist)
 	t.Run("VSPTicks", testVSPTicksInsert)
 	t.Run("VSPTicks", testVSPTicksInsertWhitelist)
+	t.Run("VSPTickBins", testVSPTickBinsInsert)
+	t.Run("VSPTickBins", testVSPTickBinsInsertWhitelist)
 	t.Run("Youtubes", testYoutubesInsert)
 	t.Run("Youtubes", testYoutubesInsertWhitelist)
 }
@@ -278,6 +290,7 @@ func TestToOne(t *testing.T) {
 	t.Run("ExchangeTickToExchangeUsingExchange", testExchangeTickToOneExchangeUsingExchange)
 	t.Run("HeartbeatToNodeUsingNode", testHeartbeatToOneNodeUsingNode)
 	t.Run("VSPTickToVSPUsingVSP", testVSPTickToOneVSPUsingVSP)
+	t.Run("VSPTickBinToVSPUsingVSP", testVSPTickBinToOneVSPUsingVSP)
 }
 
 // TestOneToOne tests cannot be run in parallel
@@ -290,6 +303,7 @@ func TestToMany(t *testing.T) {
 	t.Run("ExchangeToExchangeTicks", testExchangeToManyExchangeTicks)
 	t.Run("NodeToHeartbeats", testNodeToManyHeartbeats)
 	t.Run("VSPToVSPTicks", testVSPToManyVSPTicks)
+	t.Run("VSPToVSPTickBins", testVSPToManyVSPTickBins)
 }
 
 // TestToOneSet tests cannot be run in parallel
@@ -298,6 +312,7 @@ func TestToOneSet(t *testing.T) {
 	t.Run("ExchangeTickToExchangeUsingExchangeTicks", testExchangeTickToOneSetOpExchangeUsingExchange)
 	t.Run("HeartbeatToNodeUsingHeartbeats", testHeartbeatToOneSetOpNodeUsingNode)
 	t.Run("VSPTickToVSPUsingVSPTicks", testVSPTickToOneSetOpVSPUsingVSP)
+	t.Run("VSPTickBinToVSPUsingVSPTickBins", testVSPTickBinToOneSetOpVSPUsingVSP)
 }
 
 // TestToOneRemove tests cannot be run in parallel
@@ -318,6 +333,7 @@ func TestToManyAdd(t *testing.T) {
 	t.Run("ExchangeToExchangeTicks", testExchangeToManyAddOpExchangeTicks)
 	t.Run("NodeToHeartbeats", testNodeToManyAddOpHeartbeats)
 	t.Run("VSPToVSPTicks", testVSPToManyAddOpVSPTicks)
+	t.Run("VSPToVSPTickBins", testVSPToManyAddOpVSPTickBins)
 }
 
 // TestToManySet tests cannot be run in parallel
@@ -347,6 +363,7 @@ func TestReload(t *testing.T) {
 	t.Run("Votes", testVotesReload)
 	t.Run("VSPS", testVSPSReload)
 	t.Run("VSPTicks", testVSPTicksReload)
+	t.Run("VSPTickBins", testVSPTickBinsReload)
 	t.Run("Youtubes", testYoutubesReload)
 }
 
@@ -369,6 +386,7 @@ func TestReloadAll(t *testing.T) {
 	t.Run("Votes", testVotesReloadAll)
 	t.Run("VSPS", testVSPSReloadAll)
 	t.Run("VSPTicks", testVSPTicksReloadAll)
+	t.Run("VSPTickBins", testVSPTickBinsReloadAll)
 	t.Run("Youtubes", testYoutubesReloadAll)
 }
 
@@ -391,6 +409,7 @@ func TestSelect(t *testing.T) {
 	t.Run("Votes", testVotesSelect)
 	t.Run("VSPS", testVSPSSelect)
 	t.Run("VSPTicks", testVSPTicksSelect)
+	t.Run("VSPTickBins", testVSPTickBinsSelect)
 	t.Run("Youtubes", testYoutubesSelect)
 }
 
@@ -413,6 +432,7 @@ func TestUpdate(t *testing.T) {
 	t.Run("Votes", testVotesUpdate)
 	t.Run("VSPS", testVSPSUpdate)
 	t.Run("VSPTicks", testVSPTicksUpdate)
+	t.Run("VSPTickBins", testVSPTickBinsUpdate)
 	t.Run("Youtubes", testYoutubesUpdate)
 }
 
@@ -435,5 +455,6 @@ func TestSliceUpdateAll(t *testing.T) {
 	t.Run("Votes", testVotesSliceUpdateAll)
 	t.Run("VSPS", testVSPSSliceUpdateAll)
 	t.Run("VSPTicks", testVSPTicksSliceUpdateAll)
+	t.Run("VSPTickBins", testVSPTickBinsSliceUpdateAll)
 	t.Run("Youtubes", testYoutubesSliceUpdateAll)
 }

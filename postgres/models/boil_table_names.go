@@ -22,6 +22,7 @@ var TableNames = struct {
 	Vote            string
 	VSP             string
 	VSPTick         string
+	VSPTickBin      string
 	Youtube         string
 }{
 	Block:           "block",
@@ -42,5 +43,6 @@ var TableNames = struct {
 	Vote:            "vote",
 	VSP:             "vsp",
 	VSPTick:         "vsp_tick",
+	VSPTickBin:      "vsp_tick_bin",
 	Youtube:         "youtube",
 }
