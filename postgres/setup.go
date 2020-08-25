@@ -58,14 +58,23 @@ const (
 
 	// PoW table
 	createPowDataTable = `CREATE TABLE IF NOT EXISTS pow_data (
- 		time INT,
-		pool_hashrate VARCHAR(25),
-		workers INT,
-		coin_price VARCHAR(25),
-		btc_price VARCHAR(25),
-		source VARCHAR(25),
-		PRIMARY KEY (time, source)
-	);`
+	   time INT,
+	   pool_hashrate VARCHAR(25),
+	   workers INT,
+	   coin_price VARCHAR(25),
+	   btc_price VARCHAR(25),
+	   source VARCHAR(25),
+	   PRIMARY KEY (time, source)
+   );`
+
+	createPowBInTable = `CREATE TABLE IF NOT EXISTS pow_bin (
+	   time INT8,
+	   pool_hashrate VARCHAR(25),
+	   workers INT,
+	   bin VARCHAR(25),
+	   source VARCHAR(25),
+	   PRIMARY KEY (time, source, bin)
+   );`
 
 	lastPowEntryTimeBySource = `SELECT time FROM pow_data WHERE source=$1 ORDER BY time DESC LIMIT 1`
 	lastPowEntryTime         = `SELECT time FROM pow_data ORDER BY time DESC LIMIT 1`
@@ -261,6 +270,16 @@ func (pg *PgDb) PowDataTableExits() bool {
 	return exists
 }
 
+func (pg *PgDb) CreatePowBinTable() error {
+	_, err := pg.db.Exec(createPowBInTable)
+	return err
+}
+
+func (pg *PgDb) PowBInTableExits() bool {
+	exists, _ := pg.tableExists("pow_bin")
+	return exists
+}
+
 func (pg *PgDb) CreateMempoolDataTable() error {
 	_, err := pg.db.Exec(createMempoolTable)
 	return err
@@ -434,6 +453,11 @@ func (pg *PgDb) DropAllTables() error {
 
 	// pow_data
 	if err := pg.dropTable("pow_data"); err != nil {
+		return err
+	}
+
+	// pow_bin
+	if err := pg.dropTable("pow_bin"); err != nil {
 		return err
 	}
 

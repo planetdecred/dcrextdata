@@ -508,6 +508,14 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 		log.Info("Pow table created successfully.")
 	}
 
+	if exists := db.PowBInTableExits(); !exists {
+		if err := db.CreatePowBinTable(); err != nil {
+			log.Error("Error creating PoW bin table: ", err)
+			return err
+		}
+		log.Info("Pow bin table created successfully.")
+	}
+
 	if exists := db.RedditTableExits(); !exists {
 		if err := db.CreateRedditTable(); err != nil {
 			log.Error("Error creating reddit table: ", err)

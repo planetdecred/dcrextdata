@@ -13,6 +13,7 @@
         "mempool_bin",
         "propagation",
         "pow_data",
+        "pow_bin",
         "reddit",
         "twitter",
         "vote",

@@ -5,6 +5,7 @@ package models
 
 var TableNames = struct {
 	Block           string
+	CommunityStat   string
 	Exchange        string
 	ExchangeTick    string
 	Github          string
@@ -13,6 +14,7 @@ var TableNames = struct {
 	MempoolBin      string
 	NetworkSnapshot string
 	Node            string
+	PowBin          string
 	PowData         string
 	Propagation     string
 	Reddit          string
@@ -23,6 +25,7 @@ var TableNames = struct {
 	Youtube         string
 }{
 	Block:           "block",
+	CommunityStat:   "community_stat",
 	Exchange:        "exchange",
 	ExchangeTick:    "exchange_tick",
 	Github:          "github",
@@ -31,6 +34,7 @@ var TableNames = struct {
 	MempoolBin:      "mempool_bin",
 	NetworkSnapshot: "network_snapshot",
 	Node:            "node",
+	PowBin:          "pow_bin",
 	PowData:         "pow_data",
 	Propagation:     "propagation",
 	Reddit:          "reddit",

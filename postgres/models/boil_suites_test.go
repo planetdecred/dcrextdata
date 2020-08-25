@@ -13,6 +13,7 @@ import "testing"
 // Separating the tests thusly grants avoidance of Postgres deadlocks.
 func TestParent(t *testing.T) {
 	t.Run("Blocks", testBlocks)
+	t.Run("CommunityStats", testCommunityStats)
 	t.Run("Exchanges", testExchanges)
 	t.Run("ExchangeTicks", testExchangeTicks)
 	t.Run("Githubs", testGithubs)
@@ -21,6 +22,7 @@ func TestParent(t *testing.T) {
 	t.Run("MempoolBins", testMempoolBins)
 	t.Run("NetworkSnapshots", testNetworkSnapshots)
 	t.Run("Nodes", testNodes)
+	t.Run("PowBins", testPowBins)
 	t.Run("PowData", testPowData)
 	t.Run("Propagations", testPropagations)
 	t.Run("Reddits", testReddits)
@@ -33,6 +35,7 @@ func TestParent(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	t.Run("Blocks", testBlocksDelete)
+	t.Run("CommunityStats", testCommunityStatsDelete)
 	t.Run("Exchanges", testExchangesDelete)
 	t.Run("ExchangeTicks", testExchangeTicksDelete)
 	t.Run("Githubs", testGithubsDelete)
@@ -41,6 +44,7 @@ func TestDelete(t *testing.T) {
 	t.Run("MempoolBins", testMempoolBinsDelete)
 	t.Run("NetworkSnapshots", testNetworkSnapshotsDelete)
 	t.Run("Nodes", testNodesDelete)
+	t.Run("PowBins", testPowBinsDelete)
 	t.Run("PowData", testPowDataDelete)
 	t.Run("Propagations", testPropagationsDelete)
 	t.Run("Reddits", testRedditsDelete)
@@ -53,6 +57,7 @@ func TestDelete(t *testing.T) {
 
 func TestQueryDeleteAll(t *testing.T) {
 	t.Run("Blocks", testBlocksQueryDeleteAll)
+	t.Run("CommunityStats", testCommunityStatsQueryDeleteAll)
 	t.Run("Exchanges", testExchangesQueryDeleteAll)
 	t.Run("ExchangeTicks", testExchangeTicksQueryDeleteAll)
 	t.Run("Githubs", testGithubsQueryDeleteAll)
@@ -61,6 +66,7 @@ func TestQueryDeleteAll(t *testing.T) {
 	t.Run("MempoolBins", testMempoolBinsQueryDeleteAll)
 	t.Run("NetworkSnapshots", testNetworkSnapshotsQueryDeleteAll)
 	t.Run("Nodes", testNodesQueryDeleteAll)
+	t.Run("PowBins", testPowBinsQueryDeleteAll)
 	t.Run("PowData", testPowDataQueryDeleteAll)
 	t.Run("Propagations", testPropagationsQueryDeleteAll)
 	t.Run("Reddits", testRedditsQueryDeleteAll)
@@ -73,6 +79,7 @@ func TestQueryDeleteAll(t *testing.T) {
 
 func TestSliceDeleteAll(t *testing.T) {
 	t.Run("Blocks", testBlocksSliceDeleteAll)
+	t.Run("CommunityStats", testCommunityStatsSliceDeleteAll)
 	t.Run("Exchanges", testExchangesSliceDeleteAll)
 	t.Run("ExchangeTicks", testExchangeTicksSliceDeleteAll)
 	t.Run("Githubs", testGithubsSliceDeleteAll)
@@ -81,6 +88,7 @@ func TestSliceDeleteAll(t *testing.T) {
 	t.Run("MempoolBins", testMempoolBinsSliceDeleteAll)
 	t.Run("NetworkSnapshots", testNetworkSnapshotsSliceDeleteAll)
 	t.Run("Nodes", testNodesSliceDeleteAll)
+	t.Run("PowBins", testPowBinsSliceDeleteAll)
 	t.Run("PowData", testPowDataSliceDeleteAll)
 	t.Run("Propagations", testPropagationsSliceDeleteAll)
 	t.Run("Reddits", testRedditsSliceDeleteAll)
@@ -93,6 +101,7 @@ func TestSliceDeleteAll(t *testing.T) {
 
 func TestExists(t *testing.T) {
 	t.Run("Blocks", testBlocksExists)
+	t.Run("CommunityStats", testCommunityStatsExists)
 	t.Run("Exchanges", testExchangesExists)
 	t.Run("ExchangeTicks", testExchangeTicksExists)
 	t.Run("Githubs", testGithubsExists)
@@ -101,6 +110,7 @@ func TestExists(t *testing.T) {
 	t.Run("MempoolBins", testMempoolBinsExists)
 	t.Run("NetworkSnapshots", testNetworkSnapshotsExists)
 	t.Run("Nodes", testNodesExists)
+	t.Run("PowBins", testPowBinsExists)
 	t.Run("PowData", testPowDataExists)
 	t.Run("Propagations", testPropagationsExists)
 	t.Run("Reddits", testRedditsExists)
@@ -113,6 +123,7 @@ func TestExists(t *testing.T) {
 
 func TestFind(t *testing.T) {
 	t.Run("Blocks", testBlocksFind)
+	t.Run("CommunityStats", testCommunityStatsFind)
 	t.Run("Exchanges", testExchangesFind)
 	t.Run("ExchangeTicks", testExchangeTicksFind)
 	t.Run("Githubs", testGithubsFind)
@@ -121,6 +132,7 @@ func TestFind(t *testing.T) {
 	t.Run("MempoolBins", testMempoolBinsFind)
 	t.Run("NetworkSnapshots", testNetworkSnapshotsFind)
 	t.Run("Nodes", testNodesFind)
+	t.Run("PowBins", testPowBinsFind)
 	t.Run("PowData", testPowDataFind)
 	t.Run("Propagations", testPropagationsFind)
 	t.Run("Reddits", testRedditsFind)
@@ -133,6 +145,7 @@ func TestFind(t *testing.T) {
 
 func TestBind(t *testing.T) {
 	t.Run("Blocks", testBlocksBind)
+	t.Run("CommunityStats", testCommunityStatsBind)
 	t.Run("Exchanges", testExchangesBind)
 	t.Run("ExchangeTicks", testExchangeTicksBind)
 	t.Run("Githubs", testGithubsBind)
@@ -141,6 +154,7 @@ func TestBind(t *testing.T) {
 	t.Run("MempoolBins", testMempoolBinsBind)
 	t.Run("NetworkSnapshots", testNetworkSnapshotsBind)
 	t.Run("Nodes", testNodesBind)
+	t.Run("PowBins", testPowBinsBind)
 	t.Run("PowData", testPowDataBind)
 	t.Run("Propagations", testPropagationsBind)
 	t.Run("Reddits", testRedditsBind)
@@ -153,6 +167,7 @@ func TestBind(t *testing.T) {
 
 func TestOne(t *testing.T) {
 	t.Run("Blocks", testBlocksOne)
+	t.Run("CommunityStats", testCommunityStatsOne)
 	t.Run("Exchanges", testExchangesOne)
 	t.Run("ExchangeTicks", testExchangeTicksOne)
 	t.Run("Githubs", testGithubsOne)
@@ -161,6 +176,7 @@ func TestOne(t *testing.T) {
 	t.Run("MempoolBins", testMempoolBinsOne)
 	t.Run("NetworkSnapshots", testNetworkSnapshotsOne)
 	t.Run("Nodes", testNodesOne)
+	t.Run("PowBins", testPowBinsOne)
 	t.Run("PowData", testPowDataOne)
 	t.Run("Propagations", testPropagationsOne)
 	t.Run("Reddits", testRedditsOne)
@@ -173,6 +189,7 @@ func TestOne(t *testing.T) {
 
 func TestAll(t *testing.T) {
 	t.Run("Blocks", testBlocksAll)
+	t.Run("CommunityStats", testCommunityStatsAll)
 	t.Run("Exchanges", testExchangesAll)
 	t.Run("ExchangeTicks", testExchangeTicksAll)
 	t.Run("Githubs", testGithubsAll)
@@ -181,6 +198,7 @@ func TestAll(t *testing.T) {
 	t.Run("MempoolBins", testMempoolBinsAll)
 	t.Run("NetworkSnapshots", testNetworkSnapshotsAll)
 	t.Run("Nodes", testNodesAll)
+	t.Run("PowBins", testPowBinsAll)
 	t.Run("PowData", testPowDataAll)
 	t.Run("Propagations", testPropagationsAll)
 	t.Run("Reddits", testRedditsAll)
@@ -193,6 +211,7 @@ func TestAll(t *testing.T) {
 
 func TestCount(t *testing.T) {
 	t.Run("Blocks", testBlocksCount)
+	t.Run("CommunityStats", testCommunityStatsCount)
 	t.Run("Exchanges", testExchangesCount)
 	t.Run("ExchangeTicks", testExchangeTicksCount)
 	t.Run("Githubs", testGithubsCount)
@@ -201,6 +220,7 @@ func TestCount(t *testing.T) {
 	t.Run("MempoolBins", testMempoolBinsCount)
 	t.Run("NetworkSnapshots", testNetworkSnapshotsCount)
 	t.Run("Nodes", testNodesCount)
+	t.Run("PowBins", testPowBinsCount)
 	t.Run("PowData", testPowDataCount)
 	t.Run("Propagations", testPropagationsCount)
 	t.Run("Reddits", testRedditsCount)
@@ -214,6 +234,8 @@ func TestCount(t *testing.T) {
 func TestInsert(t *testing.T) {
 	t.Run("Blocks", testBlocksInsert)
 	t.Run("Blocks", testBlocksInsertWhitelist)
+	t.Run("CommunityStats", testCommunityStatsInsert)
+	t.Run("CommunityStats", testCommunityStatsInsertWhitelist)
 	t.Run("Exchanges", testExchangesInsert)
 	t.Run("Exchanges", testExchangesInsertWhitelist)
 	t.Run("ExchangeTicks", testExchangeTicksInsert)
@@ -230,6 +252,8 @@ func TestInsert(t *testing.T) {
 	t.Run("NetworkSnapshots", testNetworkSnapshotsInsertWhitelist)
 	t.Run("Nodes", testNodesInsert)
 	t.Run("Nodes", testNodesInsertWhitelist)
+	t.Run("PowBins", testPowBinsInsert)
+	t.Run("PowBins", testPowBinsInsertWhitelist)
 	t.Run("PowData", testPowDataInsert)
 	t.Run("PowData", testPowDataInsertWhitelist)
 	t.Run("Propagations", testPropagationsInsert)
@@ -306,6 +330,7 @@ func TestToManyRemove(t *testing.T) {}
 
 func TestReload(t *testing.T) {
 	t.Run("Blocks", testBlocksReload)
+	t.Run("CommunityStats", testCommunityStatsReload)
 	t.Run("Exchanges", testExchangesReload)
 	t.Run("ExchangeTicks", testExchangeTicksReload)
 	t.Run("Githubs", testGithubsReload)
@@ -314,6 +339,7 @@ func TestReload(t *testing.T) {
 	t.Run("MempoolBins", testMempoolBinsReload)
 	t.Run("NetworkSnapshots", testNetworkSnapshotsReload)
 	t.Run("Nodes", testNodesReload)
+	t.Run("PowBins", testPowBinsReload)
 	t.Run("PowData", testPowDataReload)
 	t.Run("Propagations", testPropagationsReload)
 	t.Run("Reddits", testRedditsReload)
@@ -326,6 +352,7 @@ func TestReload(t *testing.T) {
 
 func TestReloadAll(t *testing.T) {
 	t.Run("Blocks", testBlocksReloadAll)
+	t.Run("CommunityStats", testCommunityStatsReloadAll)
 	t.Run("Exchanges", testExchangesReloadAll)
 	t.Run("ExchangeTicks", testExchangeTicksReloadAll)
 	t.Run("Githubs", testGithubsReloadAll)
@@ -334,6 +361,7 @@ func TestReloadAll(t *testing.T) {
 	t.Run("MempoolBins", testMempoolBinsReloadAll)
 	t.Run("NetworkSnapshots", testNetworkSnapshotsReloadAll)
 	t.Run("Nodes", testNodesReloadAll)
+	t.Run("PowBins", testPowBinsReloadAll)
 	t.Run("PowData", testPowDataReloadAll)
 	t.Run("Propagations", testPropagationsReloadAll)
 	t.Run("Reddits", testRedditsReloadAll)
@@ -346,6 +374,7 @@ func TestReloadAll(t *testing.T) {
 
 func TestSelect(t *testing.T) {
 	t.Run("Blocks", testBlocksSelect)
+	t.Run("CommunityStats", testCommunityStatsSelect)
 	t.Run("Exchanges", testExchangesSelect)
 	t.Run("ExchangeTicks", testExchangeTicksSelect)
 	t.Run("Githubs", testGithubsSelect)
@@ -354,6 +383,7 @@ func TestSelect(t *testing.T) {
 	t.Run("MempoolBins", testMempoolBinsSelect)
 	t.Run("NetworkSnapshots", testNetworkSnapshotsSelect)
 	t.Run("Nodes", testNodesSelect)
+	t.Run("PowBins", testPowBinsSelect)
 	t.Run("PowData", testPowDataSelect)
 	t.Run("Propagations", testPropagationsSelect)
 	t.Run("Reddits", testRedditsSelect)
@@ -366,6 +396,7 @@ func TestSelect(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	t.Run("Blocks", testBlocksUpdate)
+	t.Run("CommunityStats", testCommunityStatsUpdate)
 	t.Run("Exchanges", testExchangesUpdate)
 	t.Run("ExchangeTicks", testExchangeTicksUpdate)
 	t.Run("Githubs", testGithubsUpdate)
@@ -374,6 +405,7 @@ func TestUpdate(t *testing.T) {
 	t.Run("MempoolBins", testMempoolBinsUpdate)
 	t.Run("NetworkSnapshots", testNetworkSnapshotsUpdate)
 	t.Run("Nodes", testNodesUpdate)
+	t.Run("PowBins", testPowBinsUpdate)
 	t.Run("PowData", testPowDataUpdate)
 	t.Run("Propagations", testPropagationsUpdate)
 	t.Run("Reddits", testRedditsUpdate)
@@ -386,6 +418,7 @@ func TestUpdate(t *testing.T) {
 
 func TestSliceUpdateAll(t *testing.T) {
 	t.Run("Blocks", testBlocksSliceUpdateAll)
+	t.Run("CommunityStats", testCommunityStatsSliceUpdateAll)
 	t.Run("Exchanges", testExchangesSliceUpdateAll)
 	t.Run("ExchangeTicks", testExchangeTicksSliceUpdateAll)
 	t.Run("Githubs", testGithubsSliceUpdateAll)
@@ -394,6 +427,7 @@ func TestSliceUpdateAll(t *testing.T) {
 	t.Run("MempoolBins", testMempoolBinsSliceUpdateAll)
 	t.Run("NetworkSnapshots", testNetworkSnapshotsSliceUpdateAll)
 	t.Run("Nodes", testNodesSliceUpdateAll)
+	t.Run("PowBins", testPowBinsSliceUpdateAll)
 	t.Run("PowData", testPowDataSliceUpdateAll)
 	t.Run("Propagations", testPropagationsSliceUpdateAll)
 	t.Run("Reddits", testRedditsSliceUpdateAll)

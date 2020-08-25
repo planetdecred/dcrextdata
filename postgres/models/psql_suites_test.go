@@ -8,6 +8,8 @@ import "testing"
 func TestUpsert(t *testing.T) {
 	t.Run("Blocks", testBlocksUpsert)
 
+	t.Run("CommunityStats", testCommunityStatsUpsert)
+
 	t.Run("Exchanges", testExchangesUpsert)
 
 	t.Run("ExchangeTicks", testExchangeTicksUpsert)
@@ -23,6 +25,8 @@ func TestUpsert(t *testing.T) {
 	t.Run("NetworkSnapshots", testNetworkSnapshotsUpsert)
 
 	t.Run("Nodes", testNodesUpsert)
+
+	t.Run("PowBins", testPowBinsUpsert)
 
 	t.Run("PowData", testPowDataUpsert)
 
