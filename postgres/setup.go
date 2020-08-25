@@ -55,16 +55,16 @@ const (
 	createVSPTickBinTable = `CREATE TABLE IF NOT EXISTS vsp_tick_bin (
 		vsp_id INT REFERENCES vsp(id) NOT NULL,
 		bin VARCHAR(25), 
-		immature INT NOT NULL,
-		live INT NOT NULL,
-		voted INT NOT NULL,
-		missed INT NOT NULL,
-		pool_fees FLOAT NOT NULL,
-		proportion_live FLOAT NOT NULL,
-		proportion_missed FLOAT NOT NULL,
-		user_count INT NOT NULL,
-		users_active INT NOT NULL,
-		time INT8 NOT NULL,
+		immature INT,
+		live INT,
+		voted INT,
+		missed INT,
+		pool_fees FLOAT,
+		proportion_live FLOAT,
+		proportion_missed FLOAT,
+		user_count INT,
+		users_active INT,
+		time INT8,
 		PRIMARY KEY (vsp_id, time, bin)
 	);`
 

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/planetdecred/dcrextdata/app/helpers"
 	"github.com/planetdecred/dcrextdata/cache"
 	"github.com/planetdecred/dcrextdata/postgres/models"
@@ -512,6 +513,9 @@ func (pg *PgDb) UpdatePowChart(ctx context.Context) error {
 	hours, _, hourIntervals := cache.GenerateHourBin(powSet.time, nil)
 	for _, pool := range pools {
 		for i, interval := range hourIntervals {
+			if hours[i] < uint64(nextHour.Unix()) {
+				continue
+			}
 			workers := powSet.workers[pool.Source].Avg(interval[0], interval[1])
 			hashrate := powSet.hashrate[pool.Source].Avg(interval[0], interval[1])
 			powBin := models.PowBin{
@@ -527,6 +531,7 @@ func (pg *PgDb) UpdatePowChart(ctx context.Context) error {
 			}
 			if err = powBin.Insert(ctx, tx, boil.Infer()); err != nil {
 				_ = tx.Rollback()
+				spew.Dump(powBin)
 				return err
 			}
 		}
@@ -559,6 +564,9 @@ func (pg *PgDb) UpdatePowChart(ctx context.Context) error {
 	days, _, dayIntervals := cache.GenerateDayBin(powSet.time, nil)
 	for _, pool := range pools {
 		for i, interval := range dayIntervals {
+			if days[i] < uint64(nextDay.Unix()) {
+				continue
+			}
 			workers := powSet.workers[pool.Source].Avg(interval[0], interval[1])
 			hashrate := powSet.hashrate[pool.Source].Avg(interval[0], interval[1])
 			powBin := models.PowBin{

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries"
 	"github.com/volatiletech/sqlboiler/queries/qm"
@@ -23,18 +24,18 @@ import (
 
 // VSPTickBin is an object representing the database table.
 type VSPTickBin struct {
-	VSPID            int     `boil:"vsp_id" json:"vsp_id" toml:"vsp_id" yaml:"vsp_id"`
-	Bin              string  `boil:"bin" json:"bin" toml:"bin" yaml:"bin"`
-	Immature         int     `boil:"immature" json:"immature" toml:"immature" yaml:"immature"`
-	Live             int     `boil:"live" json:"live" toml:"live" yaml:"live"`
-	Voted            int     `boil:"voted" json:"voted" toml:"voted" yaml:"voted"`
-	Missed           int     `boil:"missed" json:"missed" toml:"missed" yaml:"missed"`
-	PoolFees         float64 `boil:"pool_fees" json:"pool_fees" toml:"pool_fees" yaml:"pool_fees"`
-	ProportionLive   float64 `boil:"proportion_live" json:"proportion_live" toml:"proportion_live" yaml:"proportion_live"`
-	ProportionMissed float64 `boil:"proportion_missed" json:"proportion_missed" toml:"proportion_missed" yaml:"proportion_missed"`
-	UserCount        int     `boil:"user_count" json:"user_count" toml:"user_count" yaml:"user_count"`
-	UsersActive      int     `boil:"users_active" json:"users_active" toml:"users_active" yaml:"users_active"`
-	Time             int64   `boil:"time" json:"time" toml:"time" yaml:"time"`
+	VSPID            int          `boil:"vsp_id" json:"vsp_id" toml:"vsp_id" yaml:"vsp_id"`
+	Bin              string       `boil:"bin" json:"bin" toml:"bin" yaml:"bin"`
+	Immature         null.Int     `boil:"immature" json:"immature,omitempty" toml:"immature" yaml:"immature,omitempty"`
+	Live             null.Int     `boil:"live" json:"live,omitempty" toml:"live" yaml:"live,omitempty"`
+	Voted            null.Int     `boil:"voted" json:"voted,omitempty" toml:"voted" yaml:"voted,omitempty"`
+	Missed           null.Int     `boil:"missed" json:"missed,omitempty" toml:"missed" yaml:"missed,omitempty"`
+	PoolFees         null.Float64 `boil:"pool_fees" json:"pool_fees,omitempty" toml:"pool_fees" yaml:"pool_fees,omitempty"`
+	ProportionLive   null.Float64 `boil:"proportion_live" json:"proportion_live,omitempty" toml:"proportion_live" yaml:"proportion_live,omitempty"`
+	ProportionMissed null.Float64 `boil:"proportion_missed" json:"proportion_missed,omitempty" toml:"proportion_missed" yaml:"proportion_missed,omitempty"`
+	UserCount        null.Int     `boil:"user_count" json:"user_count,omitempty" toml:"user_count" yaml:"user_count,omitempty"`
+	UsersActive      null.Int     `boil:"users_active" json:"users_active,omitempty" toml:"users_active" yaml:"users_active,omitempty"`
+	Time             int64        `boil:"time" json:"time" toml:"time" yaml:"time"`
 
 	R *vspTickBinR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L vspTickBinL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -73,28 +74,28 @@ var VSPTickBinColumns = struct {
 var VSPTickBinWhere = struct {
 	VSPID            whereHelperint
 	Bin              whereHelperstring
-	Immature         whereHelperint
-	Live             whereHelperint
-	Voted            whereHelperint
-	Missed           whereHelperint
-	PoolFees         whereHelperfloat64
-	ProportionLive   whereHelperfloat64
-	ProportionMissed whereHelperfloat64
-	UserCount        whereHelperint
-	UsersActive      whereHelperint
+	Immature         whereHelpernull_Int
+	Live             whereHelpernull_Int
+	Voted            whereHelpernull_Int
+	Missed           whereHelpernull_Int
+	PoolFees         whereHelpernull_Float64
+	ProportionLive   whereHelpernull_Float64
+	ProportionMissed whereHelpernull_Float64
+	UserCount        whereHelpernull_Int
+	UsersActive      whereHelpernull_Int
 	Time             whereHelperint64
 }{
 	VSPID:            whereHelperint{field: "\"vsp_tick_bin\".\"vsp_id\""},
 	Bin:              whereHelperstring{field: "\"vsp_tick_bin\".\"bin\""},
-	Immature:         whereHelperint{field: "\"vsp_tick_bin\".\"immature\""},
-	Live:             whereHelperint{field: "\"vsp_tick_bin\".\"live\""},
-	Voted:            whereHelperint{field: "\"vsp_tick_bin\".\"voted\""},
-	Missed:           whereHelperint{field: "\"vsp_tick_bin\".\"missed\""},
-	PoolFees:         whereHelperfloat64{field: "\"vsp_tick_bin\".\"pool_fees\""},
-	ProportionLive:   whereHelperfloat64{field: "\"vsp_tick_bin\".\"proportion_live\""},
-	ProportionMissed: whereHelperfloat64{field: "\"vsp_tick_bin\".\"proportion_missed\""},
-	UserCount:        whereHelperint{field: "\"vsp_tick_bin\".\"user_count\""},
-	UsersActive:      whereHelperint{field: "\"vsp_tick_bin\".\"users_active\""},
+	Immature:         whereHelpernull_Int{field: "\"vsp_tick_bin\".\"immature\""},
+	Live:             whereHelpernull_Int{field: "\"vsp_tick_bin\".\"live\""},
+	Voted:            whereHelpernull_Int{field: "\"vsp_tick_bin\".\"voted\""},
+	Missed:           whereHelpernull_Int{field: "\"vsp_tick_bin\".\"missed\""},
+	PoolFees:         whereHelpernull_Float64{field: "\"vsp_tick_bin\".\"pool_fees\""},
+	ProportionLive:   whereHelpernull_Float64{field: "\"vsp_tick_bin\".\"proportion_live\""},
+	ProportionMissed: whereHelpernull_Float64{field: "\"vsp_tick_bin\".\"proportion_missed\""},
+	UserCount:        whereHelpernull_Int{field: "\"vsp_tick_bin\".\"user_count\""},
+	UsersActive:      whereHelpernull_Int{field: "\"vsp_tick_bin\".\"users_active\""},
 	Time:             whereHelperint64{field: "\"vsp_tick_bin\".\"time\""},
 }
 

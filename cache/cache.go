@@ -571,6 +571,28 @@ func (data ChartNullFloats) Value(index int) interface{} {
 	return data[index].Float64
 }
 
+// Avg is the average value of a segment of the dataset.
+func (data ChartNullFloats) Avg(s, e int) *null.Float64 {
+	if s >= data.Length() || e >= data.Length() {
+		return nil
+	}
+	if e <= s {
+		return nil
+	}
+	var sum float64
+	var valid bool
+	for _, v := range data[s:e] {
+		if v == nil {
+			continue
+		}
+		if v.Valid {
+			valid = true
+		}
+		sum += v.Float64
+	}
+	return &null.Float64{Float64: sum / float64(e-s), Valid: valid}
+}
+
 func (data ChartNullFloats) Valid(index int) bool {
 	if data != nil && len(data) > index && data[index] != nil {
 		return data[index].Valid

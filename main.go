@@ -235,7 +235,10 @@ func _main(ctx context.Context) error {
 		return fmt.Errorf("Error in initial propagation data update, %s", err.Error())
 	}
 	if err = db.UpdatePowChart(ctx); err != nil {
-		return fmt.Errorf("Error in initial PoW data update, %s", err.Error())
+		return fmt.Errorf("Error in initial PoW bin update, %s", err.Error())
+	}
+	if err = db.UpdateVspChart(ctx); err != nil {
+		return fmt.Errorf("Error in initial VSP bin update, %s", err.Error())
 	}
 
 	if err = cacheManager.Load(ctx); err != nil {

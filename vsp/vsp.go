@@ -139,5 +139,8 @@ func (vsp *Collector) collectAndStore(ctx context.Context) error {
 			log.Errorf("Charts update problem for %s: %s", cache.VSP, err.Error())
 		}
 	}()
+	if err = vsp.dataStore.UpdateVspChart(ctx); err != nil {
+		return fmt.Errorf("Error in initial VSP bin update, %s", err.Error())
+	}
 	return nil
 }
