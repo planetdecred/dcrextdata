@@ -668,7 +668,7 @@ type propagationSet struct {
 	blockPropagation          map[string]cache.ChartFloats
 }
 
-func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.Manager, dataType, _ string, binString string, extras ...string) ([]byte, error) {
+func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.Manager, dataType, axis string, binString string, extras ...string) ([]byte, error) {
 	blockDelays, err := pg.propagationBlockChartData(ctx, 0)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err
@@ -688,32 +688,31 @@ func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.M
 	switch dataType {
 	case cache.BlockPropagation:
 		blockPropagation := make(map[string]cache.ChartFloats)
+		var dates cache.ChartUints
+		dateMap := make(map[int64]bool)
 		for _, source := range pg.syncSources {
-			db, err := pg.syncSourceDbProvider(source)
+			data, err := models.Propagations(
+				models.PropagationWhere.Source.EQ(source),
+				models.PropagationWhere.Bin.EQ(binString),
+			).All(ctx, pg.db)
 			if err != nil {
 				return nil, err
 			}
 
-			blockDelays, err := db.propagationBlockChartData(ctx, 0)
-			if err != nil && err != sql.ErrNoRows {
-				return nil, err
-			}
-
-			receiveTimeMap := make(map[uint64]float64)
-			for _, record := range blockDelays {
-
-				receiveTimeMap[uint64(record.BlockHeight)], _ = strconv.ParseFloat(fmt.Sprintf("%04.2f", record.TimeDifference), 64)
-			}
-
-			for _, height := range heights {
-				if sourceTime, found := receiveTimeMap[height]; found {
-					blockPropagation[source] = append(blockPropagation[source], localBlockReceiveTime[height]-sourceTime)
-					continue
+			for _, rec := range data {
+				if _, f := dateMap[rec.Height]; !f {
+					if axis == string(cache.HeightAxis) {
+						dates = append(dates, uint64(rec.Height))
+					} else {
+						dates = append(dates, uint64(rec.Time))
+					}
+					dates = append(dates, uint64(rec.Time))
+					dateMap[rec.Height] = true
 				}
-				blockPropagation[source] = append(blockPropagation[source], 0)
+				blockPropagation[source] = append(blockPropagation[source], rec.Deviation)
 			}
 		}
-		var data = []cache.Lengther{heights}
+		var data = []cache.Lengther{dates}
 		for _, d := range blockPropagation {
 			data = append(data, d)
 		}
@@ -977,7 +976,165 @@ func (pg PgDb) UpdateMempoolAggregateData(ctx context.Context) error {
 	return nil
 }
 
+/*
+--SELECT
+--	string_agg(time::text, ',') AS dates,
+--	string_agg(size::text, ',') AS dates from
+--mempool_bin
+--	where bin = 'hour'
+*/
+
+// UpdatePropagationData
 func (pg PgDb) UpdatePropagationData(ctx context.Context) error {
 	log.Info("Updating propagation data")
+	tx, err := pg.db.Begin()
+	if err != nil {
+		return fmt.Errorf("cannot start transaction, %s", err.Error())
+	}
+
+	if len(pg.syncSources) == 0 {
+		log.Info("Please add one or more propagation sources")
+		return nil
+	}
+
+	for _, source := range pg.syncSources {
+		log.Infof("Fetching propagation data for %s", source)
+		// get the last entry for this source and prepage the propagation records
+		lastEntry, err := models.Propagations(
+			models.PropagationWhere.Source.EQ(source),
+			models.PropagationWhere.Bin.EQ(string(cache.DefaultBin)),
+			qm.OrderBy(fmt.Sprintf("%s desc", models.PropagationColumns.Time)),
+		).One(ctx, pg.db)
+		if err != nil && err != sql.ErrNoRows {
+			return err
+		}
+		var lastHeight int64
+		if lastEntry != nil {
+			lastHeight = lastEntry.Height
+		}
+
+		chartsBlockHeight := int32(lastHeight)
+		mainBlockDelays, err := pg.propagationBlockChartData(ctx, int(chartsBlockHeight))
+		if err != nil && err != sql.ErrNoRows {
+			return err
+		}
+
+		localBlockReceiveTime := make(map[int64]float64)
+		for _, record := range mainBlockDelays {
+			timeDifference, _ := strconv.ParseFloat(fmt.Sprintf("%04.2f", record.TimeDifference), 64)
+			localBlockReceiveTime[record.BlockHeight] = timeDifference
+		}
+
+		db, err := pg.syncSourceDbProvider(source)
+		if err != nil {
+			return err
+		}
+
+		blockDelays, err := db.propagationBlockChartData(ctx, int(chartsBlockHeight))
+		if err != nil && err != sql.ErrNoRows {
+			return err
+		}
+
+		receiveTimeMap := make(map[int64]float64)
+		for _, record := range blockDelays {
+			receiveTimeMap[record.BlockHeight], _ = strconv.ParseFloat(fmt.Sprintf("%04.2f", record.TimeDifference), 64)
+		}
+
+		var dates, heights cache.ChartUints
+		var deviations cache.ChartFloats
+
+		for _, rec := range mainBlockDelays {
+			var propagation = models.Propagation{
+				Height: rec.BlockHeight,
+				Time:   rec.BlockTime.Unix(),
+				Bin:    string(cache.DefaultBin),
+				Source: source,
+			}
+			if sourceTime, found := receiveTimeMap[rec.BlockHeight]; found {
+				propagation.Deviation = localBlockReceiveTime[rec.BlockHeight] - sourceTime
+			}
+			if err = propagation.Insert(ctx, tx, boil.Infer()); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+			dates = append(dates, uint64(propagation.Time))
+			heights = append(heights, uint64(propagation.Height))
+			deviations = append(deviations, propagation.Deviation)
+		}
+
+		log.Info("Updating propagation hourly average")
+		lastHourEntry, err := models.Propagations(
+			models.PropagationWhere.Bin.EQ(string(cache.HourBin)),
+			qm.OrderBy(fmt.Sprintf("%s desc", models.PropagationColumns.Time)),
+		).One(ctx, pg.db)
+		if err != nil && err != sql.ErrNoRows {
+			return err
+		}
+
+		var nextHour = time.Time{}
+		if lastHourEntry != nil {
+			nextHour = time.Unix(lastHourEntry.Time, 0).Add(cache.AnHour * time.Second).UTC()
+		}
+		if time.Now().Before(nextHour) {
+			if err = tx.Commit(); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		hours, hourHeights, hourIntervals := cache.GenerateHourBin(dates, heights)
+		for i, interval := range hourIntervals {
+			propagationBin := models.Propagation{
+				Time:      int64(hours[i]),
+				Height:    int64(hourHeights[i]),
+				Bin:       string(cache.HourBin),
+				Source:    source,
+				Deviation: deviations.Avg(interval[0], interval[1]),
+			}
+			if err = propagationBin.Insert(ctx, tx, boil.Infer()); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+		}
+
+		log.Info("Updating propagation daily average")
+		lastDayEntry, err := models.Propagations(
+			models.PropagationWhere.Bin.EQ(string(cache.DayBin)),
+			qm.OrderBy(fmt.Sprintf("%s desc", models.PropagationColumns.Time)),
+		).One(ctx, pg.db)
+		if err != nil && err != sql.ErrNoRows {
+			return err
+		}
+
+		var nextDay = time.Time{}
+		if lastDayEntry != nil {
+			nextDay = time.Unix(lastDayEntry.Time, 0).Add(cache.ADay * time.Second).UTC()
+		}
+		if time.Now().Before(nextDay) {
+			if err = tx.Commit(); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		days, dayHeights, dayIntervals := cache.GenerateDayBin(dates, heights)
+		for i, interval := range dayIntervals {
+			propagationBin := models.Propagation{
+				Time:      int64(days[i]),
+				Height:    int64(dayHeights[i]),
+				Bin:       string(cache.DayBin),
+				Source:    source,
+				Deviation: deviations.Avg(interval[0], interval[1]),
+			}
+			if err = propagationBin.Insert(ctx, tx, boil.Infer()); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+		}
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	log.Info("Updated propagation data")
 	return nil
 }

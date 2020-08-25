@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
-	"github.com/volatiletech/null"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries"
 	"github.com/volatiletech/sqlboiler/queries/qm"
@@ -24,11 +23,11 @@ import (
 
 // Propagation is an object representing the database table.
 type Propagation struct {
-	Height    int          `boil:"height" json:"height" toml:"height" yaml:"height"`
-	Time      null.Time    `boil:"time" json:"time,omitempty" toml:"time" yaml:"time,omitempty"`
-	Bin       string       `boil:"bin" json:"bin" toml:"bin" yaml:"bin"`
-	Source    string       `boil:"source" json:"source" toml:"source" yaml:"source"`
-	Deviation null.Float64 `boil:"deviation" json:"deviation,omitempty" toml:"deviation" yaml:"deviation,omitempty"`
+	Height    int64   `boil:"height" json:"height" toml:"height" yaml:"height"`
+	Time      int64   `boil:"time" json:"time" toml:"time" yaml:"time"`
+	Bin       string  `boil:"bin" json:"bin" toml:"bin" yaml:"bin"`
+	Source    string  `boil:"source" json:"source" toml:"source" yaml:"source"`
+	Deviation float64 `boil:"deviation" json:"deviation" toml:"deviation" yaml:"deviation"`
 
 	R *propagationR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L propagationL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -51,17 +50,17 @@ var PropagationColumns = struct {
 // Generated where
 
 var PropagationWhere = struct {
-	Height    whereHelperint
-	Time      whereHelpernull_Time
+	Height    whereHelperint64
+	Time      whereHelperint64
 	Bin       whereHelperstring
 	Source    whereHelperstring
-	Deviation whereHelpernull_Float64
+	Deviation whereHelperfloat64
 }{
-	Height:    whereHelperint{field: "\"propagation\".\"height\""},
-	Time:      whereHelpernull_Time{field: "\"propagation\".\"time\""},
+	Height:    whereHelperint64{field: "\"propagation\".\"height\""},
+	Time:      whereHelperint64{field: "\"propagation\".\"time\""},
 	Bin:       whereHelperstring{field: "\"propagation\".\"bin\""},
 	Source:    whereHelperstring{field: "\"propagation\".\"source\""},
-	Deviation: whereHelpernull_Float64{field: "\"propagation\".\"deviation\""},
+	Deviation: whereHelperfloat64{field: "\"propagation\".\"deviation\""},
 }
 
 // PropagationRels is where relationship names are stored.
@@ -186,7 +185,7 @@ func Propagations(mods ...qm.QueryMod) propagationQuery {
 
 // FindPropagation retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindPropagation(ctx context.Context, exec boil.ContextExecutor, height int, source string, bin string, selectCols ...string) (*Propagation, error) {
+func FindPropagation(ctx context.Context, exec boil.ContextExecutor, height int64, source string, bin string, selectCols ...string) (*Propagation, error) {
 	propagationObj := &Propagation{}
 
 	sel := "*"
@@ -642,7 +641,7 @@ func (o *PropagationSlice) ReloadAll(ctx context.Context, exec boil.ContextExecu
 }
 
 // PropagationExists checks if the Propagation row exists.
-func PropagationExists(ctx context.Context, exec boil.ContextExecutor, height int, source string, bin string) (bool, error) {
+func PropagationExists(ctx context.Context, exec boil.ContextExecutor, height int64, source string, bin string) (bool, error) {
 	var exists bool
 	sql := "select exists(select 1 from \"propagation\" where \"height\"=$1 AND \"source\"=$2 AND \"bin\"=$3 limit 1)"
 

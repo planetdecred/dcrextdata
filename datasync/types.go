@@ -43,6 +43,7 @@ type Store interface {
 	StoreMempoolFromSync(ctx context.Context, mempoolDto interface{}) error
 	SaveBlockFromSync(ctx context.Context, block interface{}) error
 	SaveVoteFromSync(ctx context.Context, vote interface{}) error
+	UpdatePropagationData(ctx context.Context) error
 
 	AddPowDataFromSync(ctx context.Context, data interface{}) error
 

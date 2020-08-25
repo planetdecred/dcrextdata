@@ -427,7 +427,7 @@ func testPropagationsSelect(t *testing.T) {
 }
 
 var (
-	propagationDBTypes = map[string]string{`Height`: `integer`, `Time`: `timestamp without time zone`, `Bin`: `character varying`, `Source`: `character varying`, `Deviation`: `double precision`}
+	propagationDBTypes = map[string]string{`Height`: `bigint`, `Time`: `bigint`, `Bin`: `character varying`, `Source`: `character varying`, `Deviation`: `double precision`}
 	_                  = bytes.MinRead
 )
 

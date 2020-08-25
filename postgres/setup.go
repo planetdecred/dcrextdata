@@ -93,11 +93,11 @@ const (
 	);`
 
 	createPropagationTable = `CREATE TABLE IF NOT EXISTS propagation (
-		height INT,
-		time timestamp,
-		bin VARCHAR(25),
-		source VARCHAR(255),
-		deviation FLOAT8,
+		height INT8 NOT NULL,
+		time INT8 NOT NULL,
+		bin VARCHAR(25) NOT NULL,
+		source VARCHAR(255) NOT NULL,
+		deviation FLOAT8 NOT NULL,
 		PRIMARY KEY (height, source, bin)
 	);`
 

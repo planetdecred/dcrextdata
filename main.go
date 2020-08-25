@@ -219,10 +219,6 @@ func _main(ctx context.Context) error {
 	}
 
 	commstats.SetAccounts(cfg.CommunityStatOptions)
-
-	if err = db.UpdateMempoolAggregateData(ctx); err != nil {
-		return fmt.Errorf("Error in initial mempool bin update, %s", err.Error())
-	}
 	cacheManager := cache.NewChartData(ctx, cfg.EnableChartCache, cfg.SyncDatabases, poolSources, vsps,
 		nodeCountries, noveVersions, netParams(cfg.DcrdNetworkType), bdb, cfg.CacheDir)
 	db.RegisterCharts(cacheManager, cfg.SyncDatabases, func(name string) (*postgres.PgDb, error) {
@@ -232,6 +228,12 @@ func _main(ctx context.Context) error {
 		}
 		return db, nil
 	})
+	if err = db.UpdateMempoolAggregateData(ctx); err != nil {
+		return fmt.Errorf("Error in initial mempool bin update, %s", err.Error())
+	}
+	if err = db.UpdatePropagationData(ctx); err != nil {
+		return fmt.Errorf("Error in initial propagation data update, %s", err.Error())
+	}
 
 	if err = cacheManager.Load(ctx); err != nil {
 		return err

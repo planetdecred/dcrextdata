@@ -348,6 +348,10 @@ func (c *Collector) registerBlockSyncer(syncCoordinator *datasync.SyncCoordinato
 					log.Errorf("Error while appending block synced data, %s", err.Error())
 				}
 			}
+			// update propagation data
+			if err := store.UpdatePropagationData(ctx); err != nil {
+				log.Errorf("Error in initial propagation data update, %s", err.Error())
+			}
 		},
 	})
 }
