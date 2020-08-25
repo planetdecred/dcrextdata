@@ -906,7 +906,6 @@ func (pg PgDb) UpdateMempoolAggregateData(ctx context.Context) error {
 		}
 		if err = mempoolBin.Insert(ctx, tx, boil.Infer()); err != nil {
 			_ = tx.Rollback()
-			spew.Dump(mempoolBin)
 			return err
 		}
 	}

@@ -342,25 +342,52 @@ type powSet struct {
 }
 
 func (pg *PgDb) fetchEncodePowChart(ctx context.Context, charts *cache.Manager, dataType, _ string, binString string, pools ...string) ([]byte, error) {
-	data, err := pg.fetchPowChart(ctx, 0)
-	if err != nil {
-		return nil, err
-	}
-	switch strings.ToLower(dataType) {
-	case string(cache.WorkerAxis):
+	switch binString {
+	case string(cache.DefaultBin):
+		data, err := pg.fetchPowChart(ctx, 0)
+		if err != nil {
+			return nil, err
+		}
+		switch strings.ToLower(dataType) {
+		case string(cache.WorkerAxis):
+			var deviations []cache.ChartNullUints
+			for _, p := range pools {
+				deviations = append(deviations, data.workers[p])
+			}
+			return cache.MakePowChart(charts, data.time, deviations, pools)
+		case string(cache.HashrateAxis):
+			var deviations []cache.ChartNullUints
+			for _, p := range pools {
+				deviations = append(deviations, data.hashrate[p])
+			}
+			return cache.MakePowChart(charts, data.time, deviations, pools)
+		}
+		return nil, cache.UnknownChartErr
+	default:
+		var dates cache.ChartUints
+		dateMap := make(map[int64]bool)
 		var deviations []cache.ChartNullUints
 		for _, p := range pools {
-			deviations = append(deviations, data.workers[p])
+			data, err := models.PowBins(
+				models.PowBinWhere.Source.EQ(p),
+				models.PowBinWhere.Bin.EQ(binString),
+				qm.OrderBy(models.PowBinColumns.Time),
+			).All(ctx, pg.db)
+			if err != nil && err == sql.ErrNoRows {
+				return nil, err
+			}
+			var deviation cache.ChartNullUints
+			for _, rec := range data {
+				if _, f := dateMap[rec.Time]; !f {
+					dates = append(dates, uint64(rec.Time))
+				}
+				deviation = append(deviation, &null.Uint64{Uint64: uint64(rec.Workers.Int), Valid: rec.Workers.Valid})
+			}
+			deviations = append(deviations, deviation)
 		}
-		return cache.MakePowChart(charts, data.time, deviations, pools)
-	case string(cache.HashrateAxis):
-		var deviations []cache.ChartNullUints
-		for _, p := range pools {
-			deviations = append(deviations, data.hashrate[p])
-		}
-		return cache.MakePowChart(charts, data.time, deviations, pools)
+		return cache.MakePowChart(charts, dates, deviations, pools)
 	}
-	return nil, cache.UnknownChartErr
+
 }
 
 func (pg *PgDb) fetchCachePowChart(ctx context.Context, charts *cache.Manager, _ int) (interface{}, func(), bool, error) {
@@ -444,6 +471,119 @@ func appendPowChart(charts *cache.Manager, data interface{}) error {
 	if len(powDataSet.time) > 0 {
 		charts.SetPowTip(powDataSet.time[len(powDataSet.time)-1])
 	}
+
+	return nil
+}
+
+func (pg *PgDb) UpdatePowChart(ctx context.Context) error {
+	log.Info("Updating PoW bin data")
+	lastHourEntry, err := models.PowBins(
+		models.PowBinWhere.Bin.EQ(string(cache.HourBin)),
+		qm.OrderBy(fmt.Sprintf("%s desc", models.PowBinColumns.Time)),
+	).One(ctx, pg.db)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+
+	var nextHour = time.Time{}
+	var lastHour int64
+	if lastHourEntry != nil {
+		nextHour = time.Unix(lastHourEntry.Time, 0).Add(cache.AnHour * time.Second).UTC()
+		lastHour = lastHourEntry.Time
+	}
+	if time.Now().Before(nextHour) {
+		return nil
+	}
+
+	powSet, err := pg.fetchPowChart(ctx, uint64(lastHour))
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+	tx, err := pg.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	pools, err := pg.FetchPowSourceData(ctx)
+	if err != nil {
+		return err
+	}
+
+	hours, _, hourIntervals := cache.GenerateHourBin(powSet.time, nil)
+	for _, pool := range pools {
+		for i, interval := range hourIntervals {
+			workers := powSet.workers[pool.Source].Avg(interval[0], interval[1])
+			hashrate := powSet.hashrate[pool.Source].Avg(interval[0], interval[1])
+			powBin := models.PowBin{
+				Time:   int64(hours[i]),
+				Bin:    string(cache.HourBin),
+				Source: pool.Source,
+			}
+			if workers != nil {
+				powBin.Workers = null.IntFrom(int(workers.Uint64))
+			}
+			if hashrate != nil {
+				powBin.PoolHashrate = null.StringFrom(fmt.Sprintf("%d", hashrate.Uint64))
+			}
+			if err = powBin.Insert(ctx, tx, boil.Infer()); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+		}
+	}
+
+	lastDayEntry, err := models.PowBins(
+		models.PowBinWhere.Bin.EQ(string(cache.DayBin)),
+		qm.OrderBy(fmt.Sprintf("%s desc", models.PowBinColumns.Time)),
+	).One(ctx, tx)
+	if err != nil && err != sql.ErrNoRows {
+		_ = tx.Rollback()
+		return err
+	}
+
+	var nextDay = time.Time{}
+	var lastDay int64
+	if lastDayEntry != nil {
+		nextDay = time.Unix(lastDayEntry.Time, 0).Add(cache.ADay * time.Second).UTC()
+		lastDay = lastDayEntry.Time
+	}
+	if time.Now().Before(nextDay) {
+		return nil
+	}
+
+	powSet, err = pg.fetchPowChart(ctx, uint64(lastDay))
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+
+	days, _, dayIntervals := cache.GenerateDayBin(powSet.time, nil)
+	for _, pool := range pools {
+		for i, interval := range dayIntervals {
+			workers := powSet.workers[pool.Source].Avg(interval[0], interval[1])
+			hashrate := powSet.hashrate[pool.Source].Avg(interval[0], interval[1])
+			powBin := models.PowBin{
+				Time:   int64(days[i]),
+				Bin:    string(cache.DayBin),
+				Source: pool.Source,
+			}
+			if workers != nil {
+				powBin.Workers = null.IntFrom(int(workers.Uint64))
+			}
+			if hashrate != nil {
+				powBin.PoolHashrate = null.StringFrom(fmt.Sprintf("%d", hashrate.Uint64))
+			}
+			if err = powBin.Insert(ctx, tx, boil.Infer()); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	log.Info("PoW bin data updated")
 
 	return nil
 }

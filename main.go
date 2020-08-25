@@ -234,6 +234,9 @@ func _main(ctx context.Context) error {
 	if err = db.UpdatePropagationData(ctx); err != nil {
 		return fmt.Errorf("Error in initial propagation data update, %s", err.Error())
 	}
+	if err = db.UpdatePowChart(ctx); err != nil {
+		return fmt.Errorf("Error in initial PoW data update, %s", err.Error())
+	}
 
 	if err = cacheManager.Load(ctx); err != nil {
 		return err

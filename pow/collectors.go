@@ -28,6 +28,7 @@ type PowDataStore interface {
 	AddPowData(context.Context, []PowData) error
 	LastPowEntryTime(source string) (time int64)
 	FetchPowDataForSync(ctx context.Context, date int64, skip, take int) ([]PowData, int64, error)
+	UpdateMempoolAggregateData(ctx context.Context) error
 }
 
 type Collector struct {
@@ -144,5 +145,8 @@ func (pc *Collector) Collect(ctx context.Context, cacheManager *cache.Manager) {
 	}
 	if err := pc.charts.TriggerUpdate(ctx, cache.PowChart); err != nil {
 		log.Errorf("Charts update problem for %s: %s", cache.PowChart, err.Error())
+	}
+	if err := pc.store.UpdateMempoolAggregateData(ctx); err != nil {
+		log.Error(err)
 	}
 }
