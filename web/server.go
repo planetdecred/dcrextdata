@@ -87,6 +87,8 @@ type DataQuery interface {
 	GetIPLocation(ctx context.Context, ip string) (string, int, error)
 	AllNodeVersions(ctx context.Context) ([]string, error)
 	AllNodeContries(ctx context.Context) ([]string, error)
+	FetchNodeLocations(ctx context.Context, offset, limit int) ([]netsnapshot.CountryInfo, int64, error)
+	FetchNodeVersion(ctx context.Context, offset, limit int) ([]netsnapshot.UserAgentInfo, int64, error)
 }
 
 type Server struct {

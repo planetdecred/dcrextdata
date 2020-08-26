@@ -46,10 +46,5 @@ func (pg *PgDb) RegisterCharts(charts *cache.Manager, syncSources []string, sync
 		Fetcher:  pg.fetchNetworkSnapshotChart,
 		Appender: appendSnapshotChart,
 	})
-	charts.AddUpdater(cache.ChartUpdater{
-		Tag:      cache.SnapshotTable,
-		Fetcher:  pg.fetchNetworkSnapshotTable,
-		Appender: appendSnapshotTable,
-	})
 	charts.AddRetriever(cache.Snapshot, pg.fetchEncodeSnapshotChart)
 }

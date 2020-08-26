@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
-	"github.com/dgraph-io/badger"
 	"github.com/planetdecred/dcrextdata/cache"
 	"github.com/planetdecred/dcrextdata/netsnapshot"
 	"github.com/planetdecred/dcrextdata/postgres/models"
@@ -911,59 +909,6 @@ func appendSnapshotChart(charts *cache.Manager, data interface{}) error {
 	return nil
 }
 
-func (pg *PgDb) fetchNetworkSnapshotTable(ctx context.Context, charts *cache.Manager, page int) (interface{}, func(), bool, error) {
-	var set snapshotTableSet
-
-	// Locations
-	locations, err := pg.peerCountByCountriesByTime(ctx, 0, 0)
-	if err != nil {
-		if err.Error() != sql.ErrNoRows.Error() {
-			return nil, func() {}, false, err
-		}
-	}
-	set.locations = locations
-
-	// versions
-	userAgents, err := pg.peerCountByUserAgentsByTime(ctx, 0, 0)
-	if err != nil {
-		if err.Error() != sql.ErrNoRows.Error() {
-			return nil, func() {}, false, err
-		}
-	}
-	set.versoins = userAgents
-	return set, func() {}, true, nil
-}
-
-func appendSnapshotTable(charts *cache.Manager, data interface{}) error {
-	set := data.(snapshotTableSet)
-
-	txn := charts.DB.NewTransaction(true)
-	defer txn.Discard()
-
-	var oldLocations []netsnapshot.CountryInfo
-	locationKey := fmt.Sprintf("%s-%s-*", cache.Snapshot, cache.SnapshotLocations)
-	if err := charts.ReadValTx(locationKey, &oldLocations, txn); err != nil && err != badger.ErrKeyNotFound {
-		return err
-	}
-	if err := charts.SaveValTx(locationKey, set.locations, txn); err != nil {
-		return err
-	}
-
-	var oldVersions []netsnapshot.UserAgentInfo
-	versionKey := fmt.Sprintf("%s-%s-*", cache.Snapshot, cache.SnapshotNodeVersions)
-	if err := charts.ReadValTx(versionKey, &oldVersions, txn); err != nil && err != badger.ErrKeyNotFound {
-		return err
-	}
-	if err := charts.SaveValTx(versionKey, set.versoins, txn); err != nil {
-		return err
-	}
-
-	if err := txn.Commit(); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (pg *PgDb) fetchEncodeSnapshotChart(ctx context.Context, charts *cache.Manager, dataType, axis, binString string, extras ...string) ([]byte, error) {
 	switch dataType {
 	case string(cache.SnapshotNodes):
@@ -1466,7 +1411,7 @@ func (pg *PgDb) UpdateNodeLocation(ctx context.Context) error {
 		lastEntry = lastHourEntry.Timestamp
 	}
 
-	allDates, allHeights, locations, err := pg.fetchNodeLocations(ctx, lastEntry)
+	allDates, allHeights, locations, err := pg.fetchNodeLocationChart(ctx, lastEntry)
 	if err != nil {
 		return err
 	}
@@ -1503,7 +1448,7 @@ func (pg *PgDb) UpdateNodeLocation(ctx context.Context) error {
 	return nil
 }
 
-func (pg *PgDb) fetchNodeLocations(ctx context.Context, startDate int64) (cache.ChartUints, cache.ChartUints, map[string]cache.ChartUints, error) {
+func (pg *PgDb) fetchNodeLocationChart(ctx context.Context, startDate int64) (cache.ChartUints, cache.ChartUints, map[string]cache.ChartUints, error) {
 	var datesMap, heightsMap = map[int64]struct{}{}, map[int64]struct{}{}
 	var allDates, allHeights cache.ChartUints
 	var countryMap = map[string]struct{}{}
@@ -1681,4 +1626,59 @@ func (pg *PgDb) updateNodeLocationBinData(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (pg *PgDb) FetchNodeLocations(ctx context.Context, offset, limit int) ([]netsnapshot.CountryInfo, int64, error) {
+	records, err := models.NodeLocations(
+		models.NodeLocationWhere.NodeCount.GT(0),
+		qm.OrderBy(models.NodeLocationColumns.Timestamp+" desc"),
+		qm.Offset(offset),
+		qm.Limit(limit),
+	).All(ctx, pg.db)
+
+	if err != nil {
+		return nil, 0, err
+	}
+	var result = make([]netsnapshot.CountryInfo, len(records))
+	for i, rec := range records {
+		result[i] = netsnapshot.CountryInfo{
+			Country:   rec.Country,
+			Height:    rec.Height,
+			Timestamp: rec.Timestamp,
+			Nodes:     int64(rec.NodeCount),
+		}
+	}
+	count, err := models.NodeLocations().Count(ctx, pg.db)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return result, count, nil
+}
+
+func (pg *PgDb) FetchNodeVersion(ctx context.Context, offset, limit int) ([]netsnapshot.UserAgentInfo, int64, error) {
+	records, err := models.NodeVersions(
+		models.NodeVersionWhere.NodeCount.GT(0),
+		qm.OrderBy(models.NodeVersionColumns.Timestamp+" desc"),
+		qm.Offset(offset),
+		qm.Limit(limit),
+	).All(ctx, pg.db)
+
+	if err != nil {
+		return nil, 0, err
+	}
+	var result = make([]netsnapshot.UserAgentInfo, len(records))
+	for i, rec := range records {
+		result[i] = netsnapshot.UserAgentInfo{
+			UserAgent: rec.UserAgent,
+			Height:    rec.Height,
+			Timestamp: rec.Timestamp,
+			Nodes:     int64(rec.NodeCount),
+		}
+	}
+	count, err := models.NodeVersions().Count(ctx, pg.db)
+	if err != nil {
+		return nil, 0, err
+	}
+	return result, count, nil
 }

@@ -1437,25 +1437,15 @@ func (s *Server) nodesCountUserAgents(w http.ResponseWriter, r *http.Request) {
 	}
 	offset = (page - 1) * pageSize
 
-	var userAgents []netsnapshot.UserAgentInfo
-	if err = s.charts.ReadVal(fmt.Sprintf("%s-%s-*", cache.Snapshot, cache.SnapshotNodeVersions), &userAgents); err != nil {
-		s.renderErrorfJSON("Cannot fetch data: %s", w, err.Error())
-		return
-	}
+	userAgents, total, err := s.db.FetchNodeVersion(r.Context(), offset, pageSize)
 
-	total := len(userAgents)
-	var totalPages int
-	if total%(pageSize) == 0 {
-		totalPages = total / (pageSize)
+	var totalPages int64
+	if total%int64(pageSize) == 0 {
+		totalPages = total / int64(pageSize)
 	} else {
-		totalPages = 1 + (total-total%(pageSize))/(pageSize)
+		totalPages = 1 + (total-total%int64(pageSize))/int64(pageSize)
 	}
-
-	end := offset + pageSize
-	if end >= total {
-		end = total - 1
-	}
-	s.renderJSON(map[string]interface{}{"userAgents": userAgents[offset:end], "totalPages": totalPages}, w)
+	s.renderJSON(map[string]interface{}{"userAgents": userAgents, "totalPages": totalPages}, w)
 }
 
 // /api/snapshots/user-agents/chart
@@ -1538,26 +1528,16 @@ func (s *Server) nodesCountByCountries(w http.ResponseWriter, r *http.Request) {
 	}
 	offset = (page - 1) * pageSize
 
-	var countries []netsnapshot.UserAgentInfo
-	if err = s.charts.ReadVal(fmt.Sprintf("%s-%s-*", cache.Snapshot, cache.SnapshotLocations), &countries); err != nil {
-		s.renderErrorfJSON("Cannot fetch data: %s", w, err.Error())
-		return
-	}
+	countries, total, err := s.db.FetchNodeLocations(r.Context(), offset, pageSize)
 
-	total := len(countries)
-	var totalPages int
-	if total%(pageSize) == 0 {
-		totalPages = total / (pageSize)
+	var totalPages int64
+	if total%int64(pageSize) == 0 {
+		totalPages = total / int64(pageSize)
 	} else {
-		totalPages = 1 + (total-total%(pageSize))/(pageSize)
+		totalPages = 1 + (total-total%int64(pageSize))/int64(pageSize)
 	}
 
-	end := offset + pageSize
-	if end >= total {
-		end = total - 1
-	}
-
-	s.renderJSON(map[string]interface{}{"countries": countries[offset:end], "totalPages": totalPages}, w)
+	s.renderJSON(map[string]interface{}{"countries": countries, "totalPages": totalPages}, w)
 }
 
 // /api/snapshots/countries/chart

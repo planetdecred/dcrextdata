@@ -21,14 +21,13 @@ import (
 
 // Keys for specifying chart data type.
 const (
-	Mempool       = "mempool"
-	Propagation   = "propagation"
-	Community     = "community"
-	PowChart      = "pow"
-	VSP           = "vsp"
-	Exchange      = "exchange"
-	Snapshot      = "snapshot"
-	SnapshotTable = Snapshot + "_table"
+	Mempool     = "mempool"
+	Propagation = "propagation"
+	Community   = "community"
+	PowChart    = "pow"
+	VSP         = "vsp"
+	Exchange    = "exchange"
+	Snapshot    = "snapshot"
 
 	// ADay defines the number of seconds in a day.
 	ADay   = 86400
@@ -842,9 +841,11 @@ func GenerateDayBin(dates, heights ChartUints) (days, dayHeights ChartUints, day
 		return
 	}
 
-	if dates.Length() == 0 {{
-		return
-	}}
+	if dates.Length() == 0 {
+		{
+			return
+		}
+	}
 
 	// Get the current first and last midnight stamps.
 	var start = midnight(dates[0])
