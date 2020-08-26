@@ -494,7 +494,7 @@ func (pg *PgDb) fetchEncodeVspChart(ctx context.Context, charts *cache.Manager, 
 	if binString != string(cache.DefaultBin) {
 		return pg.fetchEncodeBinVspChart(ctx, charts, binString, dataType, vspSources...)
 	}
-	data, _, err := pg.fetchVspChart(ctx, 0, dataType, vspSources...)
+	data, err := pg.fetchVspChart(ctx, 0, dataType, vspSources...)
 	if err != nil {
 		return nil, err
 	}
@@ -692,7 +692,7 @@ func (pg *PgDb) fetchEncodeBinVspChart(ctx context.Context, charts *cache.Manage
 	return cache.MakeVspChart(charts, dates, deviations, vspSources)
 }
 
-func (pg *PgDb) fetchVspChart(ctx context.Context, startDate uint64, axisString string, vspSources ...string) (*vspSet, bool, error) {
+func (pg *PgDb) fetchVspChart(ctx context.Context, startDate uint64, axisString string, vspSources ...string) (*vspSet, error) {
 	var vspDataSet = vspSet{
 		time:             []uint64{},
 		immature:         make(map[string]cache.ChartNullUints),
@@ -710,7 +710,7 @@ func (pg *PgDb) fetchVspChart(ctx context.Context, startDate uint64, axisString 
 	if len(vsps) == 0 {
 		allVspData, err := pg.FetchVSPs(ctx)
 		if err != nil {
-			return nil, false, err
+			return nil, err
 		}
 		for _, vspSource := range allVspData {
 			vsps = append(vsps, vspSource.Name)
@@ -719,25 +719,20 @@ func (pg *PgDb) fetchVspChart(ctx context.Context, startDate uint64, axisString 
 
 	dates, err := pg.allVspTickDates(ctx, helpers.UnixTime(int64(startDate)), vspSources...)
 	if err != nil && err != sql.ErrNoRows {
-		return nil, false, err
+		return nil, err
 	}
 
 	for _, date := range dates {
 		vspDataSet.time = append(vspDataSet.time, uint64(date.Unix()))
 	}
 
-	var done = true
 	for _, vspSource := range vsps {
 		points, err := pg.fetchVSPChartData(ctx, vspSource, helpers.UnixTime(int64(startDate)), 0, axisString)
 		if err != nil {
 			if err.Error() == sql.ErrNoRows.Error() {
 				continue
 			}
-			return nil, false, fmt.Errorf("error in fetching records for %s: %s", vspSource, err.Error())
-		}
-
-		if len(points) > 0 {
-			done = false
+			return nil, fmt.Errorf("error in fetching records for %s: %s", vspSource, err.Error())
 		}
 
 		var pointsMap = map[time.Time]*models.VSPTick{}
@@ -784,7 +779,7 @@ func (pg *PgDb) fetchVspChart(ctx context.Context, startDate uint64, axisString 
 		}
 	}
 
-	return &vspDataSet, done, nil
+	return &vspDataSet, nil
 }
 
 func (pg *PgDb) UpdateVspChart(ctx context.Context) error {
@@ -816,7 +811,7 @@ func (pg *PgDb) UpdateVspChart(ctx context.Context) error {
 		vsps[i] = vspSource.Name
 	}
 
-	vspSet, _, err := pg.fetchVspChart(ctx, uint64(lastHour), "", vsps...)
+	vspSet, err := pg.fetchVspChart(ctx, uint64(lastHour), "", vsps...)
 	if err != nil {
 		return err
 	}
@@ -902,7 +897,7 @@ func (pg *PgDb) UpdateVspChart(ctx context.Context) error {
 		return nil
 	}
 
-	vspSet, _, err = pg.fetchVspChart(ctx, uint64(lastDay), "", vsps...)
+	vspSet, err = pg.fetchVspChart(ctx, uint64(lastDay), "", vsps...)
 	if err != nil {
 		return err
 	}
