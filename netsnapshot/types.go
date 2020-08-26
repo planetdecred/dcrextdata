@@ -26,12 +26,14 @@ type UserAgentInfo struct {
 	UserAgent string `json:"user_agent"`
 	Nodes     int64  `json:"nodes"`
 	Timestamp int64  `json:"timestamp"`
+	Height    int64  `json:"height"`
 }
 
 type CountryInfo struct {
 	Country   string `json:"country"`
 	Nodes     int64  `json:"nodes"`
 	Timestamp int64  `json:"timestamp"`
+	Height    int64  `json:"height"`
 }
 
 type NetworkPeer struct {
