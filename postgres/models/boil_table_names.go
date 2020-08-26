@@ -15,6 +15,8 @@ var TableNames = struct {
 	NetworkSnapshot    string
 	NetworkSnapshotBin string
 	Node               string
+	NodeLocation       string
+	NodeVersion        string
 	PowBin             string
 	PowData            string
 	Propagation        string
@@ -37,6 +39,8 @@ var TableNames = struct {
 	NetworkSnapshot:    "network_snapshot",
 	NetworkSnapshotBin: "network_snapshot_bin",
 	Node:               "node",
+	NodeLocation:       "node_location",
+	NodeVersion:        "node_version",
 	PowBin:             "pow_bin",
 	PowData:            "pow_data",
 	Propagation:        "propagation",

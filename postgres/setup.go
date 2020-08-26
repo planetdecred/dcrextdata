@@ -202,6 +202,24 @@ const (
 		PRIMARY KEY (timestamp, bin)
 	);`
 
+	createNodeVersionTable = `CREATE TABLE If NOT EXISTS node_version (
+		timestamp INT8 NOT NULL,
+		height INT8 NOT NULL,
+		node_count INT NOT NULL,
+		user_agent VARCHAR(256) NOT NULL,
+		bin VARCHAR(25) NOT NULL DEFAULT '',
+		PRIMARY KEY (timestamp, bin, user_agent)
+	);`
+
+	createNodeLocationTable = `CREATE TABLE If NOT EXISTS node_location (
+		timestamp INT8 NOT NULL,
+		height INT8 NOT NULL,
+		node_count INT NOT NULL,
+		country VARCHAR(256) NOT NULL,
+		bin VARCHAR(25) NOT NULL DEFAULT '',
+		PRIMARY KEY (timestamp, bin, country)
+	);`
+
 	createNodeTable = `CREATE TABLE If NOT EXISTS node (
 		address VARCHAR(256) NOT NULL PRIMARY KEY,
 		ip_version INT NOT NULL,
@@ -422,6 +440,7 @@ func (pg *PgDb) NetworkSnapshotTableExists() bool {
 	return exists
 }
 
+// network_snapshot_bin
 func (pg *PgDb) CreateNetworkSnapshotBinTable() error {
 	_, err := pg.db.Exec(createNetworkSnapshotBinTable)
 	return err
@@ -429,6 +448,28 @@ func (pg *PgDb) CreateNetworkSnapshotBinTable() error {
 
 func (pg *PgDb) NetworkSnapshotBinTableExists() bool {
 	exists, _ := pg.tableExists("network_snapshot_bin")
+	return exists
+}
+
+// node_version
+func (pg *PgDb) CreateNodeVersoinTable() error {
+	_, err := pg.db.Exec(createNodeVersionTable)
+	return err
+}
+
+func (pg *PgDb) NodeVersionTableExists() bool {
+	exists, _ := pg.tableExists("node_version")
+	return exists
+}
+
+// node_location
+func (pg *PgDb) CreateNodeLocationTable() error {
+	_, err := pg.db.Exec(createNodeLocationTable)
+	return err
+}
+
+func (pg *PgDb) NodeLocationTableExists() bool {
+	exists, _ := pg.tableExists("node_location")
 	return exists
 }
 

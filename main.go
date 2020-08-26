@@ -581,6 +581,22 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 		log.Info("snapshot bin table created successfully.")
 	}
 
+	if exists := db.NodeVersionTableExists(); !exists {
+		if err := db.CreateNodeVersoinTable(); err != nil {
+			log.Error("Error creating node version table: ", err)
+			return err
+		}
+		log.Info("node version table created successfully.")
+	}
+
+	if exists := db.NodeLocationTableExists(); !exists {
+		if err := db.CreateNodeLocationTable(); err != nil {
+			log.Error("Error creating node location table: ", err)
+			return err
+		}
+		log.Info("node location table created successfully.")
+	}
+
 	if exists := db.NetworkNodeTableExists(); !exists {
 		if err := db.CreateNetworkNodeTable(); err != nil {
 			log.Error("Error creating node table: ", err)

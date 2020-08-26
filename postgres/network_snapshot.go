@@ -1057,6 +1057,9 @@ func (pg *PgDb) UpdateSnapshotNodesBin(ctx context.Context) error {
 	}
 	hours, hourHeights, hourIntervals := cache.GenerateHourBin(dates, heights)
 	for i, interval := range hourIntervals {
+		if int64(hours[i]) < nextHour.Unix() {
+			continue
+		}
 		m := models.NetworkSnapshotBin{
 			Timestamp:      int64(hours[i]),
 			Height:         int64(hourHeights[i]),
@@ -1111,6 +1114,9 @@ func (pg *PgDb) UpdateSnapshotNodesBin(ctx context.Context) error {
 	}
 	days, dayHeights, dayIntervals := cache.GenerateDayBin(dates, heights)
 	for i, interval := range dayIntervals {
+		if int64(days[i]) < nextDay.Unix() {
+			continue
+		}
 		m := models.NetworkSnapshotBin{
 			Timestamp:      int64(days[i]),
 			Height:         int64(dayHeights[i]),
