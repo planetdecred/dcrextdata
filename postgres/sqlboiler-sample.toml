@@ -23,6 +23,7 @@
         "youtube",
         "node",
         "network_snapshot",
+        "network_snapshot_bin",
         "heartbeat",
         "community_stat"
     ]

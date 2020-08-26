@@ -570,6 +570,14 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 		log.Info("snapshot table created successfully.")
 	}
 
+	if exists := db.NetworkSnapshotBinTableExists(); !exists {
+		if err := db.CreateNetworkSnapshotBinTable(); err != nil {
+			log.Error("Error creating network snapshot bin table: ", err)
+			return err
+		}
+		log.Info("snapshot bin table created successfully.")
+	}
+
 	if exists := db.NetworkNodeTableExists(); !exists {
 		if err := db.CreateNetworkNodeTable(); err != nil {
 			log.Error("Error creating node table: ", err)

@@ -24,6 +24,8 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("NetworkSnapshots", testNetworkSnapshotsUpsert)
 
+	t.Run("NetworkSnapshotBins", testNetworkSnapshotBinsUpsert)
+
 	t.Run("Nodes", testNodesUpsert)
 
 	t.Run("PowBins", testPowBinsUpsert)

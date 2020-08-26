@@ -1339,9 +1339,6 @@ func (charts *Manager) encodeArr(keys []string, sets []Lengther) ([]byte, error)
 
 // trim remove points that has 0s in all yAxis.
 func (charts *Manager) trim(sets ...Lengther) []Lengther {
-	if len(sets) == 2 {
-		return sets
-	}
 	dLen := sets[0].Length()
 	for i := dLen - 1; i >= 0; i-- {
 		var isZero bool = true

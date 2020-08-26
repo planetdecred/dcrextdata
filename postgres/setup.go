@@ -193,6 +193,15 @@ const (
 		PRIMARY KEY (timestamp)
 	);`
 
+	createNetworkSnapshotBinTable = `CREATE TABLE If NOT EXISTS network_snapshot_bin (
+		timestamp INT8 NOT NULL,
+		height INT8 NOT NULL,
+		node_count INT NOT NULL,
+		reachable_nodes INT NOT NULL,
+		bin VARCHAR(25) NOT NULL DEFAULT '',
+		PRIMARY KEY (timestamp, bin)
+	);`
+
 	createNodeTable = `CREATE TABLE If NOT EXISTS node (
 		address VARCHAR(256) NOT NULL PRIMARY KEY,
 		ip_version INT NOT NULL,
@@ -413,6 +422,16 @@ func (pg *PgDb) NetworkSnapshotTableExists() bool {
 	return exists
 }
 
+func (pg *PgDb) CreateNetworkSnapshotBinTable() error {
+	_, err := pg.db.Exec(createNetworkSnapshotBinTable)
+	return err
+}
+
+func (pg *PgDb) NetworkSnapshotBinTableExists() bool {
+	exists, _ := pg.tableExists("network_snapshot_bin")
+	return exists
+}
+
 // network node
 func (pg *PgDb) CreateNetworkNodeTable() error {
 	_, err := pg.db.Exec(createNodeTable)
@@ -543,6 +562,11 @@ func (pg *PgDb) DropAllTables() error {
 
 	// network_snapshot
 	if err := pg.dropTable("network_snapshot"); err != nil {
+		return err
+	}
+
+	//network_snapshot_bin
+	if err := pg.dropTable("network_snapshot_bin"); err != nil {
 		return err
 	}
 
