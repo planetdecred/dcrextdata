@@ -21,7 +21,7 @@ const (
 	retryLimit = 3
 )
 
-func NewVspCollector(period int64, store DataStore, charts *cache.Manager) (*Collector, error) {
+func NewVspCollector(period int64, store DataStore) (*Collector, error) {
 	request, err := http.NewRequest(http.MethodGet, requestURL, nil)
 	if err != nil {
 		return nil, err
@@ -32,7 +32,6 @@ func NewVspCollector(period int64, store DataStore, charts *cache.Manager) (*Col
 		period:    time.Duration(period),
 		request:   request,
 		dataStore: store,
-		charts:    charts,
 	}, nil
 }
 
@@ -134,11 +133,6 @@ func (vsp *Collector) collectAndStore(ctx context.Context) error {
 	}
 
 	log.Infof("Saved ticks for %d VSPs from %s", numberStored, requestURL)
-	go func() {
-		if err = vsp.charts.TriggerUpdate(ctx, cache.VSP); err != nil {
-			log.Errorf("Charts update problem for %s: %s", cache.VSP, err.Error())
-		}
-	}()
 	if err = vsp.dataStore.UpdateVspChart(ctx); err != nil {
 		return fmt.Errorf("Error in initial VSP bin update, %s", err.Error())
 	}

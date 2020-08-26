@@ -10,7 +10,6 @@ import (
 
 	"github.com/planetdecred/dcrextdata/app"
 	"github.com/planetdecred/dcrextdata/app/helpers"
-	"github.com/planetdecred/dcrextdata/cache"
 	"github.com/planetdecred/dcrextdata/postgres/models"
 )
 
@@ -24,7 +23,7 @@ func Subreddits() []string {
 	return subreddits
 }
 
-func (c *Collector) startRedditCollector(ctx context.Context, cacheManager *cache.Manager) {
+func (c *Collector) startRedditCollector(ctx context.Context) {
 	var lastCollectionDate time.Time
 	err := c.dataStore.LastEntry(ctx, models.TableNames.Reddit, &lastCollectionDate)
 	if err != nil && err != sql.ErrNoRows {
@@ -49,7 +48,7 @@ func (c *Collector) startRedditCollector(ctx context.Context, cacheManager *cach
 	}
 
 	registerStarter()
-	c.collectAndStoreRedditStat(ctx, cacheManager)
+	c.collectAndStoreRedditStat(ctx)
 	app.ReleaseForNewModule()
 
 	ticker := time.NewTicker(time.Duration(c.options.RedditStatInterval) * time.Minute)
@@ -59,13 +58,13 @@ func (c *Collector) startRedditCollector(ctx context.Context, cacheManager *cach
 			return
 		case <-ticker.C:
 			registerStarter()
-			c.collectAndStoreRedditStat(ctx, cacheManager)
+			c.collectAndStoreRedditStat(ctx)
 			app.ReleaseForNewModule()
 		}
 	}
 }
 
-func (c *Collector) collectAndStoreRedditStat(ctx context.Context, cacheManager *cache.Manager) {
+func (c *Collector) collectAndStoreRedditStat(ctx context.Context) {
 	log.Info("Starting Reddit stats collection cycle")
 
 	for _, subreddit := range c.options.Subreddit {
@@ -92,10 +91,6 @@ func (c *Collector) collectAndStoreRedditStat(ctx context.Context, cacheManager 
 		}
 		log.Infof("New Reddit stat collected for %s at %s, Subscribers  %d, Active Users %d", subreddit,
 			helpers.NowUTC().Format(dateMiliTemplate), resp.Data.Subscribers, resp.Data.AccountsActive)
-	}
-
-	if err := cacheManager.Update(ctx, cache.Community); err != nil {
-		log.Error(err)
 	}
 }
 

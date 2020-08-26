@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/planetdecred/dcrextdata/app/helpers"
 	"github.com/planetdecred/dcrextdata/cache"
 	"github.com/planetdecred/dcrextdata/mempool"
 	"github.com/planetdecred/dcrextdata/postgres/models"
@@ -611,63 +610,6 @@ func (pg *PgDb) fetchEncodeMempoolTxCount(ctx context.Context, charts *cache.Man
 	return charts.Encode(nil, time, data)
 }
 
-func (pg *PgDb) retrieveChartMempool(ctx context.Context, charts *cache.Manager, _ int) (interface{}, func(), bool, error) {
-	ctx, cancel := context.WithTimeout(ctx, pg.queryTimeout)
-
-	mempoolSlice, err := models.Mempools(models.MempoolWhere.Time.GT(helpers.UnixTime(int64(charts.MempoolTip())))).All(ctx, pg.db)
-	if err != nil {
-		return nil, cancel, false, fmt.Errorf("chartBlocks: %s", err.Error())
-	}
-	return mempoolSlice, cancel, true, nil
-}
-
-// Append the results from retrieveChartMempool to the provided ChartData.
-// This is the Appender half of a pair that make up a cache.ChartUpdater.
-func appendChartMempool(charts *cache.Manager, mempoolSliceInt interface{}) error {
-	mempoolSlice := mempoolSliceInt.(models.MempoolSlice)
-	if len(mempoolSlice) == 0 {
-		return nil
-	}
-
-	mempoolSet, err := charts.MempoolSet(cache.DefaultBin)
-	if err != nil && err != cache.UnknownChartErr {
-		return err
-	}
-
-	var chartsMempoolTime, chartsMempoolTxCount, chartsMempoolSize cache.ChartUints
-	var chartsMempoolFees cache.ChartFloats
-
-	for _, mempoolData := range mempoolSlice {
-		chartsMempoolTime = append(chartsMempoolTime, uint64(mempoolData.Time.UTC().Unix()))
-		chartsMempoolFees = append(chartsMempoolFees, mempoolData.TotalFee.Float64)
-		chartsMempoolTxCount = append(chartsMempoolTxCount, uint64(mempoolData.NumberOfTransactions.Int))
-		chartsMempoolSize = append(chartsMempoolSize, uint64(mempoolData.Size.Int))
-	}
-
-	mempoolSet.Time = append(mempoolSet.Time, chartsMempoolTime...)
-	mempoolSet.Fee = append(mempoolSet.Fee, chartsMempoolFees...)
-	mempoolSet.TxCount = append(mempoolSet.TxCount, chartsMempoolTxCount...)
-	mempoolSet.Size = append(mempoolSet.Size, chartsMempoolSize...)
-
-	if err := mempoolSet.Save(charts); err != nil {
-		return err
-	}
-
-	if len := mempoolSet.Time.Length(); len > 0 {
-		charts.SetMempoolTip(mempoolSet.Time[len-1])
-	}
-
-	return nil
-}
-
-type propagationSet struct {
-	height                    cache.ChartUints
-	time                      cache.ChartUints
-	blockDelay                cache.ChartFloats
-	voteReceiveTimeDeviations cache.ChartFloats
-	blockPropagation          map[string]cache.ChartFloats
-}
-
 func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.Manager, dataType, axis string, binString string, extras ...string) ([]byte, error) {
 	blockDelays, err := pg.propagationBlockChartData(ctx, 0)
 	if err != nil && err != sql.ErrNoRows {
@@ -748,110 +690,6 @@ func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.M
 		return charts.Encode(nil, heights, voteReceiveTimeDeviations)
 	}
 	return nil, cache.UnknownChartErr
-}
-
-func (pg *PgDb) fetchBlockPropagationChart(ctx context.Context, charts *cache.Manager, _ int) (interface{}, func(), bool, error) {
-	emptyCancelFunc := func() {}
-	var propagationSet propagationSet
-
-	chartsBlockHeight := int32(charts.PropagationTip())
-	blockDelays, err := pg.propagationBlockChartData(ctx, int(chartsBlockHeight))
-	if err != nil && err != sql.ErrNoRows {
-		return nil, emptyCancelFunc, false, err
-	}
-
-	localBlockReceiveTime := make(map[uint64]float64)
-	for _, record := range blockDelays {
-		propagationSet.height = append(propagationSet.height, uint64(record.BlockHeight))
-		propagationSet.time = append(propagationSet.time, uint64(record.BlockTime.Unix()))
-		timeDifference, _ := strconv.ParseFloat(fmt.Sprintf("%04.2f", record.TimeDifference), 64)
-		propagationSet.blockDelay = append(propagationSet.blockDelay, timeDifference)
-
-		localBlockReceiveTime[uint64(record.BlockHeight)] = timeDifference
-	}
-
-	votesReceiveTime, err := pg.propagationVoteChartDataByHeight(ctx, chartsBlockHeight)
-	if err != nil && err != sql.ErrNoRows {
-		return nil, emptyCancelFunc, false, err
-	}
-	var votesTimeDeviations = make(map[int64][]float64)
-
-	for _, record := range votesReceiveTime {
-		votesTimeDeviations[record.BlockHeight] = append(votesTimeDeviations[record.BlockHeight], record.TimeDifference)
-	}
-
-	for _, height := range propagationSet.height {
-		if deviations, found := votesTimeDeviations[int64(height)]; found {
-			var totalTime float64
-			for _, timeDiff := range deviations {
-				totalTime += timeDiff
-			}
-			timeDifference, _ := strconv.ParseFloat(fmt.Sprintf("%04.2f", totalTime/float64(len(deviations))*1000), 64)
-			propagationSet.voteReceiveTimeDeviations = append(propagationSet.voteReceiveTimeDeviations, timeDifference)
-			continue
-		}
-		propagationSet.voteReceiveTimeDeviations = append(propagationSet.voteReceiveTimeDeviations, 0)
-	}
-
-	propagationSet.blockPropagation = make(map[string]cache.ChartFloats)
-	for _, source := range pg.syncSources {
-		db, err := pg.syncSourceDbProvider(source)
-		if err != nil {
-			return nil, emptyCancelFunc, false, err
-		}
-
-		blockDelays, err := db.propagationBlockChartData(ctx, int(chartsBlockHeight))
-		if err != nil && err != sql.ErrNoRows {
-			return nil, emptyCancelFunc, false, err
-		}
-
-		receiveTimeMap := make(map[uint64]float64)
-		for _, record := range blockDelays {
-
-			receiveTimeMap[uint64(record.BlockHeight)], _ = strconv.ParseFloat(fmt.Sprintf("%04.2f", record.TimeDifference), 64)
-		}
-
-		for _, height := range propagationSet.height {
-			if sourceTime, found := receiveTimeMap[height]; found {
-				propagationSet.blockPropagation[source] = append(propagationSet.blockPropagation[source], localBlockReceiveTime[height]-sourceTime)
-				continue
-			}
-			propagationSet.blockPropagation[source] = append(propagationSet.blockPropagation[source], 0)
-		}
-	}
-
-	return propagationSet, emptyCancelFunc, true, nil
-}
-
-func appendBlockPropagationChart(charts *cache.Manager, data interface{}) error {
-	set := data.(propagationSet)
-
-	if len(set.height) == 0 {
-		return nil
-	}
-
-	propagationChart, err := charts.PropagationSet(cache.DefaultBin)
-	if err != nil && err != cache.UnknownChartErr {
-		return err
-	}
-	propagationChart.Heights = append(propagationChart.Heights, set.height...)
-	propagationChart.Time = append(propagationChart.Time, set.time...)
-	propagationChart.BlockDelay = append(propagationChart.BlockDelay, set.blockDelay...)
-	propagationChart.VoteReceiveTimeDeviations = append(propagationChart.VoteReceiveTimeDeviations, set.voteReceiveTimeDeviations...)
-
-	for source, deviations := range set.blockPropagation {
-		propagationChart.BlockPropagation[source] = append(propagationChart.BlockPropagation[source], deviations...)
-	}
-
-	if err := propagationChart.Save(charts); err != nil {
-		return err
-	}
-
-	if propagationChart.Heights.Length() > 0 {
-		charts.SetPropagationTip(propagationChart.Heights[propagationChart.Heights.Length()-1])
-	}
-
-	return nil
 }
 
 func (pg PgDb) UpdateMempoolAggregateData(ctx context.Context) error {
@@ -974,14 +812,6 @@ func (pg PgDb) UpdateMempoolAggregateData(ctx context.Context) error {
 	log.Info("Mempool bin data updated")
 	return nil
 }
-
-/*
---SELECT
---	string_agg(time::text, ',') AS dates,
---	string_agg(size::text, ',') AS dates from
---mempool_bin
---	where bin = 'hour'
-*/
 
 // UpdatePropagationData
 func (pg PgDb) UpdatePropagationData(ctx context.Context) error {

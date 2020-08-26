@@ -13,7 +13,6 @@ import (
 
 	"github.com/planetdecred/dcrextdata/app"
 	"github.com/planetdecred/dcrextdata/app/helpers"
-	"github.com/planetdecred/dcrextdata/cache"
 	"github.com/planetdecred/dcrextdata/exchanges/ticks"
 )
 
@@ -25,7 +24,6 @@ type TickHub struct {
 	collectors []ticks.Collector
 	client     *http.Client
 	store      ticks.Store
-	charts     *cache.Manager
 }
 
 var (
@@ -38,7 +36,7 @@ var (
 	}
 )
 
-func NewTickHub(ctx context.Context, disabledexchanges []string, store ticks.Store, charts *cache.Manager) (*TickHub, error) {
+func NewTickHub(ctx context.Context, disabledexchanges []string, store ticks.Store) (*TickHub, error) {
 	collectors := make([]ticks.Collector, 0, len(availableExchanges)-len(disabledexchanges))
 	disabledMap := make(map[string]struct{})
 	for _, e := range disabledexchanges {
@@ -67,7 +65,6 @@ func NewTickHub(ctx context.Context, disabledexchanges []string, store ticks.Sto
 		collectors: collectors,
 		client:     &http.Client{Timeout: clientTimeout},
 		store:      store,
-		charts:     charts,
 	}, nil
 }
 
@@ -89,10 +86,6 @@ func (hub *TickHub) CollectShort(ctx context.Context) {
 	}
 	wg.Wait()
 	log.Info("Completed short collection")
-
-	if err := hub.charts.TriggerUpdate(ctx, cache.Exchange); err != nil {
-		log.Errorf("Charts update problem for %s: %s", cache.Exchange, err.Error())
-	}
 }
 
 func (hub *TickHub) CollectLong(ctx context.Context) {
@@ -113,10 +106,6 @@ func (hub *TickHub) CollectLong(ctx context.Context) {
 	}
 	wg.Wait()
 	log.Info("Completed long collection")
-
-	if err := hub.charts.TriggerUpdate(ctx, cache.Exchange); err != nil {
-		log.Errorf("Charts update problem for %s: %s", cache.Exchange, err.Error())
-	}
 }
 
 func (hub *TickHub) CollectHistoric(ctx context.Context) {
@@ -137,10 +126,6 @@ func (hub *TickHub) CollectHistoric(ctx context.Context) {
 	}
 	wg.Wait()
 	log.Info("Completed historic collection")
-
-	if err := hub.charts.TriggerUpdate(ctx, cache.Exchange); err != nil {
-		log.Errorf("Charts update problem for %s: %s", cache.Exchange, err.Error())
-	}
 }
 
 func (hub *TickHub) CollectAll(ctx context.Context) {
@@ -165,20 +150,6 @@ func (hub *TickHub) CollectAll(ctx context.Context) {
 			log.Error(err)
 		}
 	}
-
-	if err := hub.charts.TriggerUpdate(ctx, cache.Exchange); err != nil {
-		log.Errorf("Charts update problem for %s: %s", cache.Exchange, err.Error())
-	}
-
-	/*hub.CollectShort(ctx)
-	if ctx.Err() != nil {
-		return
-	}
-	hub.CollectLong(ctx)
-	if ctx.Err() != nil {
-		return
-	}
-	hub.CollectHistoric(ctx)*/
 }
 
 func (hub *TickHub) Run(ctx context.Context) {

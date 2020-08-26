@@ -1213,12 +1213,10 @@ func (s *Server) communityChat(resp http.ResponseWriter, req *http.Request) {
 		}
 		platform = models.TableNames.Github
 		filters[models.GithubColumns.Repository] = fmt.Sprintf("'%s'", req.FormValue("repository"))
-		break
 	case twitterPlatform:
 		yLabel = "Followers"
 		dataType = models.TwitterColumns.Followers
 		platform = models.TableNames.Twitter
-		break
 	case redditPlatform:
 		if dataType == models.RedditColumns.ActiveAccounts {
 			yLabel = "Active Accounts"
@@ -1235,7 +1233,6 @@ func (s *Server) communityChat(resp http.ResponseWriter, req *http.Request) {
 			yLabel = "Subscribers"
 		}
 		filters[models.YoutubeColumns.Channel] = fmt.Sprintf("'%s'", req.FormValue("channel"))
-		break
 	}
 
 	if dataType == "" {
@@ -1438,6 +1435,10 @@ func (s *Server) nodesCountUserAgents(w http.ResponseWriter, r *http.Request) {
 	offset = (page - 1) * pageSize
 
 	userAgents, total, err := s.db.FetchNodeVersion(r.Context(), offset, pageSize)
+	if err != nil {
+		s.renderErrorfJSON(err.Error(), w)
+		return
+	}
 
 	var totalPages int64
 	if total%int64(pageSize) == 0 {
@@ -1529,6 +1530,10 @@ func (s *Server) nodesCountByCountries(w http.ResponseWriter, r *http.Request) {
 	offset = (page - 1) * pageSize
 
 	countries, total, err := s.db.FetchNodeLocations(r.Context(), offset, pageSize)
+	if err != nil {
+		s.renderErrorJSON(err.Error(), w)
+		return
+	}
 
 	var totalPages int64
 	if total%int64(pageSize) == 0 {

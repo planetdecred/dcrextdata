@@ -493,14 +493,6 @@ func (pg *PgDb) LastExchangeEntryID() (id int64) {
 	return
 }
 
-type exchangeTickSet struct {
-	time  cache.ChartUints
-	open  cache.ChartFloats
-	close cache.ChartFloats
-	high  cache.ChartFloats
-	low   cache.ChartFloats
-}
-
 func (pg *PgDb) fetchEncodeExchangeChart(ctx context.Context, charts *cache.Manager, dataType, _ string, binString string, setKey ...string) ([]byte, error) {
 	if len(setKey) < 1 {
 		return nil, errors.New("exchange set key is required for exchange chart")
@@ -527,90 +519,4 @@ func (pg *PgDb) fetchEncodeExchangeChart(ctx context.Context, charts *cache.Mana
 	}
 
 	return charts.Encode(nil, dates, yAxis)
-}
-
-func (pg *PgDb) fetchExchangeChart(ctx context.Context, charts *cache.Manager, _ int) (interface{}, func(), bool, error) {
-	cancel := func() {}
-	exchanges, err := pg.AllExchange(ctx)
-	if err != nil {
-		return nil, cancel, false, err
-	}
-
-	exchangeTickIntervals := []int{
-		5,
-		60,
-		120,
-		1440,
-	}
-
-	currencyPairs, err := pg.AllExchangeTicksCurrencyPair(ctx)
-	if err != nil {
-		return nil, cancel, false, fmt.Errorf("Chart:Updater:Exchange cannot fetch currency pair, %s", err.Error())
-	}
-
-	var tickSets = map[string]exchangeTickSet{}
-	for _, currencyPair := range currencyPairs {
-		for _, exchange := range exchanges {
-			for _, interval := range exchangeTickIntervals {
-				key := cache.BuildExchangeKey(exchange.Name, currencyPair.CurrencyPair, interval)
-				exchangeTickTime := charts.ExchangeSetTime(key)
-				tickSlice, err := pg.exchangeTicksChartData(ctx, currencyPair.CurrencyPair, interval, exchange.Name, exchangeTickTime)
-				if err != nil && err != sql.ErrNoRows {
-					return nil, cancel, false, err
-				}
-
-				var tickSet exchangeTickSet
-				for _, exchangeTick := range tickSlice {
-					tickSet.time = append(tickSet.time, uint64(exchangeTick.Time.UTC().Unix()))
-					tickSet.open = append(tickSet.open, exchangeTick.Open)
-					tickSet.close = append(tickSet.close, exchangeTick.Close)
-					tickSet.high = append(tickSet.high, exchangeTick.High)
-					tickSet.low = append(tickSet.low, exchangeTick.Low)
-				}
-
-				tickSets[key] = tickSet
-			}
-		}
-	}
-
-	return tickSets, cancel, true, nil
-}
-
-func appendExchangeChart(charts *cache.Manager, data interface{}) error {
-	var tickSets = data.(map[string]exchangeTickSet)
-	keyExists := func(arr []string, key string) bool {
-		for _, s := range arr {
-			if s == key {
-				return true
-			}
-		}
-		return false
-	}
-	for key, tickSet := range tickSets {
-		if !keyExists(charts.ExchangeKeys, key) {
-			charts.ExchangeKeys = append(charts.ExchangeKeys, key)
-		}
-		if len(tickSet.time) == 0 {
-			continue
-		}
-		set, err := charts.ExchangeTickSet(key, cache.DefaultBin)
-		if err != nil && err != cache.UnknownChartErr {
-			log.Errorf("Error in append exchange set for %s, %s", key, err.Error())
-			continue
-		}
-		set.Time = append(set.Time, tickSet.time...)
-		set.Open = append(set.Open, tickSet.open...)
-		set.Close = append(set.Close, tickSet.close...)
-		set.High = append(set.High, tickSet.high...)
-		set.Low = append(set.Low, tickSet.low...)
-		if err := set.Save(charts); err != nil {
-			log.Errorf("Error in append exchange set for %s, %s", key, err.Error())
-			continue
-		}
-		if set.Time.Length() > 0 {
-			charts.SetExchangeSetTime(key, set.Time[set.Time.Length()-1])
-		}
-	}
-
-	return nil
 }

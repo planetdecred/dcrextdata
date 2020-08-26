@@ -11,7 +11,6 @@ import (
 
 	"github.com/planetdecred/dcrextdata/app"
 	"github.com/planetdecred/dcrextdata/app/helpers"
-	"github.com/planetdecred/dcrextdata/cache"
 )
 
 var (
@@ -35,10 +34,9 @@ type Collector struct {
 	pows   []Pow
 	period int64
 	store  PowDataStore
-	charts *cache.Manager
 }
 
-func NewCollector(disabledPows []string, period int64, store PowDataStore, charts *cache.Manager) (*Collector, error) {
+func NewCollector(disabledPows []string, period int64, store PowDataStore) (*Collector, error) {
 	pows := make([]Pow, 0, len(availablePows)-len(disabledPows))
 	disabledMap := make(map[string]struct{})
 	for _, pow := range disabledPows {
@@ -64,11 +62,10 @@ func NewCollector(disabledPows []string, period int64, store PowDataStore, chart
 		pows:   pows,
 		period: period,
 		store:  store,
-		charts: charts,
 	}, nil
 }
 
-func (pc *Collector) Run(ctx context.Context, cacheManager *cache.Manager) {
+func (pc *Collector) Run(ctx context.Context) {
 	app.MarkBusyIfFree()
 	log.Info("Triggering PoW collectors.")
 
@@ -90,12 +87,12 @@ func (pc *Collector) Run(ctx context.Context, cacheManager *cache.Manager) {
 		// continually check the state of the app until its free to run this module
 		app.MarkBusyIfFree()
 	}
-	pc.Collect(ctx, cacheManager)
+	pc.Collect(ctx)
 	app.ReleaseForNewModule()
-	go pc.CollectAsync(ctx, cacheManager)
+	go pc.CollectAsync(ctx)
 }
 
-func (pc *Collector) CollectAsync(ctx context.Context, cacheManager *cache.Manager) {
+func (pc *Collector) CollectAsync(ctx context.Context) {
 	if ctx.Err() != nil {
 		return
 	}
@@ -117,13 +114,13 @@ func (pc *Collector) CollectAsync(ctx context.Context, cacheManager *cache.Manag
 			log.Info("The next collection cycle begins in", timeInterval)
 
 			log.Info("Starting a new PoW collection cycle")
-			pc.Collect(ctx, cacheManager)
+			pc.Collect(ctx)
 			app.ReleaseForNewModule()
 		}
 	}
 }
 
-func (pc *Collector) Collect(ctx context.Context, cacheManager *cache.Manager) {
+func (pc *Collector) Collect(ctx context.Context) {
 	log.Info("Fetching PoW data.")
 	for _, powInfo := range pc.pows {
 		select {
@@ -138,13 +135,7 @@ func (pc *Collector) Collect(ctx context.Context, cacheManager *cache.Manager) {
 			if err != nil {
 				log.Error(err)
 			}
-			if err = cacheManager.Update(ctx, cache.PowChart); err != nil {
-				log.Error(err)
-			}
 		}
-	}
-	if err := pc.charts.TriggerUpdate(ctx, cache.PowChart); err != nil {
-		log.Errorf("Charts update problem for %s: %s", cache.PowChart, err.Error())
 	}
 	if err := pc.store.UpdateMempoolAggregateData(ctx); err != nil {
 		log.Error(err)

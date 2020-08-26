@@ -11,7 +11,6 @@ import (
 
 	"github.com/planetdecred/dcrextdata/app"
 	"github.com/planetdecred/dcrextdata/app/config"
-	"github.com/planetdecred/dcrextdata/cache"
 )
 
 const (
@@ -28,7 +27,7 @@ func NewCommStatCollector(store DataStore, options *config.CommunityStatOptions)
 	}, nil
 }
 
-func (c *Collector) Run(ctx context.Context, cacheManager *cache.Manager) {
+func (c *Collector) Run(ctx context.Context) {
 	if ctx.Err() != nil {
 		return
 	}
@@ -40,14 +39,14 @@ func (c *Collector) Run(ctx context.Context, cacheManager *cache.Manager) {
 
 	app.ReleaseForNewModule()
 
-	go c.startTwitterCollector(ctx, cacheManager)
+	go c.startTwitterCollector(ctx)
 
-	go c.startYoutubeCollector(ctx, cacheManager)
+	go c.startYoutubeCollector(ctx)
 
 	// github
-	go c.startGithubCollector(ctx, cacheManager)
+	go c.startGithubCollector(ctx)
 
-	go c.startRedditCollector(ctx, cacheManager)
+	go c.startRedditCollector(ctx)
 }
 
 func SetAccounts(options config.CommunityStatOptions) {

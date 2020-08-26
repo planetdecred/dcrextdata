@@ -391,11 +391,6 @@ func (pg *PgDb) fetchEncodePowChart(ctx context.Context, charts *cache.Manager, 
 
 }
 
-func (pg *PgDb) fetchCachePowChart(ctx context.Context, charts *cache.Manager, _ int) (interface{}, func(), bool, error) {
-	data, err := pg.fetchPowChart(ctx, charts.PowTip())
-	return data, func() {}, true, err
-}
-
 func (pg *PgDb) fetchPowChart(ctx context.Context, startDate uint64) (*powSet, error) {
 
 	var powDataSet = powSet{
@@ -458,24 +453,6 @@ func (pg *PgDb) fetchPowChart(ctx context.Context, startDate uint64) (*powSet, e
 	return &powDataSet, nil
 }
 
-func appendPowChart(charts *cache.Manager, data interface{}) error {
-	powDataSet := data.(*powSet)
-
-	if len(powDataSet.time) == 0 {
-		return nil
-	}
-
-	if err := charts.AppendPowSet(cache.DefaultBin, powDataSet.time, powDataSet.workers, powDataSet.hashrate); err != nil {
-		return err
-	}
-
-	if len(powDataSet.time) > 0 {
-		charts.SetPowTip(powDataSet.time[len(powDataSet.time)-1])
-	}
-
-	return nil
-}
-
 func (pg *PgDb) UpdatePowChart(ctx context.Context) error {
 	log.Info("Updating PoW bin data")
 	lastHourEntry, err := models.PowBins(
@@ -488,7 +465,7 @@ func (pg *PgDb) UpdatePowChart(ctx context.Context) error {
 
 	var nextHour = time.Time{}
 	var lastHour int64
-	if lastHourEntry != nil {
+	if lastHourEntry != nil && lastHourEntry.Time > 0 {
 		nextHour = time.Unix(lastHourEntry.Time, 0).Add(cache.AnHour * time.Second).UTC()
 		lastHour = lastHourEntry.Time
 	}
@@ -513,7 +490,8 @@ func (pg *PgDb) UpdatePowChart(ctx context.Context) error {
 	hours, _, hourIntervals := cache.GenerateHourBin(powSet.time, nil)
 	for _, pool := range pools {
 		for i, interval := range hourIntervals {
-			if hours[i] < uint64(nextHour.Unix()) {
+
+			if int64(hours[i]) < nextHour.Unix() {
 				continue
 			}
 			workers := powSet.workers[pool.Source].Avg(interval[0], interval[1])
@@ -564,7 +542,7 @@ func (pg *PgDb) UpdatePowChart(ctx context.Context) error {
 	days, _, dayIntervals := cache.GenerateDayBin(powSet.time, nil)
 	for _, pool := range pools {
 		for i, interval := range dayIntervals {
-			if days[i] < uint64(nextDay.Unix()) {
+			if int64(days[i]) < nextDay.Unix() {
 				continue
 			}
 			workers := powSet.workers[pool.Source].Avg(interval[0], interval[1])

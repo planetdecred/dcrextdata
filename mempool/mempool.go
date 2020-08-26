@@ -176,14 +176,12 @@ func (c *Collector) DcrdHandlers(ctx context.Context, cacheManager *cache.Manage
 			}
 			if err = c.dataStore.SaveBlock(ctx, block); err != nil {
 				log.Error(err)
-			} else if err = cacheManager.TriggerUpdate(ctx, cache.Propagation); err != nil {
-				log.Errorf("Charts update problem for %s: %s", cache.Mempool, err.Error())
 			}
 		},
 	}
 }
 
-func (c *Collector) StartMonitoring(ctx context.Context, cacheManager *cache.Manager) {
+func (c *Collector) StartMonitoring(ctx context.Context) {
 	var mu sync.Mutex
 
 	collectMempool := func() {
@@ -259,10 +257,6 @@ func (c *Collector) StartMonitoring(ctx context.Context, cacheManager *cache.Man
 
 		if err = c.dataStore.StoreMempool(ctx, mempoolDto); err != nil {
 			log.Error(err)
-		} else {
-			if err = cacheManager.TriggerUpdate(ctx, cache.Mempool); err != nil {
-				log.Errorf("Charts update problem for %s: %s", cache.Mempool, err.Error())
-			}
 		}
 	}
 

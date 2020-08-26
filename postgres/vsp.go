@@ -494,7 +494,7 @@ func (pg *PgDb) fetchEncodeVspChart(ctx context.Context, charts *cache.Manager, 
 	if binString != string(cache.DefaultBin) {
 		return pg.fetchEncodeBinVspChart(ctx, charts, binString, dataType, vspSources...)
 	}
-	data, _, err := pg.fetchVspChart(ctx, 0, 0, dataType, vspSources...)
+	data, _, err := pg.fetchVspChart(ctx, 0, dataType, vspSources...)
 	if err != nil {
 		return nil, err
 	}
@@ -637,7 +637,7 @@ func (pg *PgDb) fetchEncodeBinVspChart(ctx context.Context, charts *cache.Manage
 					dates = append(dates, uint64(rec.Time))
 					dateMap[rec.Time] = true
 				}
-				deviation = append(deviation, &null.Float64{Float64: float64(rec.PoolFees.Float64), Valid: rec.PoolFees.Valid})
+				deviation = append(deviation, &null.Float64{Float64: rec.PoolFees.Float64, Valid: rec.PoolFees.Valid})
 			}
 			deviations = append(deviations, deviation)
 
@@ -648,7 +648,7 @@ func (pg *PgDb) fetchEncodeBinVspChart(ctx context.Context, charts *cache.Manage
 					dates = append(dates, uint64(rec.Time))
 					dateMap[rec.Time] = true
 				}
-				deviation = append(deviation, &null.Float64{Float64: float64(rec.ProportionLive.Float64), Valid: rec.ProportionLive.Valid})
+				deviation = append(deviation, &null.Float64{Float64: rec.ProportionLive.Float64, Valid: rec.ProportionLive.Valid})
 			}
 			deviations = append(deviations, deviation)
 
@@ -659,7 +659,7 @@ func (pg *PgDb) fetchEncodeBinVspChart(ctx context.Context, charts *cache.Manage
 					dates = append(dates, uint64(rec.Time))
 					dateMap[rec.Time] = true
 				}
-				deviation = append(deviation, &null.Float64{Float64: float64(rec.ProportionMissed.Float64), Valid: rec.ProportionMissed.Valid})
+				deviation = append(deviation, &null.Float64{Float64: rec.ProportionMissed.Float64, Valid: rec.ProportionMissed.Valid})
 			}
 			deviations = append(deviations, deviation)
 
@@ -692,30 +692,7 @@ func (pg *PgDb) fetchEncodeBinVspChart(ctx context.Context, charts *cache.Manage
 	return cache.MakeVspChart(charts, dates, deviations, vspSources)
 }
 
-func (pg *PgDb) fetchCacheVspChart(ctx context.Context, charts *cache.Manager, page int) (interface{}, func(), bool, error) {
-	startDate := charts.VSPTip()
-	// Get close to the nearest value after the start date to avoid continue loop for situations where there is a gap
-	var receiver time.Time
-	statement := fmt.Sprintf("SELECT %s FROM %s WHERE %s > '%s' ORDER BY %s LIMIT 1", models.VSPTickColumns.Time,
-		models.TableNames.VSPTick, models.VSPTickColumns.Time,
-		helpers.UnixTime(int64(startDate)).Format("2006-01-02 15:04:05+0700"), models.VSPTickColumns.Time)
-	rows := pg.db.QueryRow(statement)
-	if err := rows.Scan(&receiver); err != nil {
-		if err.Error() != sql.ErrNoRows.Error() {
-			log.Errorf("Error in getting min vsp date - %s", err.Error())
-		}
-	}
-	if int64(startDate) < receiver.Unix() {
-		startDate = uint64(receiver.Unix())
-		if startDate > 0 {
-			startDate -= 1
-		}
-	}
-	vspSet, _, err := pg.fetchVspChart(ctx, startDate, 0, "")
-	return vspSet, func() {}, true, err
-}
-
-func (pg *PgDb) fetchVspChart(ctx context.Context, startDate uint64, endDate uint64, axisString string, vspSources ...string) (*vspSet, bool, error) {
+func (pg *PgDb) fetchVspChart(ctx context.Context, startDate uint64, axisString string, vspSources ...string) (*vspSet, bool, error) {
 	var vspDataSet = vspSet{
 		time:             []uint64{},
 		immature:         make(map[string]cache.ChartNullUints),
@@ -751,7 +728,7 @@ func (pg *PgDb) fetchVspChart(ctx context.Context, startDate uint64, endDate uin
 
 	var done = true
 	for _, vspSource := range vsps {
-		points, err := pg.fetchVSPChartData(ctx, vspSource, helpers.UnixTime(int64(startDate)), endDate, axisString)
+		points, err := pg.fetchVSPChartData(ctx, vspSource, helpers.UnixTime(int64(startDate)), 0, axisString)
 		if err != nil {
 			if err.Error() == sql.ErrNoRows.Error() {
 				continue
@@ -810,40 +787,6 @@ func (pg *PgDb) fetchVspChart(ctx context.Context, startDate uint64, endDate uin
 	return &vspDataSet, done, nil
 }
 
-func appendVspChart(charts *cache.Manager, data interface{}) error {
-	vspDataSet := data.(*vspSet)
-
-	if len(vspDataSet.time) == 0 {
-		return nil
-	}
-
-	cachedVspSet, err := charts.VSPSet(cache.DefaultBin)
-	if err != nil && err != cache.UnknownChartErr {
-		return err
-	}
-
-	cachedVspSet.Time = append(cachedVspSet.Time, vspDataSet.time...)
-	for _, s := range charts.VSPSources {
-		cachedVspSet.Immature[s] = cachedVspSet.Immature[s].Append(vspDataSet.immature[s])
-		cachedVspSet.Live[s] = cachedVspSet.Live[s].Append(vspDataSet.live[s])
-		cachedVspSet.Voted[s] = cachedVspSet.Voted[s].Append(vspDataSet.voted[s])
-		cachedVspSet.Missed[s] = cachedVspSet.Missed[s].Append(vspDataSet.missed[s])
-		cachedVspSet.PoolFees[s] = cachedVspSet.PoolFees[s].Append(vspDataSet.poolFees[s])
-		cachedVspSet.ProportionLive[s] = cachedVspSet.ProportionLive[s].Append(vspDataSet.proportionLive[s])
-		cachedVspSet.ProportionMissed[s] = cachedVspSet.ProportionMissed[s].Append(vspDataSet.proportionMissed[s])
-		cachedVspSet.UserCount[s] = cachedVspSet.UserCount[s].Append(vspDataSet.userCount[s])
-		cachedVspSet.UsersActive[s] = cachedVspSet.UsersActive[s].Append(vspDataSet.usersActive[s])
-	}
-
-	if err = cachedVspSet.Save(charts); err != nil {
-		return err
-	}
-	if len(vspDataSet.time) > 0 {
-		charts.SetVSPTip(vspDataSet.time[len(vspDataSet.time)-1])
-	}
-	return nil
-}
-
 func (pg *PgDb) UpdateVspChart(ctx context.Context) error {
 	log.Info("Updating VSP bin data")
 	lastHourEntry, err := models.VSPTickBins(
@@ -860,7 +803,6 @@ func (pg *PgDb) UpdateVspChart(ctx context.Context) error {
 		nextHour = time.Unix(lastHourEntry.Time, 0).Add(cache.AnHour * time.Second).UTC()
 		lastHour = lastHourEntry.Time
 	}
-	log.Infof("Last hour VSP bin was recorded at %v", lastHour)
 	if time.Now().Before(nextHour) {
 		return nil
 	}
@@ -874,7 +816,7 @@ func (pg *PgDb) UpdateVspChart(ctx context.Context) error {
 		vsps[i] = vspSource.Name
 	}
 
-	vspSet, _, err := pg.fetchVspChart(ctx, uint64(lastHour), 0, "", vsps...)
+	vspSet, _, err := pg.fetchVspChart(ctx, uint64(lastHour), "", vsps...)
 	if err != nil {
 		return err
 	}
@@ -915,13 +857,13 @@ func (pg *PgDb) UpdateVspChart(ctx context.Context) error {
 				vspBin.Missed = null.IntFrom(int(missed.Uint64))
 			}
 			if poolFees != nil {
-				vspBin.PoolFees = null.Float64From(float64(poolFees.Float64))
+				vspBin.PoolFees = null.Float64From(poolFees.Float64)
 			}
 			if proportionLive != nil {
-				vspBin.ProportionLive = null.Float64From(float64(proportionLive.Float64))
+				vspBin.ProportionLive = null.Float64From(proportionLive.Float64)
 			}
 			if proportionMissed != nil {
-				vspBin.ProportionMissed = null.Float64From(float64(proportionMissed.Float64))
+				vspBin.ProportionMissed = null.Float64From(proportionMissed.Float64)
 			}
 			if userCount != nil {
 				vspBin.UserCount = null.IntFrom(int(userCount.Uint64))
@@ -960,7 +902,7 @@ func (pg *PgDb) UpdateVspChart(ctx context.Context) error {
 		return nil
 	}
 
-	vspSet, _, err = pg.fetchVspChart(ctx, uint64(lastDay), 0, "", vsps...)
+	vspSet, _, err = pg.fetchVspChart(ctx, uint64(lastDay), "", vsps...)
 	if err != nil {
 		return err
 	}
@@ -1001,13 +943,13 @@ func (pg *PgDb) UpdateVspChart(ctx context.Context) error {
 				vspBin.Missed = null.IntFrom(int(missed.Uint64))
 			}
 			if poolFees != nil {
-				vspBin.PoolFees = null.Float64From(float64(poolFees.Float64))
+				vspBin.PoolFees = null.Float64From(poolFees.Float64)
 			}
 			if proportionLive != nil {
-				vspBin.ProportionLive = null.Float64From(float64(proportionLive.Float64))
+				vspBin.ProportionLive = null.Float64From(proportionLive.Float64)
 			}
 			if proportionMissed != nil {
-				vspBin.ProportionMissed = null.Float64From(float64(proportionMissed.Float64))
+				vspBin.ProportionMissed = null.Float64From(proportionMissed.Float64)
 			}
 			if userCount != nil {
 				vspBin.UserCount = null.IntFrom(int(userCount.Uint64))

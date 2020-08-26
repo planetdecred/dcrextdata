@@ -18,7 +18,6 @@ import (
 	"github.com/decred/dcrd/chaincfg"
 	"github.com/decred/dcrd/dcrutil"
 	"github.com/decred/dcrd/rpcclient"
-	"github.com/dgraph-io/badger"
 	"github.com/jessevdk/go-flags"
 	"github.com/planetdecred/dcrextdata/app"
 	"github.com/planetdecred/dcrextdata/app/config"
@@ -212,15 +211,9 @@ func _main(ctx context.Context) error {
 		log.Error(err)
 	}
 
-	opt := badger.DefaultOptions("data")
-	bdb, err := badger.Open(opt)
-	if err != nil {
-		return err
-	}
-
 	commstats.SetAccounts(cfg.CommunityStatOptions)
 	cacheManager := cache.NewChartData(ctx, cfg.EnableChartCache, cfg.SyncDatabases, poolSources, vsps,
-		nodeCountries, noveVersions, netParams(cfg.DcrdNetworkType), bdb, cfg.CacheDir)
+		nodeCountries, noveVersions, netParams(cfg.DcrdNetworkType), cfg.CacheDir)
 	db.RegisterCharts(cacheManager, cfg.SyncDatabases, func(name string) (*postgres.PgDb, error) {
 		db, found := syncDbs[name]
 		if !found {
@@ -247,12 +240,6 @@ func _main(ctx context.Context) error {
 	if err = cacheManager.Load(ctx); err != nil {
 		return err
 	}
-
-	defer func() {
-		if err = cacheManager.SaveVersion(); err != nil {
-			log.Error(err)
-		}
-	}()
 
 	// http server method
 	if strings.ToLower(cfg.HttpMode) == "true" || cfg.HttpMode == "1" {
@@ -326,11 +313,11 @@ func _main(ctx context.Context) error {
 
 		collector.SetClient(dcrClient)
 
-		go collector.StartMonitoring(ctx, cacheManager)
+		go collector.StartMonitoring(ctx)
 	}
 
 	if !cfg.DisableVSP {
-		vspCollector, err := vsp.NewVspCollector(cfg.VSPInterval, db, cacheManager)
+		vspCollector, err := vsp.NewVspCollector(cfg.VSPInterval, db)
 		if err == nil {
 			go vspCollector.Run(ctx, cacheManager)
 		} else {
@@ -340,7 +327,7 @@ func _main(ctx context.Context) error {
 
 	if !cfg.DisableExchangeTicks {
 		go func() {
-			ticksHub, err := exchanges.NewTickHub(ctx, cfg.DisabledExchanges, db, cacheManager)
+			ticksHub, err := exchanges.NewTickHub(ctx, cfg.DisabledExchanges, db)
 			if err != nil {
 				log.Error(err)
 				return
@@ -351,19 +338,19 @@ func _main(ctx context.Context) error {
 
 	if !cfg.DisablePow {
 		go func() {
-			powCollector, err := pow.NewCollector(cfg.DisabledPows, cfg.PowInterval, db, cacheManager)
+			powCollector, err := pow.NewCollector(cfg.DisabledPows, cfg.PowInterval, db)
 			if err != nil {
 				log.Error(err)
 				return
 			}
-			powCollector.Run(ctx, cacheManager)
+			powCollector.Run(ctx)
 		}()
 	}
 
 	if !cfg.DisableCommunityStat {
 		redditCollector, err := commstats.NewCommStatCollector(db, &cfg.CommunityStatOptions)
 		if err == nil {
-			go redditCollector.Run(ctx, cacheManager)
+			go redditCollector.Run(ctx)
 		} else {
 			log.Error(err)
 		}
@@ -371,7 +358,7 @@ func _main(ctx context.Context) error {
 
 	if !cfg.DisableNetworkSnapshot {
 		snapshotTaker := netsnapshot.NewTaker(db, cfg.NetworkSnapshotOptions)
-		go snapshotTaker.Start(ctx, cacheManager)
+		go snapshotTaker.Start(ctx)
 	}
 
 	go syncCoordinator.StartSyncing(ctx)
