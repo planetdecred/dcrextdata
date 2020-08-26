@@ -76,6 +76,7 @@ type DataStore interface {
 	LastSnapshotTime(ctx context.Context) (timestamp int64)
 	DeleteSnapshot(ctx context.Context, timestamp int64)
 	SaveSnapshot(ctx context.Context, snapShot SnapShot) error
+	UpdateSnapshotNodesBin(ctx context.Context) error
 	SaveHeartbeat(ctx context.Context, peer Heartbeat) error
 	AttemptPeer(ctx context.Context, address string, now int64) error
 	RecordNodeConnectionFailure(ctx context.Context, address string, maxAllowedFailure int) error

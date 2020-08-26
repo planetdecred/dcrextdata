@@ -240,6 +240,9 @@ func _main(ctx context.Context) error {
 	if err = db.UpdateVspChart(ctx); err != nil {
 		return fmt.Errorf("Error in initial VSP bin update, %s", err.Error())
 	}
+	if err = db.UpdateSnapshotNodesBin(ctx); err != nil {
+		return fmt.Errorf("Error in initial network snapshot bin update, %s", err.Error())
+	}
 
 	if err = cacheManager.Load(ctx); err != nil {
 		return err

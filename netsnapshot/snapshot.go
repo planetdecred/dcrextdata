@@ -112,6 +112,9 @@ func (t taker) Start(ctx context.Context, cacheManager *cache.Manager) {
 			if err = cacheManager.Update(ctx, cache.Snapshot, cache.SnapshotTable); err != nil {
 				log.Error(err)
 			}
+			if err = t.dataStore.UpdateSnapshotNodesBin(ctx); err != nil {
+				log.Errorf("Error in initial network snapshot bin update, %s", err.Error())
+			}
 
 			mtx.Lock()
 			count = 0

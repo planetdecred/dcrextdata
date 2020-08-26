@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 
 	"github.com/dgraph-io/badger"
 	"github.com/planetdecred/dcrextdata/cache"
@@ -124,6 +125,7 @@ func (pg PgDb) SnapshotsByTime(ctx context.Context, startDate int64, pageSize in
 	var queries = []qm.QueryMod{
 		qm.Select(
 			models.NetworkSnapshotColumns.Timestamp,
+			models.NetworkSnapshotColumns.Height,
 			models.NetworkSnapshotColumns.NodeCount,
 			models.NetworkSnapshotColumns.ReachableNodes,
 		),
@@ -964,7 +966,7 @@ func appendSnapshotTable(charts *cache.Manager, data interface{}) error {
 func (pg *PgDb) fetchEncodeSnapshotChart(ctx context.Context, charts *cache.Manager, dataType, _ string, binString string, extras ...string) ([]byte, error) {
 	switch dataType {
 	case string(cache.SnapshotNodes):
-		return pg.fetchEncodeSnapshotNodesChart(ctx, charts)
+		return pg.fetchEncodeSnapshotNodesChart(ctx, charts, dataType, binString)
 	case string(cache.SnapshotNodeVersions):
 		return pg.fetchEncodeSnapshotNodeVersionsChart(ctx, charts, extras...)
 	case string(cache.SnapshotLocations):
@@ -974,20 +976,158 @@ func (pg *PgDb) fetchEncodeSnapshotChart(ctx context.Context, charts *cache.Mana
 	}
 }
 
-func (pg *PgDb) fetchEncodeSnapshotNodesChart(ctx context.Context, charts *cache.Manager) ([]byte, error) {
-	result, err := pg.SnapshotsByTime(ctx, 0, 0)
-	if err != nil {
-		return nil, err
+func (pg *PgDb) fetchEncodeSnapshotNodesChart(ctx context.Context, charts *cache.Manager, dataType, binString string) ([]byte, error) {
+	var time, nodes, reachableNodes cache.ChartUints
+
+	if binString == string(cache.DefaultBin) {
+		result, err := pg.SnapshotsByTime(ctx, 0, 0)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, rec := range result {
+			if dataType == string(cache.HeightAxis) {
+				time = append(time, uint64(rec.Height))
+			} else {
+				time = append(time, uint64(rec.Timestamp))
+			}
+			nodes = append(nodes, uint64(rec.NodeCount))
+			reachableNodes = append(reachableNodes, uint64(rec.ReachableNodeCount))
+		}
+	} else {
+		result, err := models.NetworkSnapshotBins(
+			models.NetworkSnapshotBinWhere.Bin.EQ(binString),
+			qm.OrderBy(models.NetworkSnapshotBinColumns.Timestamp),
+		).All(ctx, pg.db)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, rec := range result {
+			if dataType == string(cache.HeightAxis) {
+				time = append(time, uint64(rec.Height))
+			} else {
+				time = append(time, uint64(rec.Timestamp))
+			}
+			nodes = append(nodes, uint64(rec.NodeCount))
+			reachableNodes = append(reachableNodes, uint64(rec.ReachableNodes))
+		}
 	}
 
-	var time, nodes, reachableNodes cache.ChartUints
-	for _, rec := range result {
-		time = append(time, uint64(rec.Timestamp))
+	return charts.Encode(nil, time, nodes, reachableNodes)
+}
+
+func (pg *PgDb) UpdateSnapshotNodesBin(ctx context.Context) error {
+	log.Info("Updating snapshot node bin data")
+	// hour bin
+	lastHourEntry, err := models.NetworkSnapshotBins(
+		models.NetworkSnapshotBinWhere.Bin.EQ(string(cache.HourBin)),
+		qm.OrderBy(fmt.Sprintf("%s desc", models.NetworkSnapshotBinColumns.Timestamp)),
+	).One(ctx, pg.db)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+
+	var nextHour = time.Time{}
+	var lastHour int64
+	if lastHourEntry != nil {
+		lastHour = lastHourEntry.Timestamp
+		nextHour = time.Unix(lastHourEntry.Timestamp, 0).Add(cache.AnHour * time.Second).UTC()
+	}
+	if time.Now().Before(nextHour) {
+		return nil
+	}
+
+	records, err := pg.SnapshotsByTime(ctx, lastHour, 0)
+	if err != nil {
+		return err
+	}
+
+	var dates, heights, nodes, reachableNodes cache.ChartUints
+	for _, rec := range records {
+		dates = append(dates, uint64(rec.Timestamp))
+		heights = append(heights, uint64(rec.Height))
 		nodes = append(nodes, uint64(rec.NodeCount))
 		reachableNodes = append(reachableNodes, uint64(rec.ReachableNodeCount))
 	}
 
-	return charts.Encode(nil, time, nodes, reachableNodes)
+	tx, err := pg.db.Begin()
+	if err != nil {
+		return err
+	}
+	hours, hourHeights, hourIntervals := cache.GenerateHourBin(dates, heights)
+	for i, interval := range hourIntervals {
+		m := models.NetworkSnapshotBin{
+			Timestamp:      int64(hours[i]),
+			Height:         int64(hourHeights[i]),
+			Bin:            string(cache.HourBin),
+			NodeCount:      int(nodes.Avg(interval[0], interval[1])),
+			ReachableNodes: int(reachableNodes.Avg(interval[0], interval[1])),
+		}
+		if err = m.Insert(ctx, tx, boil.Infer()); err != nil {
+			_ = tx.Rollback()
+			return err
+		}
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	// day bin
+	lastDayEntry, err := models.NetworkSnapshotBins(
+		models.NetworkSnapshotBinWhere.Bin.EQ(string(cache.DayBin)),
+		qm.OrderBy(fmt.Sprintf("%s desc", models.NetworkSnapshotBinColumns.Timestamp)),
+	).One(ctx, pg.db)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+
+	var nextDay time.Time
+	var lastDay int64
+	if lastDayEntry != nil {
+		lastDay = lastDayEntry.Timestamp
+		nextDay = time.Unix(lastDayEntry.Timestamp, 0).Add(cache.ADay * time.Second).UTC()
+	}
+	if time.Now().Before(nextDay) {
+		return nil
+	}
+
+	records, err = pg.SnapshotsByTime(ctx, lastDay, 0)
+	if err != nil {
+		return err
+	}
+
+	dates, heights, nodes, reachableNodes = cache.ChartUints{}, cache.ChartUints{}, cache.ChartUints{}, cache.ChartUints{}
+	for _, rec := range records {
+		dates = append(dates, uint64(rec.Timestamp))
+		heights = append(heights, uint64(rec.Height))
+		nodes = append(nodes, uint64(rec.NodeCount))
+		reachableNodes = append(reachableNodes, uint64(rec.ReachableNodeCount))
+	}
+
+	tx, err = pg.db.Begin()
+	if err != nil {
+		return err
+	}
+	days, dayHeights, dayIntervals := cache.GenerateDayBin(dates, heights)
+	for i, interval := range dayIntervals {
+		m := models.NetworkSnapshotBin{
+			Timestamp:      int64(days[i]),
+			Height:         int64(dayHeights[i]),
+			Bin:            string(cache.DayBin),
+			NodeCount:      int(nodes.Avg(interval[0], interval[1])),
+			ReachableNodes: int(reachableNodes.Avg(interval[0], interval[1])),
+		}
+		if err = m.Insert(ctx, tx, boil.Infer()); err != nil {
+			_ = tx.Rollback()
+			return err
+		}
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (pg *PgDb) fetchEncodeSnapshotNodeVersionsChart(ctx context.Context, charts *cache.Manager, userAgentsArg ...string) ([]byte, error) {
