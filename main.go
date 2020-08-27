@@ -465,6 +465,14 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 		log.Info("Votes table created successfully.")
 	}
 
+	if !db.VoteReceiveTimeDeviationTableExits() {
+		if err := db.CreateVoteReceiveTimeDeviationTable(); err != nil {
+			log.Error("Error creating vote receive time deviation table: ", err)
+			return err
+		}
+		log.Info("Vote receive time deviation table created successfully.")
+	}
+
 	if exists := db.VSPInfoTableExits(); !exists {
 		if err := db.CreateVSPInfoTables(); err != nil {
 			log.Error("Error creating vsp info table: ", err)

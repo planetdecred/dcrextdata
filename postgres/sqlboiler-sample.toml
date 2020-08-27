@@ -18,6 +18,7 @@
         "reddit",
         "twitter",
         "vote",
+        "vote_receive_time_deviation",
         "vsp",
         "vsp_tick",
         "vsp_tick_bin",

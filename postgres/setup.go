@@ -157,6 +157,15 @@ const (
 		PRIMARY KEY (hash)
 	);`
 
+	createVoteReceiveTimeDeviationTable = `CREATE TABLE IF NOT EXISTS vote_receive_time_deviation (
+		hash VARCHAR(128),
+		bin VARCHAR(25),
+		block_height INT8,
+		block_time timestamp,
+		receive_time_difference FLOAT8 NOT NULL,
+		PRIMARY KEY (hash,bin)
+	);`
+
 	lastCommStatEntryTime = `SELECT date FROM reddit ORDER BY date DESC LIMIT 1`
 
 	createRedditTable = `CREATE TABLE IF NOT EXISTS reddit (
@@ -404,6 +413,17 @@ func (pg *PgDb) VoteTableExits() bool {
 	return exists
 }
 
+// vote_receive_time_deviation table
+func (pg *PgDb) CreateVoteReceiveTimeDeviationTable() error {
+	_, err := pg.db.Exec(createVoteReceiveTimeDeviationTable)
+	return err
+}
+
+func (pg *PgDb) VoteReceiveTimeDeviationTableExits() bool {
+	exists, _ := pg.tableExists("vote_receive_time_deviation")
+	return exists
+}
+
 // reddit table
 func (pg *PgDb) CreateRedditTable() error {
 	_, err := pg.db.Exec(createRedditTable)
@@ -592,6 +612,11 @@ func (pg *PgDb) DropAllTables() error {
 
 	// vote
 	if err := pg.dropTable("vote"); err != nil {
+		return err
+	}
+
+	// vote_receive_time_deviation
+	if err := pg.dropTable("vote_receive_time_deviation"); err != nil {
 		return err
 	}
 

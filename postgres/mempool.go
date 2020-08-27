@@ -435,12 +435,12 @@ func (pg *PgDb) propagationVoteChartDataByHeight(ctx context.Context, height int
 		return nil, err
 	}
 
-	var chartData []mempool.PropagationChartData
-	for _, vote := range voteSlice {
+	var chartData = make([]mempool.PropagationChartData, len(voteSlice))
+	for i, vote := range voteSlice {
 		blockReceiveTimeDiff := vote.ReceiveTime.Time.Sub(vote.BlockReceiveTime.Time).Seconds()
-		chartData = append(chartData, mempool.PropagationChartData{
+		chartData[i] = mempool.PropagationChartData{
 			BlockHeight: vote.VotingOn.Int64, TimeDifference: blockReceiveTimeDiff,
-		})
+		}
 	}
 
 	return chartData, nil
@@ -611,6 +611,7 @@ func (pg *PgDb) fetchEncodeMempoolTxCount(ctx context.Context, charts *cache.Man
 	return charts.Encode(nil, time, data)
 }
 
+// TODO: break down into individual chart type
 func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.Manager, dataType, axis string, binString string, extras ...string) ([]byte, error) {
 	blockDelays, err := pg.propagationBlockChartData(ctx, 0)
 	if err != nil && err != sql.ErrNoRows {
