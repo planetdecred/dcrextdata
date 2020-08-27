@@ -137,6 +137,14 @@ const (
 		PRIMARY KEY (height)
 	);`
 
+	createBlockBinTable = `CREATE TABLE IF NOT EXISTS block_bin (
+		height INT8 NOT NULL,
+		receive_time_diff FLOAT8 NOT NULL,
+		internal_timestamp INT8 NOT NULL,
+		bin VARCHAR(25) NOT NULL,
+		PRIMARY KEY (height,bin)
+	);`
+
 	createVoteTable = `CREATE TABLE IF NOT EXISTS vote (
 		hash VARCHAR(128),
 		voting_on INT8,
@@ -371,6 +379,17 @@ func (pg *PgDb) CreateBlockTable() error {
 
 func (pg *PgDb) BlockTableExits() bool {
 	exists, _ := pg.tableExists("block")
+	return exists
+}
+
+// createBlockBinTable
+func (pg *PgDb) CreateBlockBinTable() error {
+	_, err := pg.db.Exec(createBlockBinTable)
+	return err
+}
+
+func (pg *PgDb) BlockBinTableExits() bool {
+	exists, _ := pg.tableExists("block_bin")
 	return exists
 }
 

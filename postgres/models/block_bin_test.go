@@ -21,24 +21,24 @@ var (
 	_ = queries.Equal
 )
 
-func testCommunityStats(t *testing.T) {
+func testBlockBins(t *testing.T) {
 	t.Parallel()
 
-	query := CommunityStats()
+	query := BlockBins()
 
 	if query.Query == nil {
 		t.Error("expected a query, got nothing")
 	}
 }
 
-func testCommunityStatsDelete(t *testing.T) {
+func testBlockBinsDelete(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &CommunityStat{}
-	if err = randomize.Struct(seed, o, communityStatDBTypes, true, communityStatColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	o := &BlockBin{}
+	if err = randomize.Struct(seed, o, blockBinDBTypes, true, blockBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -54,7 +54,7 @@ func testCommunityStatsDelete(t *testing.T) {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := CommunityStats().Count(ctx, tx)
+	count, err := BlockBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -64,14 +64,14 @@ func testCommunityStatsDelete(t *testing.T) {
 	}
 }
 
-func testCommunityStatsQueryDeleteAll(t *testing.T) {
+func testBlockBinsQueryDeleteAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &CommunityStat{}
-	if err = randomize.Struct(seed, o, communityStatDBTypes, true, communityStatColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	o := &BlockBin{}
+	if err = randomize.Struct(seed, o, blockBinDBTypes, true, blockBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -81,13 +81,13 @@ func testCommunityStatsQueryDeleteAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	if rowsAff, err := CommunityStats().DeleteAll(ctx, tx); err != nil {
+	if rowsAff, err := BlockBins().DeleteAll(ctx, tx); err != nil {
 		t.Error(err)
 	} else if rowsAff != 1 {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := CommunityStats().Count(ctx, tx)
+	count, err := BlockBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -97,14 +97,14 @@ func testCommunityStatsQueryDeleteAll(t *testing.T) {
 	}
 }
 
-func testCommunityStatsSliceDeleteAll(t *testing.T) {
+func testBlockBinsSliceDeleteAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &CommunityStat{}
-	if err = randomize.Struct(seed, o, communityStatDBTypes, true, communityStatColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	o := &BlockBin{}
+	if err = randomize.Struct(seed, o, blockBinDBTypes, true, blockBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -114,7 +114,7 @@ func testCommunityStatsSliceDeleteAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice := CommunityStatSlice{o}
+	slice := BlockBinSlice{o}
 
 	if rowsAff, err := slice.DeleteAll(ctx, tx); err != nil {
 		t.Error(err)
@@ -122,7 +122,7 @@ func testCommunityStatsSliceDeleteAll(t *testing.T) {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := CommunityStats().Count(ctx, tx)
+	count, err := BlockBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -132,14 +132,14 @@ func testCommunityStatsSliceDeleteAll(t *testing.T) {
 	}
 }
 
-func testCommunityStatsExists(t *testing.T) {
+func testBlockBinsExists(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &CommunityStat{}
-	if err = randomize.Struct(seed, o, communityStatDBTypes, true, communityStatColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	o := &BlockBin{}
+	if err = randomize.Struct(seed, o, blockBinDBTypes, true, blockBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -149,23 +149,23 @@ func testCommunityStatsExists(t *testing.T) {
 		t.Error(err)
 	}
 
-	e, err := CommunityStatExists(ctx, tx, o.Date, o.Platform, o.Account, o.Metric)
+	e, err := BlockBinExists(ctx, tx, o.Height, o.Bin)
 	if err != nil {
-		t.Errorf("Unable to check if CommunityStat exists: %s", err)
+		t.Errorf("Unable to check if BlockBin exists: %s", err)
 	}
 	if !e {
-		t.Errorf("Expected CommunityStatExists to return true, but got false.")
+		t.Errorf("Expected BlockBinExists to return true, but got false.")
 	}
 }
 
-func testCommunityStatsFind(t *testing.T) {
+func testBlockBinsFind(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &CommunityStat{}
-	if err = randomize.Struct(seed, o, communityStatDBTypes, true, communityStatColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	o := &BlockBin{}
+	if err = randomize.Struct(seed, o, blockBinDBTypes, true, blockBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -175,24 +175,24 @@ func testCommunityStatsFind(t *testing.T) {
 		t.Error(err)
 	}
 
-	communityStatFound, err := FindCommunityStat(ctx, tx, o.Date, o.Platform, o.Account, o.Metric)
+	blockBinFound, err := FindBlockBin(ctx, tx, o.Height, o.Bin)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if communityStatFound == nil {
+	if blockBinFound == nil {
 		t.Error("want a record, got nil")
 	}
 }
 
-func testCommunityStatsBind(t *testing.T) {
+func testBlockBinsBind(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &CommunityStat{}
-	if err = randomize.Struct(seed, o, communityStatDBTypes, true, communityStatColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	o := &BlockBin{}
+	if err = randomize.Struct(seed, o, blockBinDBTypes, true, blockBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -202,19 +202,19 @@ func testCommunityStatsBind(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err = CommunityStats().Bind(ctx, tx, o); err != nil {
+	if err = BlockBins().Bind(ctx, tx, o); err != nil {
 		t.Error(err)
 	}
 }
 
-func testCommunityStatsOne(t *testing.T) {
+func testBlockBinsOne(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &CommunityStat{}
-	if err = randomize.Struct(seed, o, communityStatDBTypes, true, communityStatColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	o := &BlockBin{}
+	if err = randomize.Struct(seed, o, blockBinDBTypes, true, blockBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -224,38 +224,38 @@ func testCommunityStatsOne(t *testing.T) {
 		t.Error(err)
 	}
 
-	if x, err := CommunityStats().One(ctx, tx); err != nil {
+	if x, err := BlockBins().One(ctx, tx); err != nil {
 		t.Error(err)
 	} else if x == nil {
 		t.Error("expected to get a non nil record")
 	}
 }
 
-func testCommunityStatsAll(t *testing.T) {
+func testBlockBinsAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	communityStatOne := &CommunityStat{}
-	communityStatTwo := &CommunityStat{}
-	if err = randomize.Struct(seed, communityStatOne, communityStatDBTypes, false, communityStatColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	blockBinOne := &BlockBin{}
+	blockBinTwo := &BlockBin{}
+	if err = randomize.Struct(seed, blockBinOne, blockBinDBTypes, false, blockBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
-	if err = randomize.Struct(seed, communityStatTwo, communityStatDBTypes, false, communityStatColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	if err = randomize.Struct(seed, blockBinTwo, blockBinDBTypes, false, blockBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = communityStatOne.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = blockBinOne.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
-	if err = communityStatTwo.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = blockBinTwo.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	slice, err := CommunityStats().All(ctx, tx)
+	slice, err := BlockBins().All(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -265,31 +265,31 @@ func testCommunityStatsAll(t *testing.T) {
 	}
 }
 
-func testCommunityStatsCount(t *testing.T) {
+func testBlockBinsCount(t *testing.T) {
 	t.Parallel()
 
 	var err error
 	seed := randomize.NewSeed()
-	communityStatOne := &CommunityStat{}
-	communityStatTwo := &CommunityStat{}
-	if err = randomize.Struct(seed, communityStatOne, communityStatDBTypes, false, communityStatColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	blockBinOne := &BlockBin{}
+	blockBinTwo := &BlockBin{}
+	if err = randomize.Struct(seed, blockBinOne, blockBinDBTypes, false, blockBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
-	if err = randomize.Struct(seed, communityStatTwo, communityStatDBTypes, false, communityStatColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	if err = randomize.Struct(seed, blockBinTwo, blockBinDBTypes, false, blockBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = communityStatOne.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = blockBinOne.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
-	if err = communityStatTwo.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = blockBinTwo.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	count, err := CommunityStats().Count(ctx, tx)
+	count, err := BlockBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -299,14 +299,14 @@ func testCommunityStatsCount(t *testing.T) {
 	}
 }
 
-func testCommunityStatsInsert(t *testing.T) {
+func testBlockBinsInsert(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &CommunityStat{}
-	if err = randomize.Struct(seed, o, communityStatDBTypes, true, communityStatColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	o := &BlockBin{}
+	if err = randomize.Struct(seed, o, blockBinDBTypes, true, blockBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -316,7 +316,7 @@ func testCommunityStatsInsert(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := CommunityStats().Count(ctx, tx)
+	count, err := BlockBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -326,24 +326,24 @@ func testCommunityStatsInsert(t *testing.T) {
 	}
 }
 
-func testCommunityStatsInsertWhitelist(t *testing.T) {
+func testBlockBinsInsertWhitelist(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &CommunityStat{}
-	if err = randomize.Struct(seed, o, communityStatDBTypes, true); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	o := &BlockBin{}
+	if err = randomize.Struct(seed, o, blockBinDBTypes, true); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = o.Insert(ctx, tx, boil.Whitelist(communityStatColumnsWithoutDefault...)); err != nil {
+	if err = o.Insert(ctx, tx, boil.Whitelist(blockBinColumnsWithoutDefault...)); err != nil {
 		t.Error(err)
 	}
 
-	count, err := CommunityStats().Count(ctx, tx)
+	count, err := BlockBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -353,14 +353,14 @@ func testCommunityStatsInsertWhitelist(t *testing.T) {
 	}
 }
 
-func testCommunityStatsReload(t *testing.T) {
+func testBlockBinsReload(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &CommunityStat{}
-	if err = randomize.Struct(seed, o, communityStatDBTypes, true, communityStatColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	o := &BlockBin{}
+	if err = randomize.Struct(seed, o, blockBinDBTypes, true, blockBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -375,14 +375,14 @@ func testCommunityStatsReload(t *testing.T) {
 	}
 }
 
-func testCommunityStatsReloadAll(t *testing.T) {
+func testBlockBinsReloadAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &CommunityStat{}
-	if err = randomize.Struct(seed, o, communityStatDBTypes, true, communityStatColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	o := &BlockBin{}
+	if err = randomize.Struct(seed, o, blockBinDBTypes, true, blockBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -392,21 +392,21 @@ func testCommunityStatsReloadAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice := CommunityStatSlice{o}
+	slice := BlockBinSlice{o}
 
 	if err = slice.ReloadAll(ctx, tx); err != nil {
 		t.Error(err)
 	}
 }
 
-func testCommunityStatsSelect(t *testing.T) {
+func testBlockBinsSelect(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &CommunityStat{}
-	if err = randomize.Struct(seed, o, communityStatDBTypes, true, communityStatColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	o := &BlockBin{}
+	if err = randomize.Struct(seed, o, blockBinDBTypes, true, blockBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -416,7 +416,7 @@ func testCommunityStatsSelect(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice, err := CommunityStats().All(ctx, tx)
+	slice, err := BlockBins().All(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -427,25 +427,25 @@ func testCommunityStatsSelect(t *testing.T) {
 }
 
 var (
-	communityStatDBTypes = map[string]string{`Date`: `bigint`, `Platform`: `character varying`, `Account`: `character varying`, `Metric`: `character varying`, `Value`: `bigint`}
-	_                    = bytes.MinRead
+	blockBinDBTypes = map[string]string{`Height`: `bigint`, `ReceiveTimeDiff`: `double precision`, `InternalTimestamp`: `bigint`, `Bin`: `character varying`}
+	_               = bytes.MinRead
 )
 
-func testCommunityStatsUpdate(t *testing.T) {
+func testBlockBinsUpdate(t *testing.T) {
 	t.Parallel()
 
-	if 0 == len(communityStatPrimaryKeyColumns) {
+	if 0 == len(blockBinPrimaryKeyColumns) {
 		t.Skip("Skipping table with no primary key columns")
 	}
-	if len(communityStatAllColumns) == len(communityStatPrimaryKeyColumns) {
+	if len(blockBinAllColumns) == len(blockBinPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &CommunityStat{}
-	if err = randomize.Struct(seed, o, communityStatDBTypes, true, communityStatColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	o := &BlockBin{}
+	if err = randomize.Struct(seed, o, blockBinDBTypes, true, blockBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -455,7 +455,7 @@ func testCommunityStatsUpdate(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := CommunityStats().Count(ctx, tx)
+	count, err := BlockBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -464,8 +464,8 @@ func testCommunityStatsUpdate(t *testing.T) {
 		t.Error("want one record, got:", count)
 	}
 
-	if err = randomize.Struct(seed, o, communityStatDBTypes, true, communityStatPrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	if err = randomize.Struct(seed, o, blockBinDBTypes, true, blockBinPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	if rowsAff, err := o.Update(ctx, tx, boil.Infer()); err != nil {
@@ -475,18 +475,18 @@ func testCommunityStatsUpdate(t *testing.T) {
 	}
 }
 
-func testCommunityStatsSliceUpdateAll(t *testing.T) {
+func testBlockBinsSliceUpdateAll(t *testing.T) {
 	t.Parallel()
 
-	if len(communityStatAllColumns) == len(communityStatPrimaryKeyColumns) {
+	if len(blockBinAllColumns) == len(blockBinPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &CommunityStat{}
-	if err = randomize.Struct(seed, o, communityStatDBTypes, true, communityStatColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	o := &BlockBin{}
+	if err = randomize.Struct(seed, o, blockBinDBTypes, true, blockBinColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -496,7 +496,7 @@ func testCommunityStatsSliceUpdateAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := CommunityStats().Count(ctx, tx)
+	count, err := BlockBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -505,18 +505,18 @@ func testCommunityStatsSliceUpdateAll(t *testing.T) {
 		t.Error("want one record, got:", count)
 	}
 
-	if err = randomize.Struct(seed, o, communityStatDBTypes, true, communityStatPrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	if err = randomize.Struct(seed, o, blockBinDBTypes, true, blockBinPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	// Remove Primary keys and unique columns from what we plan to update
 	var fields []string
-	if strmangle.StringSliceMatch(communityStatAllColumns, communityStatPrimaryKeyColumns) {
-		fields = communityStatAllColumns
+	if strmangle.StringSliceMatch(blockBinAllColumns, blockBinPrimaryKeyColumns) {
+		fields = blockBinAllColumns
 	} else {
 		fields = strmangle.SetComplement(
-			communityStatAllColumns,
-			communityStatPrimaryKeyColumns,
+			blockBinAllColumns,
+			blockBinPrimaryKeyColumns,
 		)
 	}
 
@@ -534,7 +534,7 @@ func testCommunityStatsSliceUpdateAll(t *testing.T) {
 		}
 	}
 
-	slice := CommunityStatSlice{o}
+	slice := BlockBinSlice{o}
 	if rowsAff, err := slice.UpdateAll(ctx, tx, updateMap); err != nil {
 		t.Error(err)
 	} else if rowsAff != 1 {
@@ -542,29 +542,29 @@ func testCommunityStatsSliceUpdateAll(t *testing.T) {
 	}
 }
 
-func testCommunityStatsUpsert(t *testing.T) {
+func testBlockBinsUpsert(t *testing.T) {
 	t.Parallel()
 
-	if len(communityStatAllColumns) == len(communityStatPrimaryKeyColumns) {
+	if len(blockBinAllColumns) == len(blockBinPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
 	// Attempt the INSERT side of an UPSERT
-	o := CommunityStat{}
-	if err = randomize.Struct(seed, &o, communityStatDBTypes, true); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	o := BlockBin{}
+	if err = randomize.Struct(seed, &o, blockBinDBTypes, true); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 	if err = o.Upsert(ctx, tx, false, nil, boil.Infer(), boil.Infer()); err != nil {
-		t.Errorf("Unable to upsert CommunityStat: %s", err)
+		t.Errorf("Unable to upsert BlockBin: %s", err)
 	}
 
-	count, err := CommunityStats().Count(ctx, tx)
+	count, err := BlockBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -573,15 +573,15 @@ func testCommunityStatsUpsert(t *testing.T) {
 	}
 
 	// Attempt the UPDATE side of an UPSERT
-	if err = randomize.Struct(seed, &o, communityStatDBTypes, false, communityStatPrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize CommunityStat struct: %s", err)
+	if err = randomize.Struct(seed, &o, blockBinDBTypes, false, blockBinPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize BlockBin struct: %s", err)
 	}
 
 	if err = o.Upsert(ctx, tx, true, nil, boil.Infer(), boil.Infer()); err != nil {
-		t.Errorf("Unable to upsert CommunityStat: %s", err)
+		t.Errorf("Unable to upsert BlockBin: %s", err)
 	}
 
-	count, err = CommunityStats().Count(ctx, tx)
+	count, err = BlockBins().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}

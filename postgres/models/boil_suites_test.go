@@ -13,7 +13,7 @@ import "testing"
 // Separating the tests thusly grants avoidance of Postgres deadlocks.
 func TestParent(t *testing.T) {
 	t.Run("Blocks", testBlocks)
-	t.Run("CommunityStats", testCommunityStats)
+	t.Run("BlockBins", testBlockBins)
 	t.Run("Exchanges", testExchanges)
 	t.Run("ExchangeTicks", testExchangeTicks)
 	t.Run("Githubs", testGithubs)
@@ -39,7 +39,7 @@ func TestParent(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	t.Run("Blocks", testBlocksDelete)
-	t.Run("CommunityStats", testCommunityStatsDelete)
+	t.Run("BlockBins", testBlockBinsDelete)
 	t.Run("Exchanges", testExchangesDelete)
 	t.Run("ExchangeTicks", testExchangeTicksDelete)
 	t.Run("Githubs", testGithubsDelete)
@@ -65,7 +65,7 @@ func TestDelete(t *testing.T) {
 
 func TestQueryDeleteAll(t *testing.T) {
 	t.Run("Blocks", testBlocksQueryDeleteAll)
-	t.Run("CommunityStats", testCommunityStatsQueryDeleteAll)
+	t.Run("BlockBins", testBlockBinsQueryDeleteAll)
 	t.Run("Exchanges", testExchangesQueryDeleteAll)
 	t.Run("ExchangeTicks", testExchangeTicksQueryDeleteAll)
 	t.Run("Githubs", testGithubsQueryDeleteAll)
@@ -91,7 +91,7 @@ func TestQueryDeleteAll(t *testing.T) {
 
 func TestSliceDeleteAll(t *testing.T) {
 	t.Run("Blocks", testBlocksSliceDeleteAll)
-	t.Run("CommunityStats", testCommunityStatsSliceDeleteAll)
+	t.Run("BlockBins", testBlockBinsSliceDeleteAll)
 	t.Run("Exchanges", testExchangesSliceDeleteAll)
 	t.Run("ExchangeTicks", testExchangeTicksSliceDeleteAll)
 	t.Run("Githubs", testGithubsSliceDeleteAll)
@@ -117,7 +117,7 @@ func TestSliceDeleteAll(t *testing.T) {
 
 func TestExists(t *testing.T) {
 	t.Run("Blocks", testBlocksExists)
-	t.Run("CommunityStats", testCommunityStatsExists)
+	t.Run("BlockBins", testBlockBinsExists)
 	t.Run("Exchanges", testExchangesExists)
 	t.Run("ExchangeTicks", testExchangeTicksExists)
 	t.Run("Githubs", testGithubsExists)
@@ -143,7 +143,7 @@ func TestExists(t *testing.T) {
 
 func TestFind(t *testing.T) {
 	t.Run("Blocks", testBlocksFind)
-	t.Run("CommunityStats", testCommunityStatsFind)
+	t.Run("BlockBins", testBlockBinsFind)
 	t.Run("Exchanges", testExchangesFind)
 	t.Run("ExchangeTicks", testExchangeTicksFind)
 	t.Run("Githubs", testGithubsFind)
@@ -169,7 +169,7 @@ func TestFind(t *testing.T) {
 
 func TestBind(t *testing.T) {
 	t.Run("Blocks", testBlocksBind)
-	t.Run("CommunityStats", testCommunityStatsBind)
+	t.Run("BlockBins", testBlockBinsBind)
 	t.Run("Exchanges", testExchangesBind)
 	t.Run("ExchangeTicks", testExchangeTicksBind)
 	t.Run("Githubs", testGithubsBind)
@@ -195,7 +195,7 @@ func TestBind(t *testing.T) {
 
 func TestOne(t *testing.T) {
 	t.Run("Blocks", testBlocksOne)
-	t.Run("CommunityStats", testCommunityStatsOne)
+	t.Run("BlockBins", testBlockBinsOne)
 	t.Run("Exchanges", testExchangesOne)
 	t.Run("ExchangeTicks", testExchangeTicksOne)
 	t.Run("Githubs", testGithubsOne)
@@ -221,7 +221,7 @@ func TestOne(t *testing.T) {
 
 func TestAll(t *testing.T) {
 	t.Run("Blocks", testBlocksAll)
-	t.Run("CommunityStats", testCommunityStatsAll)
+	t.Run("BlockBins", testBlockBinsAll)
 	t.Run("Exchanges", testExchangesAll)
 	t.Run("ExchangeTicks", testExchangeTicksAll)
 	t.Run("Githubs", testGithubsAll)
@@ -247,7 +247,7 @@ func TestAll(t *testing.T) {
 
 func TestCount(t *testing.T) {
 	t.Run("Blocks", testBlocksCount)
-	t.Run("CommunityStats", testCommunityStatsCount)
+	t.Run("BlockBins", testBlockBinsCount)
 	t.Run("Exchanges", testExchangesCount)
 	t.Run("ExchangeTicks", testExchangeTicksCount)
 	t.Run("Githubs", testGithubsCount)
@@ -274,8 +274,8 @@ func TestCount(t *testing.T) {
 func TestInsert(t *testing.T) {
 	t.Run("Blocks", testBlocksInsert)
 	t.Run("Blocks", testBlocksInsertWhitelist)
-	t.Run("CommunityStats", testCommunityStatsInsert)
-	t.Run("CommunityStats", testCommunityStatsInsertWhitelist)
+	t.Run("BlockBins", testBlockBinsInsert)
+	t.Run("BlockBins", testBlockBinsInsertWhitelist)
 	t.Run("Exchanges", testExchangesInsert)
 	t.Run("Exchanges", testExchangesInsertWhitelist)
 	t.Run("ExchangeTicks", testExchangeTicksInsert)
@@ -382,7 +382,7 @@ func TestToManyRemove(t *testing.T) {}
 
 func TestReload(t *testing.T) {
 	t.Run("Blocks", testBlocksReload)
-	t.Run("CommunityStats", testCommunityStatsReload)
+	t.Run("BlockBins", testBlockBinsReload)
 	t.Run("Exchanges", testExchangesReload)
 	t.Run("ExchangeTicks", testExchangeTicksReload)
 	t.Run("Githubs", testGithubsReload)
@@ -408,7 +408,7 @@ func TestReload(t *testing.T) {
 
 func TestReloadAll(t *testing.T) {
 	t.Run("Blocks", testBlocksReloadAll)
-	t.Run("CommunityStats", testCommunityStatsReloadAll)
+	t.Run("BlockBins", testBlockBinsReloadAll)
 	t.Run("Exchanges", testExchangesReloadAll)
 	t.Run("ExchangeTicks", testExchangeTicksReloadAll)
 	t.Run("Githubs", testGithubsReloadAll)
@@ -434,7 +434,7 @@ func TestReloadAll(t *testing.T) {
 
 func TestSelect(t *testing.T) {
 	t.Run("Blocks", testBlocksSelect)
-	t.Run("CommunityStats", testCommunityStatsSelect)
+	t.Run("BlockBins", testBlockBinsSelect)
 	t.Run("Exchanges", testExchangesSelect)
 	t.Run("ExchangeTicks", testExchangeTicksSelect)
 	t.Run("Githubs", testGithubsSelect)
@@ -460,7 +460,7 @@ func TestSelect(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	t.Run("Blocks", testBlocksUpdate)
-	t.Run("CommunityStats", testCommunityStatsUpdate)
+	t.Run("BlockBins", testBlockBinsUpdate)
 	t.Run("Exchanges", testExchangesUpdate)
 	t.Run("ExchangeTicks", testExchangeTicksUpdate)
 	t.Run("Githubs", testGithubsUpdate)
@@ -486,7 +486,7 @@ func TestUpdate(t *testing.T) {
 
 func TestSliceUpdateAll(t *testing.T) {
 	t.Run("Blocks", testBlocksSliceUpdateAll)
-	t.Run("CommunityStats", testCommunityStatsSliceUpdateAll)
+	t.Run("BlockBins", testBlockBinsSliceUpdateAll)
 	t.Run("Exchanges", testExchangesSliceUpdateAll)
 	t.Run("ExchangeTicks", testExchangeTicksSliceUpdateAll)
 	t.Run("Githubs", testGithubsSliceUpdateAll)

@@ -8,7 +8,7 @@ import "testing"
 func TestUpsert(t *testing.T) {
 	t.Run("Blocks", testBlocksUpsert)
 
-	t.Run("CommunityStats", testCommunityStatsUpsert)
+	t.Run("BlockBins", testBlockBinsUpsert)
 
 	t.Run("Exchanges", testExchangesUpsert)
 

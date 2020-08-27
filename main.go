@@ -227,6 +227,9 @@ func _main(ctx context.Context) error {
 	if err = db.UpdatePropagationData(ctx); err != nil {
 		return fmt.Errorf("Error in initial propagation data update, %s", err.Error())
 	}
+	if err = db.UpdateBlockBinData(ctx); err != nil {
+		return fmt.Errorf("Error in initial block data update, %s", err.Error())
+	}
 	if err = db.UpdatePowChart(ctx); err != nil {
 		return fmt.Errorf("Error in initial PoW bin update, %s", err.Error())
 	}
@@ -442,6 +445,15 @@ func createTablesAndIndex(db *postgres.PgDb) error {
 			return err
 		}
 		log.Info("Blocks table created successfully.")
+
+	}
+
+	if !db.BlockBinTableExits() {
+		if err := db.CreateBlockBinTable(); err != nil {
+			log.Error("Error creating block bin table: ", err)
+			return err
+		}
+		log.Info("Blocks bin table created successfully.")
 
 	}
 

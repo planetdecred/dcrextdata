@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -453,14 +454,14 @@ func (pg *PgDb) propagationBlockChartData(ctx context.Context, height int) ([]me
 		return nil, err
 	}
 
-	var chartData []mempool.PropagationChartData
-	for _, block := range blockSlice {
+	var chartData = make([]mempool.PropagationChartData, len(blockSlice))
+	for i, block := range blockSlice {
 		blockReceiveTimeDiff := block.ReceiveTime.Time.Sub(block.InternalTimestamp.Time).Seconds()
-		chartData = append(chartData, mempool.PropagationChartData{
+		chartData[i] = mempool.PropagationChartData{
 			BlockHeight:    int64(block.Height),
 			TimeDifference: blockReceiveTimeDiff,
 			BlockTime:      block.InternalTimestamp.Time,
-		})
+		}
 	}
 
 	return chartData, nil
@@ -616,11 +617,15 @@ func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.M
 		return nil, err
 	}
 
-	var heights cache.ChartUints
+	var xAxis cache.ChartUints
 	var blockDelay cache.ChartFloats
 	localBlockReceiveTime := make(map[uint64]float64)
 	for _, record := range blockDelays {
-		heights = append(heights, uint64(record.BlockHeight))
+		if axis == string(cache.HeightAxis) {
+			xAxis = append(xAxis, uint64(record.BlockHeight))
+		} else {
+			xAxis = append(xAxis, uint64(record.BlockTime.Unix()))
+		}
 		timeDifference, _ := strconv.ParseFloat(fmt.Sprintf("%04.2f", record.TimeDifference), 64)
 		blockDelay = append(blockDelay, timeDifference)
 
@@ -661,7 +666,27 @@ func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.M
 		return charts.Encode(nil, data...)
 
 	case cache.BlockTimestamp:
-		return charts.Encode(nil, heights, blockDelay)
+		if binString == string(cache.DefaultBin) {
+			return charts.Encode(nil, xAxis, blockDelay)
+		} else {
+			blocks, err := models.BlockBins(
+				models.BlockBinWhere.Bin.EQ(binString),
+			).All(ctx, pg.db)
+			if err != nil {
+				return nil, err
+			}
+			var xAxis cache.ChartUints
+			var blockDelay cache.ChartFloats
+			for _, block := range blocks {
+				if axis == string(cache.HashrateAxis) {
+					xAxis = append(xAxis, uint64(block.Height))
+				} else {
+					xAxis = append(xAxis, uint64(block.InternalTimestamp))
+				}
+				blockDelay = append(blockDelay, block.ReceiveTimeDiff)
+			}
+			return charts.Encode(nil, xAxis, blockDelay)
+		}
 
 	case cache.VotesReceiveTime:
 		votesReceiveTime, err := pg.propagationVoteChartDataByHeight(ctx, 0)
@@ -675,7 +700,7 @@ func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.M
 		}
 
 		var voteReceiveTimeDeviations cache.ChartFloats
-		for _, height := range heights {
+		for _, height := range xAxis {
 			if deviations, found := votesTimeDeviations[int64(height)]; found {
 				var totalTime float64
 				for _, timeDiff := range deviations {
@@ -687,7 +712,7 @@ func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.M
 			}
 			voteReceiveTimeDeviations = append(voteReceiveTimeDeviations, 0)
 		}
-		return charts.Encode(nil, heights, voteReceiveTimeDeviations)
+		return charts.Encode(nil, xAxis, voteReceiveTimeDeviations)
 	}
 	return nil, cache.UnknownChartErr
 }
@@ -965,5 +990,182 @@ func (pg PgDb) UpdatePropagationData(ctx context.Context) error {
 		return err
 	}
 	log.Info("Updated propagation data")
+	return nil
+}
+
+func (pg *PgDb) UpdateBlockBinData(ctx context.Context) error {
+	log.Info("Updating block bin data")
+	if err := pg.updateBlockHourlyAvgData(ctx); err != nil {
+		return err
+	}
+	if err := pg.updateBlockDailyAvgData(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (pg *PgDb) updateBlockHourlyAvgData(ctx context.Context) error {
+	lastEntry, err := models.BlockBins(
+		models.BlockBinWhere.Bin.EQ(string(cache.HourBin)),
+		qm.OrderBy(fmt.Sprintf("%s desc", models.BlockBinColumns.Height)),
+	).One(ctx, pg.db)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+
+	var nextHour = time.Time{}
+	var lastHeight int64
+	if lastEntry != nil {
+		lastHeight = lastEntry.Height
+		nextHour = time.Unix(lastEntry.InternalTimestamp, 0).Add(cache.AnHour * time.Second).UTC()
+	}
+
+	if time.Now().Before(nextHour) {
+		return nil
+	}
+
+	totalCount, err := models.Blocks(
+		models.BlockWhere.Height.GT(int(lastHeight)),
+	).Count(ctx, pg.db)
+	if err != nil {
+		return err
+	}
+
+	tx, err := pg.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	const pageSize = 1000
+	var processed int64
+	for processed < totalCount {
+		log.Infof("Processing hourly average deviation of %d to %d of %d blocks", processed+1,
+			math.Min(float64(processed+pageSize), float64(totalCount)), totalCount)
+		blockSlice, err := models.Blocks(
+			models.BlockWhere.Height.GT(int(lastHeight)), // lastHeight is updated below to ensure appropriate pagination
+			qm.OrderBy(models.BlockColumns.Height),
+			qm.Limit(pageSize),
+		).All(ctx, pg.db)
+		if err != nil && err != sql.ErrNoRows {
+			_ = tx.Rollback()
+			return err
+		}
+		if err == sql.ErrNoRows {
+			break
+		}
+		var dates, heights cache.ChartUints
+		var diffs cache.ChartFloats
+		for _, block := range blockSlice {
+			dates = append(dates, uint64(block.InternalTimestamp.Time.Unix()))
+			heights = append(heights, uint64(block.Height))
+			blockReceiveTimeDiff := block.ReceiveTime.Time.Sub(block.InternalTimestamp.Time).Seconds()
+			diffs = append(diffs, blockReceiveTimeDiff)
+		}
+		hours, hourHeights, hourIntervals := cache.GenerateHourBin(dates, heights)
+		for i, interval := range hourIntervals {
+			if int64(hours[i]) < nextHour.Unix() {
+				continue
+			}
+			blockBin := models.BlockBin{
+				InternalTimestamp: int64(hours[i]),
+				Height:            int64(hourHeights[i]),
+				Bin:               string(cache.HourBin),
+				ReceiveTimeDiff:   diffs.Avg(interval[0], interval[1]),
+			}
+			if err = blockBin.Insert(ctx, tx, boil.Infer()); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+			lastHeight = blockBin.Height
+		}
+		processed += int64(len(blockSlice))
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (pg *PgDb) updateBlockDailyAvgData(ctx context.Context) error {
+	lastEntry, err := models.BlockBins(
+		models.BlockBinWhere.Bin.EQ(string(cache.DayBin)),
+		qm.OrderBy(fmt.Sprintf("%s desc", models.BlockBinColumns.Height)),
+	).One(ctx, pg.db)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+
+	var nextDay = time.Time{}
+	var lastHeight int64
+	if lastEntry != nil {
+		lastHeight = lastEntry.Height
+		nextDay = time.Unix(lastEntry.InternalTimestamp, 0).Add(cache.ADay * time.Second).UTC()
+	}
+
+	if time.Now().Before(nextDay) {
+		return nil
+	}
+
+	totalCount, err := models.Blocks(
+		models.BlockWhere.Height.GT(int(lastHeight)),
+	).Count(ctx, pg.db)
+	if err != nil {
+		return err
+	}
+
+	tx, err := pg.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	const pageSize = 1000
+	var processed int64
+	for processed < totalCount {
+		log.Infof("Processing daily average deviation of %d to %d of %f blocks", processed+1,
+			math.Min(float64(processed+pageSize), float64(totalCount)), totalCount)
+		blockSlice, err := models.Blocks(
+			models.BlockWhere.Height.GT(int(lastHeight)), // lastHeight is updated below to ensure appropriate pagination
+			qm.OrderBy(models.BlockColumns.Height),
+			qm.Limit(pageSize),
+		).All(ctx, pg.db)
+		if err != nil && err != sql.ErrNoRows {
+			_ = tx.Rollback()
+			return err
+		}
+		if err == sql.ErrNoRows {
+			break
+		}
+		var dates, heights cache.ChartUints
+		var diffs cache.ChartFloats
+		for _, block := range blockSlice {
+			dates = append(dates, uint64(block.InternalTimestamp.Time.Unix()))
+			heights = append(heights, uint64(block.Height))
+			blockReceiveTimeDiff := block.ReceiveTime.Time.Sub(block.InternalTimestamp.Time).Seconds()
+			diffs = append(diffs, blockReceiveTimeDiff)
+		}
+		days, dayHeights, dayIntervals := cache.GenerateDayBin(dates, heights)
+		for i, interval := range dayIntervals {
+			if int64(days[i]) < nextDay.Unix() {
+				continue
+			}
+			blockBin := models.BlockBin{
+				InternalTimestamp: int64(days[i]),
+				Height:            int64(dayHeights[i]),
+				Bin:               string(cache.DayBin),
+				ReceiveTimeDiff:   diffs.Avg(interval[0], interval[1]),
+			}
+			if err = blockBin.Insert(ctx, tx, boil.Infer()); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+			lastHeight = blockBin.Height
+		}
+		processed += int64(len(blockSlice))
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
 	return nil
 }

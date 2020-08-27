@@ -6,6 +6,7 @@
     sslmode = "disable"
     whitelist=[
         "block",
+        "block_bin",
         "exchange",
         "exchange_tick",
         "github",

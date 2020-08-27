@@ -5,7 +5,7 @@ package models
 
 var TableNames = struct {
 	Block              string
-	CommunityStat      string
+	BlockBin           string
 	Exchange           string
 	ExchangeTick       string
 	Github             string
@@ -29,7 +29,7 @@ var TableNames = struct {
 	Youtube            string
 }{
 	Block:              "block",
-	CommunityStat:      "community_stat",
+	BlockBin:           "block_bin",
 	Exchange:           "exchange",
 	ExchangeTick:       "exchange_tick",
 	Github:             "github",
