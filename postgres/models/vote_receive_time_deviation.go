@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
-	"github.com/volatiletech/null"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries"
 	"github.com/volatiletech/sqlboiler/queries/qm"
@@ -24,24 +23,21 @@ import (
 
 // VoteReceiveTimeDeviation is an object representing the database table.
 type VoteReceiveTimeDeviation struct {
-	Hash                  string     `boil:"hash" json:"hash" toml:"hash" yaml:"hash"`
-	Bin                   string     `boil:"bin" json:"bin" toml:"bin" yaml:"bin"`
-	BlockHeight           null.Int64 `boil:"block_height" json:"block_height,omitempty" toml:"block_height" yaml:"block_height,omitempty"`
-	BlockTime             null.Time  `boil:"block_time" json:"block_time,omitempty" toml:"block_time" yaml:"block_time,omitempty"`
-	ReceiveTimeDifference float64    `boil:"receive_time_difference" json:"receive_time_difference" toml:"receive_time_difference" yaml:"receive_time_difference"`
+	Bin                   string  `boil:"bin" json:"bin" toml:"bin" yaml:"bin"`
+	BlockHeight           int64   `boil:"block_height" json:"block_height" toml:"block_height" yaml:"block_height"`
+	BlockTime             int64   `boil:"block_time" json:"block_time" toml:"block_time" yaml:"block_time"`
+	ReceiveTimeDifference float64 `boil:"receive_time_difference" json:"receive_time_difference" toml:"receive_time_difference" yaml:"receive_time_difference"`
 
 	R *voteReceiveTimeDeviationR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L voteReceiveTimeDeviationL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var VoteReceiveTimeDeviationColumns = struct {
-	Hash                  string
 	Bin                   string
 	BlockHeight           string
 	BlockTime             string
 	ReceiveTimeDifference string
 }{
-	Hash:                  "hash",
 	Bin:                   "bin",
 	BlockHeight:           "block_height",
 	BlockTime:             "block_time",
@@ -51,16 +47,14 @@ var VoteReceiveTimeDeviationColumns = struct {
 // Generated where
 
 var VoteReceiveTimeDeviationWhere = struct {
-	Hash                  whereHelperstring
 	Bin                   whereHelperstring
-	BlockHeight           whereHelpernull_Int64
-	BlockTime             whereHelpernull_Time
+	BlockHeight           whereHelperint64
+	BlockTime             whereHelperint64
 	ReceiveTimeDifference whereHelperfloat64
 }{
-	Hash:                  whereHelperstring{field: "\"vote_receive_time_deviation\".\"hash\""},
 	Bin:                   whereHelperstring{field: "\"vote_receive_time_deviation\".\"bin\""},
-	BlockHeight:           whereHelpernull_Int64{field: "\"vote_receive_time_deviation\".\"block_height\""},
-	BlockTime:             whereHelpernull_Time{field: "\"vote_receive_time_deviation\".\"block_time\""},
+	BlockHeight:           whereHelperint64{field: "\"vote_receive_time_deviation\".\"block_height\""},
+	BlockTime:             whereHelperint64{field: "\"vote_receive_time_deviation\".\"block_time\""},
 	ReceiveTimeDifference: whereHelperfloat64{field: "\"vote_receive_time_deviation\".\"receive_time_difference\""},
 }
 
@@ -81,10 +75,10 @@ func (*voteReceiveTimeDeviationR) NewStruct() *voteReceiveTimeDeviationR {
 type voteReceiveTimeDeviationL struct{}
 
 var (
-	voteReceiveTimeDeviationAllColumns            = []string{"hash", "bin", "block_height", "block_time", "receive_time_difference"}
-	voteReceiveTimeDeviationColumnsWithoutDefault = []string{"hash", "bin", "block_height", "block_time", "receive_time_difference"}
+	voteReceiveTimeDeviationAllColumns            = []string{"bin", "block_height", "block_time", "receive_time_difference"}
+	voteReceiveTimeDeviationColumnsWithoutDefault = []string{"bin", "block_height", "block_time", "receive_time_difference"}
 	voteReceiveTimeDeviationColumnsWithDefault    = []string{}
-	voteReceiveTimeDeviationPrimaryKeyColumns     = []string{"hash", "bin"}
+	voteReceiveTimeDeviationPrimaryKeyColumns     = []string{"block_time", "bin"}
 )
 
 type (
@@ -186,7 +180,7 @@ func VoteReceiveTimeDeviations(mods ...qm.QueryMod) voteReceiveTimeDeviationQuer
 
 // FindVoteReceiveTimeDeviation retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindVoteReceiveTimeDeviation(ctx context.Context, exec boil.ContextExecutor, hash string, bin string, selectCols ...string) (*VoteReceiveTimeDeviation, error) {
+func FindVoteReceiveTimeDeviation(ctx context.Context, exec boil.ContextExecutor, blockTime int64, bin string, selectCols ...string) (*VoteReceiveTimeDeviation, error) {
 	voteReceiveTimeDeviationObj := &VoteReceiveTimeDeviation{}
 
 	sel := "*"
@@ -194,10 +188,10 @@ func FindVoteReceiveTimeDeviation(ctx context.Context, exec boil.ContextExecutor
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"vote_receive_time_deviation\" where \"hash\"=$1 AND \"bin\"=$2", sel,
+		"select %s from \"vote_receive_time_deviation\" where \"block_time\"=$1 AND \"bin\"=$2", sel,
 	)
 
-	q := queries.Raw(query, hash, bin)
+	q := queries.Raw(query, blockTime, bin)
 
 	err := q.Bind(ctx, exec, voteReceiveTimeDeviationObj)
 	if err != nil {
@@ -526,7 +520,7 @@ func (o *VoteReceiveTimeDeviation) Delete(ctx context.Context, exec boil.Context
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), voteReceiveTimeDeviationPrimaryKeyMapping)
-	sql := "DELETE FROM \"vote_receive_time_deviation\" WHERE \"hash\"=$1 AND \"bin\"=$2"
+	sql := "DELETE FROM \"vote_receive_time_deviation\" WHERE \"block_time\"=$1 AND \"bin\"=$2"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -603,7 +597,7 @@ func (o VoteReceiveTimeDeviationSlice) DeleteAll(ctx context.Context, exec boil.
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *VoteReceiveTimeDeviation) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindVoteReceiveTimeDeviation(ctx, exec, o.Hash, o.Bin)
+	ret, err := FindVoteReceiveTimeDeviation(ctx, exec, o.BlockTime, o.Bin)
 	if err != nil {
 		return err
 	}
@@ -642,16 +636,16 @@ func (o *VoteReceiveTimeDeviationSlice) ReloadAll(ctx context.Context, exec boil
 }
 
 // VoteReceiveTimeDeviationExists checks if the VoteReceiveTimeDeviation row exists.
-func VoteReceiveTimeDeviationExists(ctx context.Context, exec boil.ContextExecutor, hash string, bin string) (bool, error) {
+func VoteReceiveTimeDeviationExists(ctx context.Context, exec boil.ContextExecutor, blockTime int64, bin string) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"vote_receive_time_deviation\" where \"hash\"=$1 AND \"bin\"=$2 limit 1)"
+	sql := "select exists(select 1 from \"vote_receive_time_deviation\" where \"block_time\"=$1 AND \"bin\"=$2 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, hash, bin)
+		fmt.Fprintln(writer, blockTime, bin)
 	}
-	row := exec.QueryRowContext(ctx, sql, hash, bin)
+	row := exec.QueryRowContext(ctx, sql, blockTime, bin)
 
 	err := row.Scan(&exists)
 	if err != nil {

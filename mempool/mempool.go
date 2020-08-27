@@ -144,6 +144,10 @@ func (c *Collector) DcrdHandlers(ctx context.Context, cacheManager *cache.Manage
 				if err = c.dataStore.SaveVote(ctx, vote); err != nil {
 					log.Error(err)
 				}
+
+				if err = c.dataStore.UpdateVoteTimeDeviationData(ctx); err != nil {
+					log.Errorf("Error in vote receive time deviation data update, %s", err.Error())
+				}
 			}()
 		},
 
@@ -178,7 +182,7 @@ func (c *Collector) DcrdHandlers(ctx context.Context, cacheManager *cache.Manage
 				log.Error(err)
 			}
 			if err = c.dataStore.UpdateBlockBinData(ctx); err != nil {
-				log.Errorf("Error in initial block data update, %s", err.Error())
+				log.Errorf("Error in block bin data update, %s", err.Error())
 			}
 		},
 	}

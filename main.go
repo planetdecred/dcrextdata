@@ -230,6 +230,9 @@ func _main(ctx context.Context) error {
 	if err = db.UpdateBlockBinData(ctx); err != nil {
 		return fmt.Errorf("Error in initial block data update, %s", err.Error())
 	}
+	if err = db.UpdateVoteTimeDeviationData(ctx); err != nil {
+		return fmt.Errorf("Error in initial vote receive time deviation data update, %s", err.Error())
+	}
 	if err = db.UpdatePowChart(ctx); err != nil {
 		return fmt.Errorf("Error in initial PoW bin update, %s", err.Error())
 	}

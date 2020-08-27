@@ -672,6 +672,7 @@ func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.M
 		} else {
 			blocks, err := models.BlockBins(
 				models.BlockBinWhere.Bin.EQ(binString),
+				qm.OrderBy(models.BlockBinColumns.InternalTimestamp),
 			).All(ctx, pg.db)
 			if err != nil {
 				return nil, err
@@ -690,30 +691,51 @@ func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.M
 		}
 
 	case cache.VotesReceiveTime:
-		votesReceiveTime, err := pg.propagationVoteChartDataByHeight(ctx, 0)
-		if err != nil && err != sql.ErrNoRows {
-			return nil, err
-		}
-		var votesTimeDeviations = make(map[int64]cache.ChartFloats)
-
-		for _, record := range votesReceiveTime {
-			votesTimeDeviations[record.BlockHeight] = append(votesTimeDeviations[record.BlockHeight], record.TimeDifference)
-		}
-
-		var voteReceiveTimeDeviations cache.ChartFloats
-		for _, height := range xAxis {
-			if deviations, found := votesTimeDeviations[int64(height)]; found {
-				var totalTime float64
-				for _, timeDiff := range deviations {
-					totalTime += timeDiff
-				}
-				timeDifference, _ := strconv.ParseFloat(fmt.Sprintf("%04.2f", totalTime/float64(len(deviations))*1000), 64)
-				voteReceiveTimeDeviations = append(voteReceiveTimeDeviations, timeDifference)
-				continue
+		if binString == string(cache.DefaultBin) {
+			votesReceiveTime, err := pg.propagationVoteChartDataByHeight(ctx, 0)
+			if err != nil && err != sql.ErrNoRows {
+				return nil, err
 			}
-			voteReceiveTimeDeviations = append(voteReceiveTimeDeviations, 0)
+			var votesTimeDeviations = make(map[int64]cache.ChartFloats)
+
+			for _, record := range votesReceiveTime {
+				votesTimeDeviations[record.BlockHeight] = append(votesTimeDeviations[record.BlockHeight], record.TimeDifference)
+			}
+
+			var voteReceiveTimeDeviations cache.ChartFloats
+			for _, height := range xAxis {
+				if deviations, found := votesTimeDeviations[int64(height)]; found {
+					var totalTime float64
+					for _, timeDiff := range deviations {
+						totalTime += timeDiff
+					}
+					timeDifference, _ := strconv.ParseFloat(fmt.Sprintf("%04.2f", totalTime/float64(len(deviations))*1000), 64)
+					voteReceiveTimeDeviations = append(voteReceiveTimeDeviations, timeDifference)
+					continue
+				}
+				voteReceiveTimeDeviations = append(voteReceiveTimeDeviations, 0)
+			}
+			return charts.Encode(nil, xAxis, voteReceiveTimeDeviations)
+		} else {
+			records, err := models.VoteReceiveTimeDeviations(
+				models.VoteReceiveTimeDeviationWhere.Bin.EQ(binString),
+				qm.OrderBy(models.VoteReceiveTimeDeviationColumns.BlockTime),
+			).All(ctx, pg.db)
+			if err != nil {
+				return nil, err
+			}
+			var xAxis cache.ChartUints
+			var diffs cache.ChartFloats
+			for _, rec := range records {
+				if axis == string(cache.HeightAxis) {
+					xAxis = append(xAxis, uint64(rec.BlockHeight))
+				} else {
+					xAxis = append(xAxis, uint64(rec.BlockTime))
+				}
+				diffs = append(diffs, rec.ReceiveTimeDifference)
+			}
+			return charts.Encode(nil, xAxis, diffs)
 		}
-		return charts.Encode(nil, xAxis, voteReceiveTimeDeviations)
 	}
 	return nil, cache.UnknownChartErr
 }
@@ -994,6 +1016,7 @@ func (pg PgDb) UpdatePropagationData(ctx context.Context) error {
 	return nil
 }
 
+// UpdateBlockBinData
 func (pg *PgDb) UpdateBlockBinData(ctx context.Context) error {
 	log.Info("Updating block bin data")
 	if err := pg.updateBlockHourlyAvgData(ctx); err != nil {
@@ -1040,7 +1063,7 @@ func (pg *PgDb) updateBlockHourlyAvgData(ctx context.Context) error {
 	const pageSize = 1000
 	var processed int64
 	for processed < totalCount {
-		log.Infof("Processing hourly average deviation of %d to %d of %d blocks", processed+1,
+		log.Infof("Processing hourly average deviation of %d to %f of %d blocks", processed+1,
 			math.Min(float64(processed+pageSize), float64(totalCount)), totalCount)
 		blockSlice, err := models.Blocks(
 			models.BlockWhere.Height.GT(int(lastHeight)), // lastHeight is updated below to ensure appropriate pagination
@@ -1123,7 +1146,7 @@ func (pg *PgDb) updateBlockDailyAvgData(ctx context.Context) error {
 	const pageSize = 1000
 	var processed int64
 	for processed < totalCount {
-		log.Infof("Processing daily average deviation of %d to %d of %f blocks", processed+1,
+		log.Infof("Processing daily average deviation of %d to %f of %d blocks", processed+1,
 			math.Min(float64(processed+pageSize), float64(totalCount)), totalCount)
 		blockSlice, err := models.Blocks(
 			models.BlockWhere.Height.GT(int(lastHeight)), // lastHeight is updated below to ensure appropriate pagination
@@ -1163,6 +1186,230 @@ func (pg *PgDb) updateBlockDailyAvgData(ctx context.Context) error {
 			lastHeight = blockBin.Height
 		}
 		processed += int64(len(blockSlice))
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateVoteTimeDeviationData
+func (pg *PgDb) UpdateVoteTimeDeviationData(ctx context.Context) error {
+	log.Info("Updating vote time deviation data")
+	if err := pg.updateVoteTimeDeviationHourlyAvgData(ctx); err != nil {
+		return err
+	}
+	if err := pg.updateVoteTimeDeviationDailyAvgData(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (pg *PgDb) updateVoteTimeDeviationHourlyAvgData(ctx context.Context) error {
+	lastEntry, err := models.VoteReceiveTimeDeviations(
+		models.VoteReceiveTimeDeviationWhere.Bin.EQ(string(cache.HourBin)),
+		qm.OrderBy(fmt.Sprintf("%s desc", models.VoteReceiveTimeDeviationColumns.BlockTime)),
+		// The retrival process below ensure that all votes for the block is processed in one circle
+		// qm.OrderBy(fmt.Sprintf("%s desc", models.VoteReceiveTimeDeviationColumns.Hash)),
+	).One(ctx, pg.db)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+
+	var lastHour, nextHour time.Time
+	if lastEntry != nil {
+		lastHour = time.Unix(lastEntry.BlockTime, 0)
+		nextHour = time.Unix(lastEntry.BlockTime, 0).Add(cache.AnHour * time.Second).UTC()
+	} else {
+		firstBlock, err := models.Blocks(
+			qm.OrderBy(models.BlockColumns.Height),
+		).One(ctx, pg.db)
+		if err != nil && err != sql.ErrNoRows {
+			return nil
+		}
+		if firstBlock == nil {
+			return nil
+		}
+		// the query uses <= so we are stepping back by 1 second
+		lastHour = firstBlock.ReceiveTime.Time.Add(-1 * time.Second)
+	}
+
+	if time.Now().Before(nextHour) {
+		return nil
+	}
+
+	totalCount, err := models.Votes(
+		models.VoteWhere.TargetedBlockTime.GT(null.TimeFrom(lastHour)),
+	).Count(ctx, pg.db)
+	if err != nil {
+		return err
+	}
+
+	if totalCount == 0 {
+		return nil
+	}
+
+	tx, err := pg.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	var processed int64
+	for processed < totalCount {
+
+		voteSlice, err := models.Votes(
+			// lastHeight is updated below to ensure appropriate pagination
+			models.VoteWhere.TargetedBlockTime.GT(null.TimeFrom(lastHour)),
+			// Using block height to coordinate pagination to ensure the processing of all votes
+			models.VoteWhere.TargetedBlockTime.LTE(null.TimeFrom(lastHour.Add(7*24*time.Hour))),
+			qm.OrderBy(models.VoteColumns.VotingOn),
+		).All(ctx, tx)
+
+		if err != nil && err != sql.ErrNoRows {
+			_ = tx.Rollback()
+			return err
+		}
+		if err == sql.ErrNoRows {
+			return nil
+		}
+
+		var dates, heights cache.ChartUints
+		var diffs cache.ChartFloats
+		for _, vote := range voteSlice {
+			dates = append(dates, uint64(vote.TargetedBlockTime.Time.Unix()))
+			heights = append(heights, uint64(vote.VotingOn.Int64))
+			blockReceiveTimeDiff := vote.ReceiveTime.Time.Sub(vote.BlockReceiveTime.Time).Seconds()
+			diffs = append(diffs, blockReceiveTimeDiff)
+		}
+		hours, hourHeights, hourIntervals := cache.GenerateHourBin(dates, heights)
+		for i, interval := range hourIntervals {
+			if int64(hours[i]) < nextHour.Unix() {
+				continue
+			}
+			m := models.VoteReceiveTimeDeviation{
+				BlockTime:             int64(hours[i]),
+				BlockHeight:           int64(hourHeights[i]),
+				Bin:                   string(cache.HourBin),
+				ReceiveTimeDifference: diffs.Avg(interval[0], interval[1]),
+			}
+			if err = m.Insert(ctx, tx, boil.Infer()); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+			lastHour = time.Unix(m.BlockTime, 0)
+			nextHour = lastHour.Add(1 * time.Hour)
+		}
+
+		log.Infof("Processed hourly average vote receive time deviation of %d to %d of %d votes", processed,
+			processed+int64(len(voteSlice)), totalCount)
+		processed += int64(len(voteSlice))
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (pg *PgDb) updateVoteTimeDeviationDailyAvgData(ctx context.Context) error {
+	lastEntry, err := models.VoteReceiveTimeDeviations(
+		models.VoteReceiveTimeDeviationWhere.Bin.EQ(string(cache.DayBin)),
+		qm.OrderBy(fmt.Sprintf("%s desc", models.VoteReceiveTimeDeviationColumns.BlockTime)),
+		// The retrival process below ensure that all votes for the block is processed in one circle
+		// qm.OrderBy(fmt.Sprintf("%s desc", models.VoteReceiveTimeDeviationColumns.Hash)),
+	).One(ctx, pg.db)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+
+	var lastDay, nextDay time.Time
+	if lastEntry != nil {
+		lastDay = time.Unix(lastEntry.BlockTime, 0)
+		nextDay = time.Unix(lastEntry.BlockTime, 0).Add(cache.ADay * time.Second).UTC()
+	} else {
+		firstBlock, err := models.Blocks(
+			qm.OrderBy(models.BlockColumns.Height),
+		).One(ctx, pg.db)
+		if err != nil && err != sql.ErrNoRows {
+			return nil
+		}
+		if firstBlock == nil {
+			return nil
+		}
+		// the query uses <= so we are stepping back by 1 second
+		lastDay = firstBlock.ReceiveTime.Time.Add(-1 * time.Second)
+	}
+
+	if time.Now().Before(nextDay) {
+		return nil
+	}
+
+	totalCount, err := models.Votes(
+		models.VoteWhere.TargetedBlockTime.GT(null.TimeFrom(lastDay)),
+	).Count(ctx, pg.db)
+	if err != nil {
+		return err
+	}
+
+	if totalCount == 0 {
+		return nil
+	}
+
+	tx, err := pg.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	var processed int64
+	for processed < totalCount {
+
+		voteSlice, err := models.Votes(
+			// lastHeight is updated below to ensure appropriate pagination
+			models.VoteWhere.TargetedBlockTime.GT(null.TimeFrom(lastDay)),
+			// Using block height to coordinate pagination to ensure the processing of all votes
+			models.VoteWhere.TargetedBlockTime.LTE(null.TimeFrom(lastDay.Add(14*24*time.Hour))),
+			qm.OrderBy(models.VoteColumns.VotingOn),
+		).All(ctx, tx)
+
+		if err != nil && err != sql.ErrNoRows {
+			_ = tx.Rollback()
+			return err
+		}
+		if err == sql.ErrNoRows {
+			return nil
+		}
+
+		var dates, heights cache.ChartUints
+		var diffs cache.ChartFloats
+		for _, vote := range voteSlice {
+			dates = append(dates, uint64(vote.TargetedBlockTime.Time.Unix()))
+			heights = append(heights, uint64(vote.VotingOn.Int64))
+			blockReceiveTimeDiff := vote.ReceiveTime.Time.Sub(vote.BlockReceiveTime.Time).Seconds()
+			diffs = append(diffs, blockReceiveTimeDiff)
+		}
+		days, dayHeights, dayIntervals := cache.GenerateDayBin(dates, heights)
+		for i, interval := range dayIntervals {
+			if int64(days[i]) < nextDay.Unix() {
+				continue
+			}
+			m := models.VoteReceiveTimeDeviation{
+				BlockTime:             int64(days[i]),
+				BlockHeight:           int64(dayHeights[i]),
+				Bin:                   string(cache.DayBin),
+				ReceiveTimeDifference: diffs.Avg(interval[0], interval[1]),
+			}
+			if err = m.Insert(ctx, tx, boil.Infer()); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+			lastDay = time.Unix(m.BlockTime, 0)
+			nextDay = lastDay.Add(24 * time.Hour)
+		}
+
+		log.Infof("Processed daily average vote receive time deviation of %d to %d of %d votes", processed,
+			processed+int64(len(voteSlice)), totalCount)
+		processed += int64(len(voteSlice))
 	}
 	if err = tx.Commit(); err != nil {
 		return err

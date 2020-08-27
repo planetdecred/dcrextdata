@@ -158,12 +158,11 @@ const (
 	);`
 
 	createVoteReceiveTimeDeviationTable = `CREATE TABLE IF NOT EXISTS vote_receive_time_deviation (
-		hash VARCHAR(128),
-		bin VARCHAR(25),
-		block_height INT8,
-		block_time timestamp,
+		bin VARCHAR(25) NOT NULL,
+		block_height INT8 NOT NULL,
+		block_time INT8 NOT NULL,
 		receive_time_difference FLOAT8 NOT NULL,
-		PRIMARY KEY (hash,bin)
+		PRIMARY KEY (block_time,bin)
 	);`
 
 	lastCommStatEntryTime = `SELECT date FROM reddit ORDER BY date DESC LIMIT 1`

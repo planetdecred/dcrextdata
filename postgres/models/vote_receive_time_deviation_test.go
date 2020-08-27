@@ -149,7 +149,7 @@ func testVoteReceiveTimeDeviationsExists(t *testing.T) {
 		t.Error(err)
 	}
 
-	e, err := VoteReceiveTimeDeviationExists(ctx, tx, o.Hash, o.Bin)
+	e, err := VoteReceiveTimeDeviationExists(ctx, tx, o.BlockTime, o.Bin)
 	if err != nil {
 		t.Errorf("Unable to check if VoteReceiveTimeDeviation exists: %s", err)
 	}
@@ -175,7 +175,7 @@ func testVoteReceiveTimeDeviationsFind(t *testing.T) {
 		t.Error(err)
 	}
 
-	voteReceiveTimeDeviationFound, err := FindVoteReceiveTimeDeviation(ctx, tx, o.Hash, o.Bin)
+	voteReceiveTimeDeviationFound, err := FindVoteReceiveTimeDeviation(ctx, tx, o.BlockTime, o.Bin)
 	if err != nil {
 		t.Error(err)
 	}
@@ -427,7 +427,7 @@ func testVoteReceiveTimeDeviationsSelect(t *testing.T) {
 }
 
 var (
-	voteReceiveTimeDeviationDBTypes = map[string]string{`Hash`: `character varying`, `Bin`: `character varying`, `BlockHeight`: `bigint`, `BlockTime`: `timestamp without time zone`, `ReceiveTimeDifference`: `double precision`}
+	voteReceiveTimeDeviationDBTypes = map[string]string{`Bin`: `character varying`, `BlockHeight`: `bigint`, `BlockTime`: `bigint`, `ReceiveTimeDifference`: `double precision`}
 	_                               = bytes.MinRead
 )
 

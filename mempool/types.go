@@ -98,6 +98,7 @@ type DataStore interface {
 	UpdateBlockBinData(context.Context) error
 	FetchBlockForSync(ctx context.Context, blockHeight int64, offtset int, limit int) ([]Block, int64, error)
 	SaveVote(ctx context.Context, vote Vote) error
+	UpdateVoteTimeDeviationData(context.Context) error
 	FetchVoteForSync(ctx context.Context, date time.Time, offtset int, limit int) ([]Vote, int64, error)
 
 	datasync.Store
