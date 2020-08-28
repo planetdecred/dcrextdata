@@ -942,10 +942,6 @@ func (pg *PgDb) updateMempoolDailyAvg(ctx context.Context) error {
 // UpdatePropagationData
 func (pg PgDb) UpdatePropagationData(ctx context.Context) error {
 	log.Info("Updating propagation data")
-	tx, err := pg.db.Begin()
-	if err != nil {
-		return fmt.Errorf("cannot start transaction, %s", err.Error())
-	}
 
 	if len(pg.syncSources) == 0 {
 		log.Info("Please add one or more propagation sources")
@@ -953,90 +949,162 @@ func (pg PgDb) UpdatePropagationData(ctx context.Context) error {
 	}
 
 	for _, source := range pg.syncSources {
-		log.Infof("Fetching propagation data for %s", source)
-		// get the last entry for this source and prepage the propagation records
-		lastEntry, err := models.Propagations(
-			models.PropagationWhere.Source.EQ(source),
+		if err := pg.updatePropagationDataForSource(ctx, source); err != nil {
+			return err
+		}
+		if err := pg.updatePropagationHourlyAvgForSource(ctx, source); err != nil {
+			return err
+		}
+		if err := pg.updatePropagationDailyAvgForSource(ctx, source); err != nil {
+			return err
+		}
+	}
+	log.Info("Updated propagation data")
+	return nil
+}
+
+func (pg *PgDb) updatePropagationDataForSource(ctx context.Context, source string) error {
+
+	tx, err := pg.db.Begin()
+	if err != nil {
+		return err
+	}
+	log.Infof("Fetching propagation data for %s", source)
+	// get the last entry for this source and prepage the propagation records
+	lastEntry, err := models.Propagations(
+		models.PropagationWhere.Source.EQ(source),
+		models.PropagationWhere.Bin.EQ(string(cache.DefaultBin)),
+		qm.OrderBy(fmt.Sprintf("%s desc", models.PropagationColumns.Time)),
+	).One(ctx, tx)
+	if err != nil && err != sql.ErrNoRows {
+		_ = tx.Rollback()
+		return err
+	}
+	var lastHeight int64
+	if lastEntry != nil {
+		lastHeight = lastEntry.Height
+	}
+
+	chartsBlockHeight := int32(lastHeight)
+	mainBlockDelays, err := pg.propagationBlockChartData(ctx, int(chartsBlockHeight))
+	if err != nil && err != sql.ErrNoRows {
+		_ = tx.Rollback()
+		return err
+	}
+
+	localBlockReceiveTime := make(map[int64]float64)
+	for _, record := range mainBlockDelays {
+		timeDifference, _ := strconv.ParseFloat(fmt.Sprintf("%04.2f", record.TimeDifference), 64)
+		localBlockReceiveTime[record.BlockHeight] = timeDifference
+	}
+
+	db, err := pg.syncSourceDbProvider(source)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+
+	blockDelays, err := db.propagationBlockChartData(ctx, int(chartsBlockHeight))
+	if err != nil && err != sql.ErrNoRows {
+		_ = tx.Rollback()
+		return err
+	}
+
+	receiveTimeMap := make(map[int64]float64)
+	for _, record := range blockDelays {
+		receiveTimeMap[record.BlockHeight], _ = strconv.ParseFloat(fmt.Sprintf("%04.2f", record.TimeDifference), 64)
+	}
+
+	for _, rec := range mainBlockDelays {
+		var propagation = models.Propagation{
+			Height: rec.BlockHeight,
+			Time:   rec.BlockTime.Unix(),
+			Bin:    string(cache.DefaultBin),
+			Source: source,
+		}
+		if sourceTime, found := receiveTimeMap[rec.BlockHeight]; found {
+			propagation.Deviation = localBlockReceiveTime[rec.BlockHeight] - sourceTime
+		}
+		if err = propagation.Insert(ctx, tx, boil.Infer()); err != nil {
+			_ = tx.Rollback()
+			return err
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (pg *PgDb) updatePropagationHourlyAvgForSource(ctx context.Context, source string) error {
+
+	tx, err := pg.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Updating propagation hourly average for %s", source)
+	lastHourEntry, err := models.Propagations(
+		models.PropagationWhere.Bin.EQ(string(cache.HourBin)),
+		models.PropagationWhere.Source.EQ(source),
+		qm.OrderBy(fmt.Sprintf("%s desc", models.PropagationColumns.Time)),
+	).One(ctx, tx)
+	if err != nil && err != sql.ErrNoRows {
+		_ = tx.Rollback()
+		return err
+	}
+
+	var nextHour time.Time
+	if lastHourEntry != nil {
+		nextHour = time.Unix(lastHourEntry.Time, 0).Add(cache.AnHour * time.Second).UTC()
+	} else {
+		lastHourEntry, err = models.Propagations(
 			models.PropagationWhere.Bin.EQ(string(cache.DefaultBin)),
-			qm.OrderBy(fmt.Sprintf("%s desc", models.PropagationColumns.Time)),
-		).One(ctx, pg.db)
-		if err != nil && err != sql.ErrNoRows {
-			return err
-		}
-		var lastHeight int64
-		if lastEntry != nil {
-			lastHeight = lastEntry.Height
-		}
-
-		chartsBlockHeight := int32(lastHeight)
-		mainBlockDelays, err := pg.propagationBlockChartData(ctx, int(chartsBlockHeight))
-		if err != nil && err != sql.ErrNoRows {
-			return err
-		}
-
-		localBlockReceiveTime := make(map[int64]float64)
-		for _, record := range mainBlockDelays {
-			timeDifference, _ := strconv.ParseFloat(fmt.Sprintf("%04.2f", record.TimeDifference), 64)
-			localBlockReceiveTime[record.BlockHeight] = timeDifference
-		}
-
-		db, err := pg.syncSourceDbProvider(source)
+			models.PropagationWhere.Source.EQ(source),
+			qm.OrderBy(models.PropagationColumns.Time),
+		).One(ctx, tx)
 		if err != nil {
+			_ = tx.Rollback()
 			return err
 		}
+		nextHour = time.Unix(lastHourEntry.Time, 0).UTC()
+	}
+	if time.Now().Before(nextHour) {
+		_ = tx.Rollback()
+		return nil
+	}
 
-		blockDelays, err := db.propagationBlockChartData(ctx, int(chartsBlockHeight))
+	totalCount, err := models.Propagations(
+		models.PropagationWhere.Time.GTE(nextHour.Unix()),
+		models.PropagationWhere.Source.EQ(source),
+	).Count(ctx, pg.db)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+
+	step := 7 * 24 * time.Hour
+	var processed int64
+	for processed < totalCount {
+		propagations, err := models.Propagations(
+			models.PropagationWhere.Time.GTE(nextHour.Unix()),
+			models.PropagationWhere.Time.LT(nextHour.Add(step).Unix()),
+			models.PropagationWhere.Source.EQ(source),
+			qm.OrderBy(models.PropagationColumns.Time),
+		).All(ctx, tx)
 		if err != nil && err != sql.ErrNoRows {
+			_ = tx.Rollback()
 			return err
 		}
-
-		receiveTimeMap := make(map[int64]float64)
-		for _, record := range blockDelays {
-			receiveTimeMap[record.BlockHeight], _ = strconv.ParseFloat(fmt.Sprintf("%04.2f", record.TimeDifference), 64)
+		dLen := len(propagations)
+		var dates, heights = make(cache.ChartUints, dLen), make(cache.ChartUints, dLen)
+		var deviations = make(cache.ChartFloats, dLen)
+		for i, rec := range propagations {
+			dates[i] = uint64(rec.Time)
+			heights[i] = uint64(rec.Height)
+			deviations[i] = rec.Deviation
 		}
-
-		var dates, heights cache.ChartUints
-		var deviations cache.ChartFloats
-
-		for _, rec := range mainBlockDelays {
-			var propagation = models.Propagation{
-				Height: rec.BlockHeight,
-				Time:   rec.BlockTime.Unix(),
-				Bin:    string(cache.DefaultBin),
-				Source: source,
-			}
-			if sourceTime, found := receiveTimeMap[rec.BlockHeight]; found {
-				propagation.Deviation = localBlockReceiveTime[rec.BlockHeight] - sourceTime
-			}
-			if err = propagation.Insert(ctx, tx, boil.Infer()); err != nil {
-				_ = tx.Rollback()
-				return err
-			}
-			dates = append(dates, uint64(propagation.Time))
-			heights = append(heights, uint64(propagation.Height))
-			deviations = append(deviations, propagation.Deviation)
-		}
-
-		log.Info("Updating propagation hourly average")
-		lastHourEntry, err := models.Propagations(
-			models.PropagationWhere.Bin.EQ(string(cache.HourBin)),
-			qm.OrderBy(fmt.Sprintf("%s desc", models.PropagationColumns.Time)),
-		).One(ctx, pg.db)
-		if err != nil && err != sql.ErrNoRows {
-			return err
-		}
-
-		var nextHour = time.Time{}
-		if lastHourEntry != nil {
-			nextHour = time.Unix(lastHourEntry.Time, 0).Add(cache.AnHour * time.Second).UTC()
-		}
-		if time.Now().Before(nextHour) {
-			if err = tx.Commit(); err != nil {
-				return err
-			}
-			return nil
-		}
-
 		hours, hourHeights, hourIntervals := cache.GenerateHourBin(dates, heights)
 		for i, interval := range hourIntervals {
 			propagationBin := models.Propagation{
@@ -1051,32 +1119,90 @@ func (pg PgDb) UpdatePropagationData(ctx context.Context) error {
 				return err
 			}
 		}
+		log.Infof("Processed hourly average of %d to %d of %d propagation records", processed,
+			processed+int64(dLen), totalCount)
+		processed += int64(dLen)
+		nextHour = nextHour.Add(step)
+	}
 
-		log.Info("Updating propagation daily average")
-		lastDayEntry, err := models.Propagations(
-			models.PropagationWhere.Bin.EQ(string(cache.DayBin)),
-			qm.OrderBy(fmt.Sprintf("%s desc", models.PropagationColumns.Time)),
-		).One(ctx, pg.db)
-		if err != nil && err != sql.ErrNoRows {
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (pg *PgDb) updatePropagationDailyAvgForSource(ctx context.Context, source string) error {
+
+	tx, err := pg.db.Begin()
+	if err != nil {
+		return err
+	}
+	log.Infof("Updating propagation daily average for %s", source)
+	lastDayEntry, err := models.Propagations(
+		models.PropagationWhere.Bin.EQ(string(cache.DayBin)),
+		models.PropagationWhere.Source.EQ(source),
+		qm.OrderBy(fmt.Sprintf("%s desc", models.PropagationColumns.Time)),
+	).One(ctx, tx)
+	if err != nil && err != sql.ErrNoRows {
+		_ = tx.Rollback()
+		return err
+	}
+
+	var nextDay time.Time
+	if lastDayEntry != nil {
+		nextDay = time.Unix(lastDayEntry.Time, 0).Add(cache.ADay * time.Second).UTC()
+	} else {
+		lastDayEntry, err = models.Propagations(
+			models.PropagationWhere.Bin.EQ(string(cache.DefaultBin)),
+			models.PropagationWhere.Source.EQ(source),
+			qm.OrderBy(models.PropagationColumns.Time),
+		).One(ctx, tx)
+		if err != nil {
+			_ = tx.Rollback()
 			return err
 		}
+		nextDay = time.Unix(lastDayEntry.Time, 0).UTC()
+	}
+	if time.Now().Before(nextDay) {
+		_ = tx.Rollback()
+		return nil
+	}
 
-		var nextDay = time.Time{}
-		if lastDayEntry != nil {
-			nextDay = time.Unix(lastDayEntry.Time, 0).Add(cache.ADay * time.Second).UTC()
-		}
-		if time.Now().Before(nextDay) {
-			if err = tx.Commit(); err != nil {
-				return err
-			}
-			return nil
-		}
+	totalCount, err := models.Propagations(
+		models.PropagationWhere.Time.GTE(nextDay.Unix()),
+		models.PropagationWhere.Source.EQ(source),
+	).Count(ctx, pg.db)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
 
-		days, dayHeights, dayIntervals := cache.GenerateDayBin(dates, heights)
+	var processed int64
+	step := 30 * 24 * time.Hour
+	for processed < totalCount {
+		propagations, err := models.Propagations(
+			models.PropagationWhere.Time.GTE(nextDay.Unix()),
+			models.PropagationWhere.Time.LT(nextDay.Add(step).Unix()),
+			models.PropagationWhere.Source.EQ(source),
+			qm.OrderBy(models.PropagationColumns.Time),
+		).All(ctx, tx)
+		if err != nil && err != sql.ErrNoRows {
+			_ = tx.Rollback()
+			return err
+		}
+		dLen := len(propagations)
+		var dates, heights = make(cache.ChartUints, dLen), make(cache.ChartUints, dLen)
+		var deviations = make(cache.ChartFloats, dLen)
+		for i, rec := range propagations {
+			dates[i] = uint64(rec.Time)
+			heights[i] = uint64(rec.Height)
+			deviations[i] = rec.Deviation
+		}
+		days, dayHeight, dayIntervals := cache.GenerateDayBin(dates, heights)
 		for i, interval := range dayIntervals {
 			propagationBin := models.Propagation{
 				Time:      int64(days[i]),
-				Height:    int64(dayHeights[i]),
+				Height:    int64(dayHeight[i]),
 				Bin:       string(cache.DayBin),
 				Source:    source,
 				Deviation: deviations.Avg(interval[0], interval[1]),
@@ -1086,11 +1212,15 @@ func (pg PgDb) UpdatePropagationData(ctx context.Context) error {
 				return err
 			}
 		}
+		log.Infof("Processed daily average of %d to %d of %d propagation records", processed,
+			processed+int64(dLen), totalCount)
+		processed += int64(dLen)
+		nextDay = nextDay.Add(step)
 	}
+
 	if err = tx.Commit(); err != nil {
 		return err
 	}
-	log.Info("Updated propagation data")
 	return nil
 }
 
@@ -1141,7 +1271,7 @@ func (pg *PgDb) updateBlockHourlyAvgData(ctx context.Context) error {
 	const pageSize = 1000
 	var processed int64
 	for processed < totalCount {
-		log.Infof("Processing hourly average deviation of %d to %f of %d blocks", processed+1,
+		log.Infof("Processing hourly average deviation of %d to %.0f of %d blocks", processed+1,
 			math.Min(float64(processed+pageSize), float64(totalCount)), totalCount)
 		blockSlice, err := models.Blocks(
 			models.BlockWhere.Height.GT(int(lastHeight)), // lastHeight is updated below to ensure appropriate pagination
@@ -1224,7 +1354,7 @@ func (pg *PgDb) updateBlockDailyAvgData(ctx context.Context) error {
 	const pageSize = 1000
 	var processed int64
 	for processed < totalCount {
-		log.Infof("Processing daily average deviation of %d to %f of %d blocks", processed+1,
+		log.Infof("Processing daily average deviation of %d to %.0f of %d blocks", processed+1,
 			math.Min(float64(processed+pageSize), float64(totalCount)), totalCount)
 		blockSlice, err := models.Blocks(
 			models.BlockWhere.Height.GT(int(lastHeight)), // lastHeight is updated below to ensure appropriate pagination
@@ -1295,9 +1425,8 @@ func (pg *PgDb) updateVoteTimeDeviationHourlyAvgData(ctx context.Context) error 
 		return err
 	}
 
-	var lastHour, nextHour time.Time
+	var nextHour time.Time
 	if lastEntry != nil {
-		lastHour = time.Unix(lastEntry.BlockTime, 0)
 		nextHour = time.Unix(lastEntry.BlockTime, 0).Add(cache.AnHour * time.Second).UTC()
 	} else {
 		firstBlock, err := models.Blocks(
@@ -1309,8 +1438,7 @@ func (pg *PgDb) updateVoteTimeDeviationHourlyAvgData(ctx context.Context) error 
 		if firstBlock == nil {
 			return nil
 		}
-		// the query uses <= so we are stepping back by 1 second
-		lastHour = firstBlock.ReceiveTime.Time.Add(-1 * time.Second)
+		nextHour = firstBlock.ReceiveTime.Time
 	}
 
 	if time.Now().Before(nextHour) {
@@ -1318,7 +1446,7 @@ func (pg *PgDb) updateVoteTimeDeviationHourlyAvgData(ctx context.Context) error 
 	}
 
 	totalCount, err := models.Votes(
-		models.VoteWhere.TargetedBlockTime.GT(null.TimeFrom(lastHour)),
+		models.VoteWhere.TargetedBlockTime.GTE(null.TimeFrom(nextHour)),
 	).Count(ctx, pg.db)
 	if err != nil {
 		return err
@@ -1333,14 +1461,15 @@ func (pg *PgDb) updateVoteTimeDeviationHourlyAvgData(ctx context.Context) error 
 		return err
 	}
 
+	const step = 7 * 24 * time.Hour
 	var processed int64
 	for processed < totalCount {
 
 		voteSlice, err := models.Votes(
 			// lastHeight is updated below to ensure appropriate pagination
-			models.VoteWhere.TargetedBlockTime.GT(null.TimeFrom(lastHour)),
+			models.VoteWhere.TargetedBlockTime.GTE(null.TimeFrom(nextHour)),
 			// Using block height to coordinate pagination to ensure the processing of all votes
-			models.VoteWhere.TargetedBlockTime.LTE(null.TimeFrom(lastHour.Add(7*24*time.Hour))),
+			models.VoteWhere.TargetedBlockTime.LT(null.TimeFrom(nextHour.Add(step))),
 			qm.OrderBy(models.VoteColumns.VotingOn),
 		).All(ctx, tx)
 
@@ -1375,13 +1504,12 @@ func (pg *PgDb) updateVoteTimeDeviationHourlyAvgData(ctx context.Context) error 
 				_ = tx.Rollback()
 				return err
 			}
-			lastHour = time.Unix(m.BlockTime, 0)
-			nextHour = lastHour.Add(1 * time.Hour)
 		}
 
 		log.Infof("Processed hourly average vote receive time deviation of %d to %d of %d votes", processed,
 			processed+int64(len(voteSlice)), totalCount)
 		processed += int64(len(voteSlice))
+		nextHour = nextHour.Add(step)
 	}
 	if err = tx.Commit(); err != nil {
 		return err
@@ -1401,9 +1529,8 @@ func (pg *PgDb) updateVoteTimeDeviationDailyAvgData(ctx context.Context) error {
 		return err
 	}
 
-	var lastDay, nextDay time.Time
+	var nextDay time.Time
 	if lastEntry != nil {
-		lastDay = time.Unix(lastEntry.BlockTime, 0)
 		nextDay = time.Unix(lastEntry.BlockTime, 0).Add(cache.ADay * time.Second).UTC()
 	} else {
 		firstBlock, err := models.Blocks(
@@ -1415,8 +1542,7 @@ func (pg *PgDb) updateVoteTimeDeviationDailyAvgData(ctx context.Context) error {
 		if firstBlock == nil {
 			return nil
 		}
-		// the query uses <= so we are stepping back by 1 second
-		lastDay = firstBlock.ReceiveTime.Time.Add(-1 * time.Second)
+		nextDay = firstBlock.ReceiveTime.Time
 	}
 
 	if time.Now().Before(nextDay) {
@@ -1424,7 +1550,7 @@ func (pg *PgDb) updateVoteTimeDeviationDailyAvgData(ctx context.Context) error {
 	}
 
 	totalCount, err := models.Votes(
-		models.VoteWhere.TargetedBlockTime.GT(null.TimeFrom(lastDay)),
+		models.VoteWhere.TargetedBlockTime.GTE(null.TimeFrom(nextDay)),
 	).Count(ctx, pg.db)
 	if err != nil {
 		return err
@@ -1439,14 +1565,15 @@ func (pg *PgDb) updateVoteTimeDeviationDailyAvgData(ctx context.Context) error {
 		return err
 	}
 
+	const step = 14 * 24 * time.Hour // 14 days
 	var processed int64
 	for processed < totalCount {
 
 		voteSlice, err := models.Votes(
 			// lastHeight is updated below to ensure appropriate pagination
-			models.VoteWhere.TargetedBlockTime.GT(null.TimeFrom(lastDay)),
+			models.VoteWhere.TargetedBlockTime.GTE(null.TimeFrom(nextDay)),
 			// Using block height to coordinate pagination to ensure the processing of all votes
-			models.VoteWhere.TargetedBlockTime.LTE(null.TimeFrom(lastDay.Add(14*24*time.Hour))),
+			models.VoteWhere.TargetedBlockTime.LT(null.TimeFrom(nextDay.Add(step))),
 			qm.OrderBy(models.VoteColumns.VotingOn),
 		).All(ctx, tx)
 
@@ -1481,13 +1608,12 @@ func (pg *PgDb) updateVoteTimeDeviationDailyAvgData(ctx context.Context) error {
 				_ = tx.Rollback()
 				return err
 			}
-			lastDay = time.Unix(m.BlockTime, 0)
-			nextDay = lastDay.Add(24 * time.Hour)
 		}
 
 		log.Infof("Processed daily average vote receive time deviation of %d to %d of %d votes", processed,
 			processed+int64(len(voteSlice)), totalCount)
 		processed += int64(len(voteSlice))
+		nextDay = nextDay.Add(step)
 	}
 	if err = tx.Commit(); err != nil {
 		return err
