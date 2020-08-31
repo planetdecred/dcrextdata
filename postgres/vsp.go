@@ -782,8 +782,97 @@ func (pg *PgDb) fetchVspChart(ctx context.Context, startDate uint64, axisString 
 	return &vspDataSet, nil
 }
 
+func (pg *PgDb) fetchVspChartForSource(ctx context.Context, startDate uint64, axisString string, vspSource string) (*vspSet, error) {
+	var vspDataSet = vspSet{
+		time:             []uint64{},
+		immature:         make(map[string]cache.ChartNullUints),
+		live:             make(map[string]cache.ChartNullUints),
+		voted:            make(map[string]cache.ChartNullUints),
+		missed:           make(map[string]cache.ChartNullUints),
+		poolFees:         make(map[string]cache.ChartNullFloats),
+		proportionLive:   make(map[string]cache.ChartNullFloats),
+		proportionMissed: make(map[string]cache.ChartNullFloats),
+		userCount:        make(map[string]cache.ChartNullUints),
+		usersActive:      make(map[string]cache.ChartNullUints),
+	}
+
+	dates, err := pg.allVspTickDates(ctx, helpers.UnixTime(int64(startDate)))
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+
+	for _, date := range dates {
+		vspDataSet.time = append(vspDataSet.time, uint64(date.Unix()))
+	}
+
+	points, err := pg.fetchVSPChartData(ctx, vspSource, helpers.UnixTime(int64(startDate)), 0, axisString)
+	if err != nil {
+		if err.Error() == sql.ErrNoRows.Error() {
+			return &vspSet{}, nil
+		}
+		return nil, fmt.Errorf("error in fetching records for %s: %s", vspSource, err.Error())
+	}
+
+	var pointsMap = map[time.Time]*models.VSPTick{}
+	for _, record := range points {
+		pointsMap[record.Time] = record
+	}
+
+	var hasFoundOne bool
+	for _, date := range dates {
+		if record, found := pointsMap[date]; found {
+			vspDataSet.immature[vspSource] = append(vspDataSet.immature[vspSource], &null.Uint64{Valid: true, Uint64: uint64(record.Immature)})
+			vspDataSet.live[vspSource] = append(vspDataSet.live[vspSource], &null.Uint64{Valid: true, Uint64: uint64(record.Live)})
+			vspDataSet.voted[vspSource] = append(vspDataSet.voted[vspSource], &null.Uint64{Valid: true, Uint64: uint64(record.Voted)})
+			vspDataSet.missed[vspSource] = append(vspDataSet.missed[vspSource], &null.Uint64{Valid: true, Uint64: uint64(record.Missed)})
+			vspDataSet.poolFees[vspSource] = append(vspDataSet.poolFees[vspSource], &null.Float64{Valid: true, Float64: record.PoolFees})
+			vspDataSet.proportionLive[vspSource] = append(vspDataSet.proportionLive[vspSource], &null.Float64{Valid: true, Float64: record.ProportionLive})
+			vspDataSet.proportionMissed[vspSource] = append(vspDataSet.proportionMissed[vspSource], &null.Float64{Valid: true, Float64: record.ProportionMissed})
+			vspDataSet.userCount[vspSource] = append(vspDataSet.userCount[vspSource], &null.Uint64{Valid: true, Uint64: uint64(record.UserCount)})
+			vspDataSet.usersActive[vspSource] = append(vspDataSet.usersActive[vspSource], &null.Uint64{Valid: true, Uint64: uint64(record.UsersActive)})
+			hasFoundOne = true
+		} else {
+			if hasFoundOne {
+				vspDataSet.immature[vspSource] = append(vspDataSet.immature[vspSource], &null.Uint64{Valid: false})
+				vspDataSet.live[vspSource] = append(vspDataSet.live[vspSource], &null.Uint64{Valid: false})
+				vspDataSet.voted[vspSource] = append(vspDataSet.voted[vspSource], &null.Uint64{Valid: false})
+				vspDataSet.missed[vspSource] = append(vspDataSet.missed[vspSource], &null.Uint64{Valid: false})
+				vspDataSet.poolFees[vspSource] = append(vspDataSet.poolFees[vspSource], &null.Float64{Valid: false})
+				vspDataSet.proportionLive[vspSource] = append(vspDataSet.proportionLive[vspSource], &null.Float64{Valid: false})
+				vspDataSet.proportionMissed[vspSource] = append(vspDataSet.proportionMissed[vspSource], &null.Float64{Valid: false})
+				vspDataSet.userCount[vspSource] = append(vspDataSet.userCount[vspSource], &null.Uint64{Valid: false})
+				vspDataSet.usersActive[vspSource] = append(vspDataSet.usersActive[vspSource], &null.Uint64{Valid: false})
+			} else {
+				vspDataSet.immature[vspSource] = append(vspDataSet.immature[vspSource], nil)
+				vspDataSet.live[vspSource] = append(vspDataSet.live[vspSource], nil)
+				vspDataSet.voted[vspSource] = append(vspDataSet.voted[vspSource], nil)
+				vspDataSet.missed[vspSource] = append(vspDataSet.missed[vspSource], nil)
+				vspDataSet.poolFees[vspSource] = append(vspDataSet.poolFees[vspSource], nil)
+				vspDataSet.proportionLive[vspSource] = append(vspDataSet.proportionLive[vspSource], nil)
+				vspDataSet.proportionMissed[vspSource] = append(vspDataSet.proportionMissed[vspSource], nil)
+				vspDataSet.userCount[vspSource] = append(vspDataSet.userCount[vspSource], nil)
+				vspDataSet.usersActive[vspSource] = append(vspDataSet.usersActive[vspSource], nil)
+			}
+		}
+	}
+
+	return &vspDataSet, nil
+}
+
 func (pg *PgDb) UpdateVspChart(ctx context.Context) error {
 	log.Info("Updating VSP bin data")
+	if err := pg.UpdateVspHourlyChart(ctx); err != nil {
+		return err
+	}
+
+	if err := pg.UpdateVspDailyChart(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (pg *PgDb) UpdateVspHourlyChart(ctx context.Context) error {
+	log.Info("Updating VSP hourly average")
 	lastHourEntry, err := models.VSPTickBins(
 		models.VSPTickBinWhere.Bin.EQ(string(cache.HourBin)),
 		qm.OrderBy(fmt.Sprintf("%s desc", models.VSPTickBinColumns.Time)),
@@ -811,16 +900,17 @@ func (pg *PgDb) UpdateVspChart(ctx context.Context) error {
 		vsps[i] = vspSource.Name
 	}
 
-	vspSet, err := pg.fetchVspChart(ctx, uint64(lastHour), "", vsps...)
-	if err != nil {
-		return err
-	}
 	tx, err := pg.db.Begin()
 	if err != nil {
 		return err
 	}
-	hours, _, hourIntervals := cache.GenerateHourBin(vspSet.time, nil)
 	for _, source := range allVspData {
+		log.Infof("Updating VSP hourly average for %s", source.Name)
+		vspSet, err := pg.fetchVspChartForSource(ctx, uint64(lastHour), "", source.Name)
+		if err != nil {
+			return err
+		}
+		hours, _, hourIntervals := cache.GenerateHourBin(vspSet.time, nil)
 		for i, interval := range hourIntervals {
 			if int64(hours[i]) < nextHour.Unix() {
 				continue
@@ -877,7 +967,11 @@ func (pg *PgDb) UpdateVspChart(ctx context.Context) error {
 		return err
 	}
 
-	// day bin
+	return nil
+}
+
+func (pg *PgDb) UpdateVspDailyChart(ctx context.Context) error {
+	log.Info("Updating VSP daily average")
 	lastDayEntry, err := models.VSPTickBins(
 		models.VSPTickBinWhere.Bin.EQ(string(cache.DayBin)),
 		qm.OrderBy(fmt.Sprintf("%s desc", models.VSPTickBinColumns.Time)),
@@ -887,43 +981,74 @@ func (pg *PgDb) UpdateVspChart(ctx context.Context) error {
 	}
 
 	var nextDay = time.Time{}
-	var lastDay int64
 	if lastDayEntry != nil {
 		nextDay = time.Unix(lastDayEntry.Time, 0).Add(cache.ADay * time.Second).UTC()
-		lastDay = lastDayEntry.Time
 	}
-	log.Infof("Last day VSP bin was recorded at %v", lastDay)
 	if time.Now().Before(nextDay) {
 		return nil
 	}
 
-	vspSet, err = pg.fetchVspChart(ctx, uint64(lastDay), "", vsps...)
+	allVspData, err := pg.FetchVSPs(ctx)
 	if err != nil {
 		return err
 	}
-	tx, err = pg.db.Begin()
+	var vsps = make([]string, len(allVspData))
+	for i, vspSource := range allVspData {
+		vsps[i] = vspSource.Name
+	}
+
+	tx, err := pg.db.Begin()
 	if err != nil {
 		return err
 	}
-	days, _, dayIntervals := cache.GenerateDayBin(vspSet.time, nil)
-	for _, pool := range allVspData {
+
+	for _, source := range allVspData {
+		log.Infof("Updating VSP daily average for %s", source.Name)
+		records, err := models.VSPTickBins(
+			models.VSPTickBinWhere.VSPID.EQ(source.ID),
+			models.VSPTickBinWhere.Bin.EQ(string(cache.HourBin)),
+			models.VSPTickBinWhere.Time.GTE(nextDay.Unix()),
+		).All(ctx, tx)
+		if err != nil {
+			_ = tx.Rollback()
+			return err
+		}
+		var timeSet cache.ChartUints
+		var immatureSet, liveSet, votedSet, missedSet, userCountSet, usersActiveSet cache.ChartNullUints
+		var poolFeesSet, proportionLiveSet, proportionMissedSet cache.ChartNullFloats
+
+		for _, rec := range records {
+			timeSet = append(timeSet, uint64(rec.Time))
+			immatureSet = append(immatureSet, &null.Uint64{Uint64: uint64(rec.Immature.Int), Valid: rec.Immature.Valid})
+			liveSet = append(liveSet, &null.Uint64{Uint64: uint64(rec.Live.Int), Valid: rec.Live.Valid})
+			missedSet = append(missedSet, &null.Uint64{Uint64: uint64(rec.Missed.Int), Valid: rec.Missed.Valid})
+			votedSet = append(votedSet, &null.Uint64{Uint64: uint64(rec.Voted.Int), Valid: rec.Voted.Valid})
+			userCountSet = append(userCountSet, &null.Uint64{Uint64: uint64(rec.UserCount.Int), Valid: rec.UserCount.Valid})
+			usersActiveSet = append(usersActiveSet, &null.Uint64{Uint64: uint64(rec.UsersActive.Int), Valid: rec.UsersActive.Valid})
+			poolFeesSet = append(poolFeesSet, &null.Float64{Float64: rec.PoolFees.Float64, Valid: rec.PoolFees.Valid})
+			proportionLiveSet = append(proportionLiveSet, &null.Float64{
+				Float64: rec.ProportionLive.Float64, Valid: rec.ProportionLive.Valid})
+			proportionMissedSet = append(proportionMissedSet, &null.Float64{
+				Float64: rec.ProportionMissed.Float64, Valid: rec.ProportionMissed.Valid})
+		}
+		days, _, dayIntervals := cache.GenerateDayBin(timeSet, nil)
 		for i, interval := range dayIntervals {
-			if int64(days[i]) < nextHour.Unix() {
+			if int64(days[i]) < nextDay.Unix() {
 				continue
 			}
-			immature := vspSet.immature[pool.Name].Avg(interval[0], interval[1])
-			live := vspSet.live[pool.Name].Avg(interval[0], interval[1])
-			voted := vspSet.voted[pool.Name].Avg(interval[0], interval[1])
-			missed := vspSet.missed[pool.Name].Avg(interval[0], interval[1])
-			poolFees := vspSet.poolFees[pool.Name].Avg(interval[0], interval[1])
-			proportionLive := vspSet.proportionLive[pool.Name].Avg(interval[0], interval[1])
-			proportionMissed := vspSet.proportionMissed[pool.Name].Avg(interval[0], interval[1])
-			userCount := vspSet.userCount[pool.Name].Avg(interval[0], interval[1])
-			usersActive := vspSet.usersActive[pool.Name].Avg(interval[0], interval[1])
+			immature := immatureSet.Avg(interval[0], interval[1])
+			live := liveSet.Avg(interval[0], interval[1])
+			voted := votedSet.Avg(interval[0], interval[1])
+			missed := missedSet.Avg(interval[0], interval[1])
+			poolFees := poolFeesSet.Avg(interval[0], interval[1])
+			proportionLive := proportionLiveSet.Avg(interval[0], interval[1])
+			proportionMissed := proportionMissedSet.Avg(interval[0], interval[1])
+			userCount := userCountSet.Avg(interval[0], interval[1])
+			usersActive := usersActiveSet.Avg(interval[0], interval[1])
 			vspBin := models.VSPTickBin{
 				Time:  int64(days[i]),
 				Bin:   string(cache.DayBin),
-				VSPID: pool.ID,
+				VSPID: source.ID,
 			}
 			if immature != nil {
 				vspBin.Immature = null.IntFrom(int(immature.Uint64))
@@ -954,6 +1079,7 @@ func (pg *PgDb) UpdateVspChart(ctx context.Context) error {
 			}
 			if err = vspBin.Insert(ctx, tx, boil.Infer()); err != nil {
 				_ = tx.Rollback()
+				spew.Dump(vspBin)
 				return err
 			}
 		}
