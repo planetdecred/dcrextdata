@@ -773,7 +773,7 @@ func (pg *PgDb) updateMempoolHourlyAverage(ctx context.Context) error {
 	totalCount, err := models.Mempools(
 		models.MempoolWhere.Time.GTE(nextHour),
 	).Count(ctx, pg.db)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows{
 		return err
 	}
 
@@ -870,7 +870,7 @@ func (pg *PgDb) updateMempoolDailyAvg(ctx context.Context) error {
 	totalCount, err := models.Mempools(
 		models.MempoolWhere.Time.GTE(nextDay),
 	).Count(ctx, pg.db)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows{
 		return err
 	}
 

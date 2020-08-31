@@ -892,12 +892,6 @@ func isFileExists(filePath string) bool {
 	return !os.IsNotExist(err)
 }
 
-// Load loads chart data from the gob file at the specified path and performs an
-// update.
-func (charts *Manager) Load(ctx context.Context) error {
-	return nil
-}
-
 // AddRetriever adds a Retriever to the Retrievers slice.
 func (charts *Manager) AddRetriever(chartID string, retriever Retriver) {
 	charts.retrivers[chartID] = retriever

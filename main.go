@@ -243,10 +243,6 @@ func _main(ctx context.Context) error {
 		return fmt.Errorf("Error in initial network snapshot bin update, %s", err.Error())
 	}
 
-	if err = cacheManager.Load(ctx); err != nil {
-		return err
-	}
-
 	// http server method
 	if strings.ToLower(cfg.HttpMode) == "true" || cfg.HttpMode == "1" {
 		extDbFactory := func(name string) (query web.DataQuery, e error) {
