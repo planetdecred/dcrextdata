@@ -861,11 +861,11 @@ func (pg *PgDb) fetchVspChartForSource(ctx context.Context, startDate uint64, ax
 
 func (pg *PgDb) UpdateVspChart(ctx context.Context) error {
 	log.Info("Updating VSP bin data")
-	if err := pg.UpdateVspHourlyChart(ctx); err != nil {
+	if err := pg.UpdateVspHourlyChart(ctx); err != nil && err != sql.ErrNoRows {
 		return err
 	}
 
-	if err := pg.UpdateVspDailyChart(ctx); err != nil {
+	if err := pg.UpdateVspDailyChart(ctx); err != nil && err != sql.ErrNoRows {
 		return err
 	}
 	return nil

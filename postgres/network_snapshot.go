@@ -1002,7 +1002,7 @@ func (pg *PgDb) UpdateNodeVersion(ctx context.Context) error {
 	}
 
 	allDates, allHeights, versions, err := pg.fetchSnapshotNodeVersions(ctx, lastEntry)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 	tx, err := pg.db.Begin()
@@ -1031,7 +1031,7 @@ func (pg *PgDb) UpdateNodeVersion(ctx context.Context) error {
 		return err
 	}
 
-	if err = pg.updateSnapshotVersionBinData(ctx); err != nil {
+	if err = pg.updateSnapshotVersionBinData(ctx); err != nil && err != sql.ErrNoRows {
 		return err
 	}
 
@@ -1223,7 +1223,7 @@ func (pg *PgDb) UpdateNodeLocation(ctx context.Context) error {
 	}
 
 	allDates, allHeights, locations, err := pg.fetchNodeLocationChart(ctx, lastEntry)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 	tx, err := pg.db.Begin()
@@ -1252,7 +1252,7 @@ func (pg *PgDb) UpdateNodeLocation(ctx context.Context) error {
 		return err
 	}
 
-	if err = pg.updateNodeLocationBinData(ctx); err != nil {
+	if err = pg.updateNodeLocationBinData(ctx); err != nil && err != sql.ErrNoRows {
 		return err
 	}
 

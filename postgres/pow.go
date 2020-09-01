@@ -466,11 +466,11 @@ func (pg *PgDb) fetchPowChart(ctx context.Context, startDate uint64, endDate uin
 
 func (pg *PgDb) UpdatePowChart(ctx context.Context) error {
 	log.Info("Updating PoW bin data")
-	if err := pg.updatePowHourlyAvg(ctx); err != nil {
+	if err := pg.updatePowHourlyAvg(ctx); err != nil && err != sql.ErrNoRows {
 		return err
 	}
 
-	if err := pg.updatePowDailyAvg(ctx); err != nil {
+	if err := pg.updatePowDailyAvg(ctx); err != nil && err != sql.ErrNoRows {
 		return err
 	}
 

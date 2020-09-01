@@ -741,11 +741,11 @@ func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.M
 
 func (pg PgDb) UpdateMempoolAggregateData(ctx context.Context) error {
 	log.Info("Updating mempool bin data")
-	if err := pg.updateMempoolHourlyAverage(ctx); err != nil {
+	if err := pg.updateMempoolHourlyAverage(ctx); err != nil && err != sql.ErrNoRows {
 		return err
 	}
 
-	if err := pg.updateMempoolDailyAvg(ctx); err != nil {
+	if err := pg.updateMempoolDailyAvg(ctx); err != nil && err != sql.ErrNoRows {
 		return err
 	}
 
@@ -758,7 +758,7 @@ func (pg *PgDb) updateMempoolHourlyAverage(ctx context.Context) error {
 		models.MempoolBinWhere.Bin.EQ(string(cache.HourBin)),
 		qm.OrderBy(fmt.Sprintf("%s desc", models.MempoolBinColumns.Time)),
 	).One(ctx, pg.db)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil {
 		return err
 	}
 
@@ -773,7 +773,7 @@ func (pg *PgDb) updateMempoolHourlyAverage(ctx context.Context) error {
 	totalCount, err := models.Mempools(
 		models.MempoolWhere.Time.GTE(nextHour),
 	).Count(ctx, pg.db)
-	if err != nil && err != sql.ErrNoRows{
+	if err != nil {
 		return err
 	}
 
@@ -790,7 +790,7 @@ func (pg *PgDb) updateMempoolHourlyAverage(ctx context.Context) error {
 			models.MempoolWhere.Time.GTE(nextHour),
 			qm.OrderBy(models.MempoolColumns.Time),
 		).One(ctx, pg.db)
-		if err != nil && err != sql.ErrNoRows {
+		if err != nil {
 			return err
 		}
 		if firstMem != nil {
@@ -802,7 +802,7 @@ func (pg *PgDb) updateMempoolHourlyAverage(ctx context.Context) error {
 			models.MempoolWhere.Time.LT(nextHour.Add(7*24*time.Hour)),
 			qm.OrderBy(models.MempoolColumns.Time),
 		).All(ctx, pg.db)
-		if err != nil && err != sql.ErrNoRows {
+		if err != nil {
 			return err
 		}
 
@@ -847,7 +847,7 @@ func (pg *PgDb) updateMempoolDailyAvg(ctx context.Context) error {
 		models.MempoolBinWhere.Bin.EQ(string(cache.DayBin)),
 		qm.OrderBy(fmt.Sprintf("%s desc", models.MempoolBinColumns.Time)),
 	).One(ctx, pg.db)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil {
 		return err
 	}
 
@@ -870,7 +870,7 @@ func (pg *PgDb) updateMempoolDailyAvg(ctx context.Context) error {
 	totalCount, err := models.Mempools(
 		models.MempoolWhere.Time.GTE(nextDay),
 	).Count(ctx, pg.db)
-	if err != nil && err != sql.ErrNoRows{
+	if err != nil {
 		return err
 	}
 
@@ -887,7 +887,7 @@ func (pg *PgDb) updateMempoolDailyAvg(ctx context.Context) error {
 			models.MempoolWhere.Time.GTE(nextDay),
 			qm.OrderBy(models.MempoolColumns.Time),
 		).One(ctx, pg.db)
-		if err != nil && err != sql.ErrNoRows {
+		if err != nil {
 			return err
 		}
 		if firstMem != nil {
@@ -899,7 +899,7 @@ func (pg *PgDb) updateMempoolDailyAvg(ctx context.Context) error {
 			models.MempoolWhere.Time.LT(nextDay.Add(30*24*time.Hour)),
 			qm.OrderBy(models.MempoolColumns.Time),
 		).All(ctx, pg.db)
-		if err != nil && err != sql.ErrNoRows {
+		if err != nil {
 			return err
 		}
 
@@ -949,13 +949,13 @@ func (pg PgDb) UpdatePropagationData(ctx context.Context) error {
 	}
 
 	for _, source := range pg.syncSources {
-		if err := pg.updatePropagationDataForSource(ctx, source); err != nil {
+		if err := pg.updatePropagationDataForSource(ctx, source); err != nil && err != sql.ErrNoRows {
 			return err
 		}
-		if err := pg.updatePropagationHourlyAvgForSource(ctx, source); err != nil {
+		if err := pg.updatePropagationHourlyAvgForSource(ctx, source); err != nil && err != sql.ErrNoRows {
 			return err
 		}
-		if err := pg.updatePropagationDailyAvgForSource(ctx, source); err != nil {
+		if err := pg.updatePropagationDailyAvgForSource(ctx, source); err != nil && err != sql.ErrNoRows {
 			return err
 		}
 	}
@@ -976,7 +976,7 @@ func (pg *PgDb) updatePropagationDataForSource(ctx context.Context, source strin
 		models.PropagationWhere.Bin.EQ(string(cache.DefaultBin)),
 		qm.OrderBy(fmt.Sprintf("%s desc", models.PropagationColumns.Time)),
 	).One(ctx, tx)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil {
 		_ = tx.Rollback()
 		return err
 	}
@@ -987,7 +987,7 @@ func (pg *PgDb) updatePropagationDataForSource(ctx context.Context, source strin
 
 	chartsBlockHeight := int32(lastHeight)
 	mainBlockDelays, err := pg.propagationBlockChartData(ctx, int(chartsBlockHeight))
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil {
 		_ = tx.Rollback()
 		return err
 	}
@@ -1005,7 +1005,7 @@ func (pg *PgDb) updatePropagationDataForSource(ctx context.Context, source strin
 	}
 
 	blockDelays, err := db.propagationBlockChartData(ctx, int(chartsBlockHeight))
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil {
 		_ = tx.Rollback()
 		return err
 	}
@@ -1227,10 +1227,10 @@ func (pg *PgDb) updatePropagationDailyAvgForSource(ctx context.Context, source s
 // UpdateBlockBinData
 func (pg *PgDb) UpdateBlockBinData(ctx context.Context) error {
 	log.Info("Updating block bin data")
-	if err := pg.updateBlockHourlyAvgData(ctx); err != nil {
+	if err := pg.updateBlockHourlyAvgData(ctx); err != nil && err != sql.ErrNoRows {
 		return err
 	}
-	if err := pg.updateBlockDailyAvgData(ctx); err != nil {
+	if err := pg.updateBlockDailyAvgData(ctx); err != nil && err != sql.ErrNoRows {
 		return err
 	}
 	return nil
@@ -1405,10 +1405,10 @@ func (pg *PgDb) updateBlockDailyAvgData(ctx context.Context) error {
 // UpdateVoteTimeDeviationData
 func (pg *PgDb) UpdateVoteTimeDeviationData(ctx context.Context) error {
 	log.Info("Updating vote time deviation data")
-	if err := pg.updateVoteTimeDeviationHourlyAvgData(ctx); err != nil {
+	if err := pg.updateVoteTimeDeviationHourlyAvgData(ctx); err != nil && err != sql.ErrNoRows {
 		return err
 	}
-	if err := pg.updateVoteTimeDeviationDailyAvgData(ctx); err != nil {
+	if err := pg.updateVoteTimeDeviationDailyAvgData(ctx); err != nil && err != sql.ErrNoRows {
 		return err
 	}
 	return nil
