@@ -758,7 +758,7 @@ func (pg *PgDb) updateMempoolHourlyAverage(ctx context.Context) error {
 		models.MempoolBinWhere.Bin.EQ(string(cache.HourBin)),
 		qm.OrderBy(fmt.Sprintf("%s desc", models.MempoolBinColumns.Time)),
 	).One(ctx, pg.db)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 
@@ -847,7 +847,7 @@ func (pg *PgDb) updateMempoolDailyAvg(ctx context.Context) error {
 		models.MempoolBinWhere.Bin.EQ(string(cache.DayBin)),
 		qm.OrderBy(fmt.Sprintf("%s desc", models.MempoolBinColumns.Time)),
 	).One(ctx, pg.db)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 
@@ -976,7 +976,7 @@ func (pg *PgDb) updatePropagationDataForSource(ctx context.Context, source strin
 		models.PropagationWhere.Bin.EQ(string(cache.DefaultBin)),
 		qm.OrderBy(fmt.Sprintf("%s desc", models.PropagationColumns.Time)),
 	).One(ctx, tx)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		_ = tx.Rollback()
 		return err
 	}

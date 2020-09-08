@@ -781,6 +781,9 @@ func ValidateLengths(lens ...Lengther) (int, error) {
 	return firstLen, nil
 }
 
+// GenerateDayBin returns slice of the first time of each day within the supplied
+// dates with the correspounding heights if not nil.
+// The dayIntervals holds the start and end index for each day
 func GenerateDayBin(dates, heights ChartUints) (days, dayHeights ChartUints, dayIntervals [][2]int) {
 	if heights != nil && dates.Length() != heights.Length() {
 		log.Criticalf("generateHourBin: length mismatch %d != %d", dates.Length(), heights.Length())
@@ -800,8 +803,7 @@ func GenerateDayBin(dates, heights ChartUints) (days, dayHeights ChartUints, day
 	// the index that begins new data.
 	offset := 0
 	// If there is day or more worth of new data, append to the Days zoomSet by
-	// finding the first and last+1 blocks of each new day, and taking averages
-	// or sums of the blocks in the interval.  0.06096031
+	// finding the first and last+1 blocks of each new day
 	if end > start+ADay {
 		next := start + ADay
 		startIdx := 0
@@ -828,6 +830,9 @@ func GenerateDayBin(dates, heights ChartUints) (days, dayHeights ChartUints, day
 	return
 }
 
+// GenerateHourBin returns slice of the first time of each hour within the supplied
+// dates with the correspounding heights if not nil.
+// The hourIntervals holds the start and end index for each day
 func GenerateHourBin(dates, heights ChartUints) (hours, hourHeights ChartUints, hourIntervals [][2]int) {
 	if heights != nil && dates.Length() != heights.Length() {
 		log.Criticalf("generateHourBin: length mismatch %d != %d", dates.Length(), heights.Length())
