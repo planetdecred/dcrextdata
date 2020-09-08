@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/planetdecred/dcrextdata/cache"
 	"github.com/planetdecred/dcrextdata/netsnapshot"
 	"github.com/planetdecred/dcrextdata/postgres/models"
@@ -870,6 +871,7 @@ func (pg *PgDb) UpdateSnapshotNodesBin(ctx context.Context) error {
 		return err
 	}
 	days, dayHeights, dayIntervals := cache.GenerateDayBin(dates, heights)
+	spew.Dump(days)
 	for i, interval := range dayIntervals {
 		if int64(days[i]) < nextDay.Unix() {
 			continue

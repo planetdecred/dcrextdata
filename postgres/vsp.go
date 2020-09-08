@@ -861,11 +861,11 @@ func (pg *PgDb) fetchVspChartForSource(ctx context.Context, startDate uint64, ax
 
 func (pg *PgDb) UpdateVspChart(ctx context.Context) error {
 	log.Info("Updating VSP bin data")
-	if err := pg.UpdateVspHourlyChart(ctx); err != nil && err != sql.ErrNoRows {
+	if err := pg.UpdateVspHourlyChart(ctx); err != nil {
 		return err
 	}
 
-	if err := pg.UpdateVspDailyChart(ctx); err != nil && err != sql.ErrNoRows {
+	if err := pg.UpdateVspDailyChart(ctx); err != nil {
 		return err
 	}
 	return nil
@@ -905,7 +905,7 @@ func (pg *PgDb) UpdateVspHourlyChart(ctx context.Context) error {
 		return err
 	}
 	for _, source := range allVspData {
-		log.Infof("Updating VSP hourly average for %s", source.Name)
+		startTime := time.Now()
 		vspSet, err := pg.fetchVspChartForSource(ctx, uint64(lastHour), "", source.Name)
 		if err != nil {
 			return err
@@ -962,6 +962,10 @@ func (pg *PgDb) UpdateVspHourlyChart(ctx context.Context) error {
 				return err
 			}
 		}
+		// show log if the previous circle took up to 5s
+		if time.Since(startTime).Seconds() >= 5 {
+			log.Infof("Updated VSP hourly average for %s", source.Name)
+		}
 	}
 	if err = tx.Commit(); err != nil {
 		return err
@@ -1003,10 +1007,11 @@ func (pg *PgDb) UpdateVspDailyChart(ctx context.Context) error {
 	}
 
 	for _, source := range allVspData {
-		log.Infof("Updating VSP daily average for %s", source.Name)
+		startTime := time.Now()
+
 		records, err := models.VSPTickBins(
 			models.VSPTickBinWhere.VSPID.EQ(source.ID),
-			models.VSPTickBinWhere.Bin.EQ(string(cache.HourBin)),
+			models.VSPTickBinWhere.Bin.EQ(string(cache.DayBin)),
 			models.VSPTickBinWhere.Time.GTE(nextDay.Unix()),
 		).All(ctx, tx)
 		if err != nil {
@@ -1079,9 +1084,12 @@ func (pg *PgDb) UpdateVspDailyChart(ctx context.Context) error {
 			}
 			if err = vspBin.Insert(ctx, tx, boil.Infer()); err != nil {
 				_ = tx.Rollback()
-				spew.Dump(vspBin)
 				return err
 			}
+		}
+		// show log if the previous circle took up to 5s
+		if time.Since(startTime).Seconds() >= 5 {
+			log.Infof("Updated VSP daily average for %s", source.Name)
 		}
 	}
 	if err = tx.Commit(); err != nil {
