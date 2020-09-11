@@ -240,8 +240,8 @@ export default class extends Controller {
         count++
       }
     })
-    if (count > 5) {
-      notifyFailure('You cannot compare more than 5 sources')
+    if (count > 10) {
+      notifyFailure('You cannot compare more than 10 sources')
       e.currentTarget.checked = false
       return
     }
