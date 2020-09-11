@@ -38,7 +38,7 @@ type luxorPowData struct {
 }
 
 type luxorAPIResponse struct {
-	GlobalStats []luxorPowData `json:"globalStats"`
+	GlobalStats []luxorPowData `json:"global_stats"`
 }
 
 type f2poolPowData map[string]float64
