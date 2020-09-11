@@ -245,33 +245,6 @@ func (pg *PgDb) FetchPowChartData(ctx context.Context, source string, dataType s
 	return
 }
 
-func (pg *PgDb) FetchPowChartDatav(ctx context.Context, source string, dataType string) ([]pow.PowChartData, error) {
-	powDatum, err := models.PowData(qm.Select(models.PowDatumColumns.Time, dataType),
-		models.PowDatumWhere.Source.EQ(source), qm.OrderBy(models.PowDatumColumns.Time)).All(ctx, pg.db)
-	if err != nil {
-		return nil, err
-	}
-
-	var result []pow.PowChartData
-	for _, item := range powDatum {
-		var record string
-		if dataType == models.PowDatumColumns.Workers {
-			record = strconv.FormatInt(int64(item.Workers.Int), 10)
-		} else if dataType == models.PowDatumColumns.PoolHashrate {
-			record = item.PoolHashrate.String
-		} else {
-			return nil, fmt.Errorf("unsupported data type: %s", dataType)
-		}
-		powChartData := pow.PowChartData{
-			Date:   helpers.UnixTime(int64(item.Time)),
-			Record: record,
-		}
-		result = append(result, powChartData)
-	}
-
-	return result, nil
-}
-
 func (pg *PgDb) powDataModelToDto(item *models.PowDatum) (dto pow.PowDataDto, err error) {
 	poolHashRate, err := strconv.ParseFloat(item.PoolHashrate.String, 64)
 	if err != nil {
@@ -386,7 +359,13 @@ func (pg *PgDb) fetchEncodePowChart(ctx context.Context, charts *cache.Manager, 
 				if _, f := dateMap[rec.Time]; !f {
 					dates = append(dates, uint64(rec.Time))
 				}
-				deviation = append(deviation, &null.Uint64{Uint64: uint64(rec.Workers.Int), Valid: rec.Workers.Valid})
+				switch strings.ToLower(dataType) {
+				case string(cache.WorkerAxis):
+					deviation = append(deviation, &null.Uint64{Uint64: uint64(rec.Workers.Int), Valid: rec.Workers.Valid})
+				case string(cache.HashrateAxis):
+					hashrateRaw, _ := strconv.ParseInt(rec.PoolHashrate.String, 10, 64)
+					deviation = append(deviation, &null.Uint64{Uint64: uint64(hashrateRaw), Valid: rec.PoolHashrate.Valid})
+				}
 			}
 			deviations = append(deviations, deviation)
 		}

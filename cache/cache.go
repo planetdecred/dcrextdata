@@ -1035,7 +1035,12 @@ func MakePowChart(charts *Manager, dates ChartUints, deviations []ChartNullUints
 	for _, d := range deviations {
 		recs = append(recs, d)
 	}
+	var recCopy = make([]Lengther, len(recs))
+	copy(recCopy, recs)
 	recs = charts.trim(recs...)
+	if recs[0].Length() == 0 {
+		recs = recCopy
+	}
 	return charts.Encode(nil, recs...)
 }
 
@@ -1045,6 +1050,11 @@ func MakeVspChart(charts *Manager, dates ChartUints, deviations []ChartNullData,
 		recs = append(recs, d)
 	}
 
+	var recCopy = make([]Lengther, len(recs))
+	copy(recCopy, recs)
 	recs = charts.trim(recs...)
+	if recs[0].Length() == 0 {
+		recs = recCopy
+	}
 	return charts.Encode(nil, recs...)
 }
