@@ -977,7 +977,7 @@ func (pg *PgDb) UpdateVspHourlyChart(ctx context.Context) error {
 func (pg *PgDb) UpdateVspDailyChart(ctx context.Context) error {
 	log.Info("Updating VSP daily average")
 	lastDayEntry, err := models.VSPTickBins(
-		models.VSPTickBinWhere.Bin.EQ(string(cache.DayBin)),
+		models.VSPTickBinWhere.Bin.EQ(string(cache.HourBin)),
 		qm.OrderBy(fmt.Sprintf("%s desc", models.VSPTickBinColumns.Time)),
 	).One(ctx, pg.db)
 	if err != nil && err != sql.ErrNoRows {
