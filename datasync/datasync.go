@@ -43,6 +43,10 @@ func (s *SyncCoordinator) Syncer(tableName string) (Syncer, bool) {
 func (s *SyncCoordinator) StartSyncing(ctx context.Context) {
 	runSyncers := func() {
 		for _, source := range s.instances {
+			// empty url means the DBs is configured only for offline comparison without syncing
+			if source.url == "" {
+				continue
+			}
 			for i := 0; i <= len(s.syncersKeys); i++ {
 				tableName := s.syncersKeys[i]
 				syncer, found := s.syncers[tableName]
