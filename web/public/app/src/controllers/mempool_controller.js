@@ -24,7 +24,7 @@ export default class extends Controller {
       'chartWrapper', 'viewOption', 'labels', 'viewOptionControl', 'messageView',
       'chartDataTypeSelector', 'chartDataType', 'chartOptions', 'labels', 'selectedMempoolOpt',
       'selectedNumberOfRows', 'numPageWrapper', 'loadingData',
-      'zoomSelector', 'zoomOption', 'interval', 'graphIntervalWrapper', 'axisOption'
+      'zoomSelector', 'zoomOption', 'interval', 'graphIntervalWrapper'
     ]
   }
 
@@ -133,7 +133,7 @@ export default class extends Controller {
       this.selectedNumberOfRowsberOfRows = this.selectedNumberOfRowsTarget.value
       url = `/getmempool?page=${this.nextPage}&records-per-page=${this.selectedNumberOfRowsberOfRows}&view-option=${this.selectedViewOption}`
     } else {
-      url = `/api/charts/mempool/${this.dataType}?axis=${this.selectedAxis()}&bin=${this.selectedInterval()}`
+      url = `/api/charts/mempool/${this.dataType}?axis=time&bin=${this.selectedInterval()}`
     }
 
     const _this = this
@@ -226,24 +226,6 @@ export default class extends Controller {
     insertOrUpdateQueryParam('bin', option, 'day')
   }
 
-  selectedAxis () {
-    let axis = selectedOption(this.axisOptionTargets)
-    if (!axis) {
-      axis = 'time'
-    }
-    return axis
-  }
-
-  isHeightAxis () {
-    return this.selectedAxis() === 'height'
-  }
-
-  setAxis (e) {
-    const option = e.currentTarget.dataset.option
-    setActiveOptionBtn(option, this.axisOptionTargets)
-    this.fetchData(this.selectedViewOption)
-  }
-
   async validateZoom () {
     await animationFrame()
     await animationFrame()
@@ -251,7 +233,7 @@ export default class extends Controller {
     this.limits = this.chartsView.xAxisExtremes()
     var selected = this.selectedZoom()
     if (selected) {
-      this.lastZoom = Zoom.validate(selected, this.limits, 1, this.isHeightAxis() ? this.avgBlockTime : 1)
+      this.lastZoom = Zoom.validate(selected, this.limits, 1, 1)
     } else {
       this.lastZoom = Zoom.project(this.settings.zoom, oldLimits, this.limits)
     }
@@ -274,7 +256,7 @@ export default class extends Controller {
     this.lastZoom = Zoom.object(start, end)
     this.settings.zoom = Zoom.encode(this.lastZoom)
     let ex = this.chartsView.xAxisExtremes()
-    let option = Zoom.mapKey(this.settings.zoom, ex, this.isHeightAxis() ? this.avgBlockTime : 1)
+    let option = Zoom.mapKey(this.settings.zoom, ex, 1)
     setActiveOptionBtn(option, this.zoomOptionTargets)
   }
 
@@ -308,10 +290,7 @@ export default class extends Controller {
       let minVal, maxVal
 
       data.x.forEach(record => {
-        let val = record
-        if (!this.isHeightAxis()) {
-          val = new Date(record * 1000)
-        }
+        let val = new Date(record * 1000)
         if (minVal === undefined || val < minVal) {
           minVal = val
         }
@@ -321,8 +300,8 @@ export default class extends Controller {
         }
       })
 
-      const chartData = zipXYZData(data, this.isHeightAxis())
-      let xLabel = this.isHeightAxis() ? 'Height' : 'Time'
+      const chartData = zipXYZData(data)
+      let xLabel = 'Time'
       _this.chartsView = new Dygraph(_this.chartsViewTarget, chartData,
         {
           legend: 'always',
@@ -350,7 +329,7 @@ export default class extends Controller {
       )
 
       _this.validateZoom()
-      if (updateZoomSelector(_this.zoomOptionTargets, minVal, maxVal, this.isHeightAxis() ? this.avgBlockTime : 1)) {
+      if (updateZoomSelector(_this.zoomOptionTargets, minVal, maxVal, 1)) {
         show(this.zoomSelectorTarget)
       } else {
         hide(this.zoomSelectorTarget)
