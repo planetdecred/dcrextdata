@@ -653,7 +653,6 @@ func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.M
 					} else {
 						dates = append(dates, uint64(rec.Time))
 					}
-					dates = append(dates, uint64(rec.Time))
 					dateMap[rec.Height] = true
 				}
 				blockPropagation[source] = append(blockPropagation[source], rec.Deviation)
@@ -679,7 +678,7 @@ func (pg *PgDb) fetchEncodePropagationChart(ctx context.Context, charts *cache.M
 			var xAxis cache.ChartUints
 			var blockDelay cache.ChartFloats
 			for _, block := range blocks {
-				if axis == string(cache.HashrateAxis) {
+				if axis == string(cache.HeightAxis) {
 					xAxis = append(xAxis, uint64(block.Height))
 				} else {
 					xAxis = append(xAxis, uint64(block.InternalTimestamp))
@@ -1076,6 +1075,7 @@ func (pg *PgDb) updatePropagationHourlyAvgForSource(ctx context.Context, source 
 	}
 
 	totalCount, err := models.Propagations(
+		models.PropagationWhere.Bin.EQ(string(cache.DefaultBin)),
 		models.PropagationWhere.Time.GTE(nextHour.Unix()),
 		models.PropagationWhere.Source.EQ(source),
 	).Count(ctx, pg.db)
@@ -1087,7 +1087,20 @@ func (pg *PgDb) updatePropagationHourlyAvgForSource(ctx context.Context, source 
 	step := 7 * 24 * time.Hour
 	var processed int64
 	for processed < totalCount {
+		nextEntry, err := models.Propagations(
+			models.PropagationWhere.Bin.EQ(string(cache.DefaultBin)),
+			models.PropagationWhere.Time.GTE(nextHour.Unix()),
+			qm.OrderBy(models.PropagationColumns.Time),
+		).One(ctx, tx)
+		if err != nil && err == sql.ErrNoRows {
+			break
+		} else if err != nil {
+			return nil
+		}
+		nextHour = time.Unix(nextEntry.Time, 0)
+
 		propagations, err := models.Propagations(
+			models.PropagationWhere.Bin.EQ(string(cache.DefaultBin)),
 			models.PropagationWhere.Time.GTE(nextHour.Unix()),
 			models.PropagationWhere.Time.LT(nextHour.Add(step).Unix()),
 			models.PropagationWhere.Source.EQ(source),
@@ -1180,7 +1193,19 @@ func (pg *PgDb) updatePropagationDailyAvgForSource(ctx context.Context, source s
 	var processed int64
 	step := 30 * 24 * time.Hour
 	for processed < totalCount {
+		nextEntry, err := models.Propagations(
+			models.PropagationWhere.Bin.EQ(string(cache.DefaultBin)),
+			models.PropagationWhere.Time.GTE(nextDay.Unix()),
+			qm.OrderBy(models.PropagationColumns.Time),
+		).One(ctx, tx)
+		if err != nil && err == sql.ErrNoRows {
+			break
+		} else if err != nil {
+			return nil
+		}
+		nextDay = time.Unix(nextEntry.Time, 0)
 		propagations, err := models.Propagations(
+			models.PropagationWhere.Bin.EQ(string(cache.DefaultBin)),
 			models.PropagationWhere.Time.GTE(nextDay.Unix()),
 			models.PropagationWhere.Time.LT(nextDay.Add(step).Unix()),
 			models.PropagationWhere.Source.EQ(source),
