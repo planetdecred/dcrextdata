@@ -149,6 +149,27 @@ func _main(ctx context.Context) error {
 		return nil
 	}
 
+	if cfg.ResetCache {
+		resetTables, err := helpers.RequestYesNoConfirmation("Are you sure you want to reset the dcrextdata cache data?", "")
+		if err != nil {
+			return fmt.Errorf("error reading your response: %s", err.Error())
+		}
+
+		if resetTables {
+			err = db.DropCacheTables()
+			if err != nil {
+				db.Close()
+				log.Error("Could not drop tables: ", err)
+				return err
+			}
+
+			fmt.Println("Done. You can restart the server now.")
+			return nil
+		}
+
+		return nil
+	}
+
 	// Display app version.
 	log.Infof("%s version %v (Go version %s)", app.AppName, app.Version(), runtime.Version())
 

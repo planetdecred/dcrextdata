@@ -177,6 +177,7 @@ type ConfigFileOptions struct {
 // CommandLineOptions holds the top-level options/flags that are displayed on the command-line menu
 type CommandLineOptions struct {
 	Reset      bool   `short:"R" long:"reset" description:"Drop all database tables and start over"`
+	ResetCache bool   `short:"E" long:"reset-cache" description:"Drop all database tables used in storing computed cache data"`
 	ConfigFile string `short:"C" long:"configfile" description:"Path to Configuration file"`
 	HttpMode   string `long:"http" description:"Launch http server"`
 }

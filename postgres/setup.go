@@ -667,6 +667,40 @@ func (pg *PgDb) DropAllTables() error {
 	return nil
 }
 
+func (pg *PgDb) DropCacheTables() error {
+	// vsp_tick
+	if err := pg.dropTable("vsp_tick_bin"); err != nil {
+		return err
+	}
+
+	// pow_bin
+	if err := pg.dropTable("pow_bin"); err != nil {
+		return err
+	}
+
+	// mempool_bin
+	if err := pg.dropTable("mempool_bin"); err != nil {
+		return err
+	}
+
+	// propagation
+	if err := pg.dropTable("propagation"); err != nil {
+		return err
+	}
+
+	// vote_receive_time_deviation
+	if err := pg.dropTable("vote_receive_time_deviation"); err != nil {
+		return err
+	}
+
+	//network_snapshot_bin
+	if err := pg.dropTable("network_snapshot_bin"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (pg *PgDb) dropTable(name string) error {
 	log.Tracef("Dropping table %s", name)
 	_, err := pg.db.Exec(fmt.Sprintf(`DROP TABLE IF EXISTS %s;`, name))
