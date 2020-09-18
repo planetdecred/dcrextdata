@@ -40,7 +40,7 @@ export default class extends Controller {
       'viewOptionControl', 'viewOption',
       'chartWrapper', 'chartsView', 'labels', 'tableWrapper', 'loadingData', 'messageView',
       'tableWrapper', 'table', 'rowTemplate', 'tableCol1', 'tableCol2', 'tableCol3',
-      'platform', 'subreddit', 'subAccountWrapper', 'dataTypeWrapper', 'dataType',
+      'platform', 'subreddit', 'subAccountWrapper', 'dataTypeWrapper', 'dataTypeContainer', 'dataType',
       'twitterHandle', 'repository', 'channel', 'zoomSelector', 'zoomOption'
     ]
   }
@@ -84,8 +84,6 @@ export default class extends Controller {
     if (this.channel === '' && this.channelTarget.options.length > 0) {
       this.channel = this.channelTarget.value = this.channelTarget.options[0].innerText
     }
-
-    this.dataType = this.dataTypeTarget.dataset.initialValue
 
     if (this.settings.zoom) {
       setActiveOptionBtn(this.settings.zoom, this.zoomOptionTargets)
@@ -200,9 +198,6 @@ export default class extends Controller {
     if (this.channelTarget.options.length > 0) {
       this.channelTarget.value = this.channelTarget.options[0].value
     }
-    if (this.dataTypeTarget.options.length > 0) {
-      this.dataTypeTarget.value = this.dataTypeTarget.options[0].value
-    }
   }
 
   subredditChanged (event) {
@@ -270,14 +265,18 @@ export default class extends Controller {
   }
 
   dataTypeChanged (event) {
-    this.dataType = event.currentTarget.value
-    let defaultDataType
-    if (event.currentTarget.options.length > 0) {
-      defaultDataType = event.currentTarget.options[0].value
+    // if this will lead to empty selection, check it back and discontinue
+    let selectionCount = 0
+    this.dataTypeTargets.forEach(el => {
+      if (el.checked) {
+        selectionCount++
+      }
+    })
+    if (selectionCount === 0) {
+      event.currentTarget.checked = true
+      return
     }
-    insertOrUpdateQueryParam('data-type', this.dataType, defaultDataType)
     this.fetchDataAndPlotGraph()
-    insertOrUpdateQueryParam('data-type', this.dataType, this.dataTypeTarget.options[0].getAttribute('value'))
   }
 
   showCurrentSubAccountWrapper () {
@@ -292,23 +291,29 @@ export default class extends Controller {
   }
 
   updateDataTypeControl () {
-    this.dataTypeTarget.innerHTML = ''
+    this.dataTypeContainerTarget.innerHTML = ''
+    this.labels = []
     hide(this.dataTypeWrapperTarget)
     if (this.viewOption !== 'chart') {
       return
     }
 
     const _this = this
-    const addDataTypeOption = function (value, label) {
-      let selected = _this.dataType === value ? 'selected' : ''
-      _this.dataTypeTarget.innerHTML += `<option ${selected} value="${value}">${label}</option>`
+    const addDataTypeOption = function (value, label, isChecked) {
+      let checked = isChecked ? 'checked' : ''
+      _this.dataTypeContainerTarget.innerHTML += `
+      <div class="form-check form-check-inline ml-1">
+          <input data-target="commstat.dataType" data-action="click->commstat#dataTypeChanged"
+          class="form-check-input" type="checkbox" value="${value}" data-label="${label}" ${checked}>
+          <label class="form-check-label">${label}</label>
+      </div>`
     }
     switch (this.platform) {
       case redditPlatform:
         if (this.dataType !== 'subscribers' && this.dataType !== 'active_accounts') {
           this.dataType = 'subscribers'
         }
-        addDataTypeOption('subscribers', 'Subscribers')
+        addDataTypeOption('subscribers', 'Subscribers', true)
         addDataTypeOption('active_accounts', 'Active Accounts')
         show(_this.dataTypeWrapperTarget)
         break
@@ -316,7 +321,7 @@ export default class extends Controller {
         if (this.dataType !== 'folks' && this.dataType !== 'stars') {
           this.dataType = 'folks'
         }
-        addDataTypeOption('folks', 'Forks')
+        addDataTypeOption('folks', 'Forks', true)
         addDataTypeOption('stars', 'Stars')
         show(_this.dataTypeWrapperTarget)
         break
@@ -324,17 +329,15 @@ export default class extends Controller {
         if (this.dataType !== 'subscribers' && this.dataType !== 'view_count') {
           this.dataType = 'subscribers'
         }
-        addDataTypeOption('subscribers', 'Subscribers')
+        addDataTypeOption('subscribers', 'Subscribers', true)
         addDataTypeOption('view_count', 'View Count')
         show(_this.dataTypeWrapperTarget)
         break
+      case twitterPlatform:
+        this.dataType = 'followers'
+        this.label = 'Followers'
+        break
     }
-
-    if (this.dataType === '' && this.dataTypeTarget.innerHTML !== '') {
-      this.dataType = this.dataTypeTarget.value = this.dataTypeTarget.options[0].innerText
-    }
-
-    this.dataTypeTarget.value = this.dataType
   }
 
   loadPreviousPage () {
@@ -488,7 +491,18 @@ export default class extends Controller {
     showLoading(this.loadingDataTarget, elementsToToggle)
 
     const _this = this
-    const queryString = `data-type=${this.dataType}&platform=${this.platform}&subreddit=${_this.subreddit}` +
+    const selections = []
+    this.labels = []
+    this.dataTypeTargets.forEach(el => {
+      if (!el.checked) return
+      _this.labels.push(el.getAttribute('data-label'))
+      selections.push(el.value)
+    })
+    if (selections.length === 0) {
+      this.labels.push(this.label)
+      selections.push(this.dataType)
+    }
+    const queryString = `data-type=${selections.join('--')}&platform=${this.platform}&subreddit=${_this.subreddit}` +
       `&twitter-handle=${this.twitterHandle}&view-option=${this.viewOption}&repository=${this.repository}&channel=${this.channel}`
     _this.trimUrlParam()
 
@@ -529,7 +543,7 @@ export default class extends Controller {
       labelsDiv: _this.labelsTarget,
       ylabel: dataSet.ylabel,
       xlabel: 'Date',
-      labels: ['Date', dataSet.ylabel],
+      labels: ['Date', ...this.labels],
       labelsUTC: true,
       labelsKMB: true,
       connectSeparatedPoints: true,
