@@ -15,6 +15,7 @@ import { animationFrame } from '../helpers/animation_helper'
 import TurboQuery from '../helpers/turbolinks_helper'
 
 const Dygraph = require('../../../dist/js/dygraphs.min.js')
+var chartData
 
 export default class extends Controller {
   static get targets () {
@@ -24,7 +25,7 @@ export default class extends Controller {
       'exRowTemplate', 'currentPage', 'selectedNum', 'exchangeTableWrapper', 'tickWapper', 'viewOptionControl',
       'chartWrapper', 'labels', 'chartsView', 'selectedViewOption', 'hideOption', 'sourceWrapper', 'chartSelector',
       'pageSizeWrapper', 'chartSource', 'messageView', 'hideIntervalOption', 'viewOption',
-      'zoomSelector', 'zoomOption'
+      'zoomSelector', 'zoomOption', 'drawGridWrapper', 'drawGrid'
     ]
   }
 
@@ -67,6 +68,7 @@ export default class extends Controller {
     this.selectedViewOption = 'table'
     hide(this.messageViewTarget)
     hide(this.tickWapperTarget)
+    hide(this.drawGridWrapperTarget)
     show(this.hideOptionTarget)
     show(this.pageSizeWrapperTarget)
     hide(this.chartWrapperTarget)
@@ -94,6 +96,7 @@ export default class extends Controller {
     hide(this.pageSizeWrapperTarget)
     show(this.tickWapperTarget)
     show(this.zoomSelectorTarget)
+    show(this.drawGridWrapperTarget)
     hide(this.hideOptionTarget)
     hide(this.messageViewTarget)
     hide(this.numPageWrapperTarget)
@@ -313,6 +316,7 @@ export default class extends Controller {
             _this.drawInitialGraph()
           } else {
             hideLoading(_this.loadingDataTarget, [_this.chartWrapperTarget])
+            chartData = result
             _this.plotGraph(result)
           }
         }
@@ -366,6 +370,10 @@ export default class extends Controller {
     this.validateZoom()
   }
 
+  drawGridCheckChanged () {
+    this.plotGraph()
+  }
+
   async validateZoom () {
     await animationFrame()
     await animationFrame()
@@ -411,10 +419,10 @@ export default class extends Controller {
   }
 
   // exchange chart
-  plotGraph (data) {
+  plotGraph () {
     const _this = this
     let minDate, maxDate
-    data.x.forEach(unixTime => {
+    chartData.x.forEach(unixTime => {
       let date = new Date(unixTime * 1000)
       if (minDate === undefined || date < minDate) {
         minDate = date
@@ -435,14 +443,15 @@ export default class extends Controller {
       xlabel: 'Date',
       labels: _this.labels,
       colors: colors,
-      digitsAfterDecimal: 8
+      digitsAfterDecimal: 8,
+      drawGrid: this.drawGridTarget.checked
     }
 
-    const chartData = zipXYZData(data)
+    const data = zipXYZData(chartData)
 
     _this.chartsView = new Dygraph(
       _this.chartsViewTarget,
-      chartData, { ...options, ...extra }
+      data, { ...options, ...extra }
     )
 
     _this.validateZoom()

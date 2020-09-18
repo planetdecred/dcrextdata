@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/planetdecred/dcrextdata/commstats"
 	"github.com/planetdecred/dcrextdata/postgres/models"
 	"github.com/volatiletech/sqlboiler/boil"
@@ -210,6 +211,7 @@ func (pg *PgDb) CommunityChart(ctx context.Context, platform string, dataType st
 	}
 	sqlTemplate += " ORDER BY date"
 	query := fmt.Sprintf(sqlTemplate, templateArgs...)
+	spew.Dump(query)
 
 	rows, err := pg.db.QueryContext(ctx, query)
 	if err != nil {

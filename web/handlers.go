@@ -16,6 +16,7 @@ import (
 	"github.com/planetdecred/dcrextdata/postgres/models"
 	"github.com/planetdecred/dcrextdata/pow"
 	"github.com/planetdecred/dcrextdata/vsp"
+	"github.com/volatiletech/null"
 )
 
 const (
@@ -1202,36 +1203,24 @@ func (s *Server) communityChat(resp http.ResponseWriter, req *http.Request) {
 	platform := req.FormValue("platform")
 	dataType := req.FormValue("data-type")
 
+	var dates cache.ChartUints
+	cols := strings.Split(dataType, "--")
+	var recs = make([]cache.Lengther, len(cols)+1)
+
 	filters := map[string]string{}
-	yLabel := ""
+
 	switch platform {
 	case githubPlatform:
-		if dataType == models.GithubColumns.Folks {
-			yLabel = "Forks"
-		} else {
-			yLabel = "Stars"
-		}
 		platform = models.TableNames.Github
 		filters[models.GithubColumns.Repository] = fmt.Sprintf("'%s'", req.FormValue("repository"))
 	case twitterPlatform:
-		yLabel = "Followers"
 		dataType = models.TwitterColumns.Followers
 		platform = models.TableNames.Twitter
 	case redditPlatform:
-		if dataType == models.RedditColumns.ActiveAccounts {
-			yLabel = "Active Accounts"
-		} else if dataType == models.RedditColumns.Subscribers {
-			yLabel = "Subscribers"
-		}
 		platform = models.TableNames.Reddit
 		filters[models.RedditColumns.Subreddit] = fmt.Sprintf("'%s'", req.FormValue("subreddit"))
 	case youtubePlatform:
 		platform = models.TableNames.Youtube
-		if dataType == models.YoutubeColumns.ViewCount {
-			yLabel = "View Count"
-		} else if dataType == models.YoutubeColumns.Subscribers {
-			yLabel = "Subscribers"
-		}
 		filters[models.YoutubeColumns.Channel] = fmt.Sprintf("'%s'", req.FormValue("channel"))
 	}
 
@@ -1239,23 +1228,37 @@ func (s *Server) communityChat(resp http.ResponseWriter, req *http.Request) {
 		s.renderErrorJSON("Data type cannot be empty", resp)
 		return
 	}
+	for i, col := range cols {
+		data, err := s.db.CommunityChart(req.Context(), platform, col, filters)
+		if err != nil {
+			s.renderErrorJSON(fmt.Sprintf("Cannot fetch chart data, %s", err.Error()), resp)
+			return
+		}
+		var records cache.ChartNullUints
+		dLen := dates.Length()
+		for _, record := range data {
+			if dLen == 0 {
+				dates = append(dates, uint64(record.Date.Unix()))
+			}
+			if record.Record > 0 {
+				rec := &null.Uint64{Uint64: uint64(record.Record), Valid: true}
+				records = append(records, rec)
+			} else {
+				records = append(records, nil)
+			}
 
-	data, err := s.db.CommunityChart(req.Context(), platform, dataType, filters)
+		}
+		recs[i+1] = records
+	}
+
+	recs[0] = dates
+	recs = s.charts.Trim(recs...)
+	data, err := s.charts.Encode(nil, recs...)
 	if err != nil {
 		s.renderErrorJSON(fmt.Sprintf("Cannot fetch chart data, %s", err.Error()), resp)
 		return
 	}
-	var dates, records cache.ChartUints
-	for _, record := range data {
-		dates = append(dates, uint64(record.Date.Unix()))
-		records = append(records, uint64(record.Record))
-	}
-
-	s.renderJSON(map[string]interface{}{
-		"x":      dates,
-		"y":      records,
-		"ylabel": yLabel,
-	}, resp)
+	s.renderJSONBytes(data, resp)
 }
 
 // /nodes

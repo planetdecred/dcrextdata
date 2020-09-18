@@ -1005,8 +1005,8 @@ func (charts *Manager) encodeArr(keys []string, sets []Lengther) ([]byte, error)
 	return json.Marshal(response)
 }
 
-// trim remove points that has 0s in all yAxis.
-func (charts *Manager) trim(sets ...Lengther) []Lengther {
+// Trim remove points that has 0s in all yAxis.
+func (charts *Manager) Trim(sets ...Lengther) []Lengther {
 	dLen := sets[0].Length()
 	for i := dLen - 1; i >= 0; i-- {
 		var isZero bool = true
@@ -1037,7 +1037,7 @@ func MakePowChart(charts *Manager, dates ChartUints, deviations []ChartNullUints
 	}
 	var recCopy = make([]Lengther, len(recs))
 	copy(recCopy, recs)
-	recs = charts.trim(recs...)
+	recs = charts.Trim(recs...)
 	if recs[0].Length() == 0 {
 		recs = recCopy
 	}
@@ -1052,7 +1052,7 @@ func MakeVspChart(charts *Manager, dates ChartUints, deviations []ChartNullData,
 
 	var recCopy = make([]Lengther, len(recs))
 	copy(recCopy, recs)
-	recs = charts.trim(recs...)
+	recs = charts.Trim(recs...)
 	if recs[0].Length() == 0 {
 		recs = recCopy
 	}
