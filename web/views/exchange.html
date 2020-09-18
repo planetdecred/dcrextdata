@@ -52,9 +52,6 @@
                                     <option value="{{$cpair.CurrencyPair}}" {{ if eq $cpair.CurrencyPair $selectedCurrencyPair}} selected {{ end }}>{{commonPair $cpair.CurrencyPair}}</option>
                                     {{ end }}
                                 </select>
-
-                            
-
                         </div>
                         <div data-target="exchange.intervalWapper" class="control-div p-0">
                             <div class="control-label">Interval:</div>
@@ -80,9 +77,9 @@
                         </select>
                     </div>
 
-                            <div class="chart-control-wrapper mr-2 mb-1" data-target="exchange.zoomSelector">
-                                <div class="chart-control">
-                                    <ul
+                    <div class="chart-control-wrapper mr-2" data-target="exchange.zoomSelector">
+                        <div class="chart-control">
+                            <ul
                                             class="nav nav-pills"
                                     >
                                         <li class="nav-item">
@@ -130,10 +127,17 @@
                                                     data-option="day"
                                             >Day</a>
                                         </li>
-                                    </ul>
-                                </div>
-                            </div>
+                            </ul>
+                        </div>
+                    </div>
 
+                    <div class="chart-control-wrapper" data-target="exchange.drawGridWrapper">
+                        <div class="chart-control form-check form-check-inline">
+                            <input data-target="exchange.drawGrid" data-action="click->exchange#drawGridCheckChanged"
+                            class="form-check-input ml-1" type="checkbox" checked>
+                            <label class="form-check-label">Show Draw Grid</label>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="inner-content {{ if .chartView }}d-none{{ end }}" data-target="exchange.exchangeTableWrapper">
