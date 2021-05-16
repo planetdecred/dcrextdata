@@ -11,7 +11,7 @@ logs
 .idea
 data
 postgres/sqlboiler.toml
-./node_modules
+node_modules
 web/public/dist/js/app.bundle.js
 web/public/dist/js/app.bundle.js.map
 web/public/dist/js/vendors~app.bundle.js

@@ -19,8 +19,8 @@ To run **dcrextdata** on your machine you will need the following to be setup.
 * Minimum supported version is 1.11.4. Installation instructions can be found [here](https://golang.org/doc/install).
 * Set `$GOPATH` environment variable and add `$GOPATH/bin` to your PATH environment variable as part of the go installation process.
 
-**Install Postgrsql**
-* Postgrsql is a relational DBMS used for data storage. Download and installation guide can be found [here](postgresql.org/download)
+**Install Postgresql**
+* Postgresql is a relational DBMS used for data storage. Download and installation guide can be found [here](postgresql.org/download)
 * *Quick start for  Postgresql*
 
     If you have a new postgresql install and you want a quick setup for dcrextdata, you can start `postgresql command-line client`(It comes with the installation) with...
@@ -78,7 +78,11 @@ for a list of all options and their default values.
 ## Running dcrextdata
 To run *dcrextdata*, use...
 - `dcrextdata` on your command line interface to create database table, fetch data and store the data and launch the http web server. The web server can be disabled by setting `--http=false`
-- You can perform a reset by running with the `-R` or `--reset` flag.
+- You can perform a database migration by running with the `--migrate` flag.
+  * `--migrate=up` will upgrade the database to the latest version.
+  * `--migrate=up:2` will upgrade the database and limit the number of migrations (2 for this example)
+  * `--migrate=down:3` the same with the above example but for downgrade.
+  * `--migrate="new:awesome migrate file message"` create new migration file(only for dev)
 - Run `dcrextdata -h` or `dcrextdata help` to get general information of commands and options that can be issued on the cli.
 - Use `dcrextdata <command> -h` or   `dcrextdata help <command>` to get detailed information about a command.
 

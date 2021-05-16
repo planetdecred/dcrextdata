@@ -180,6 +180,7 @@ type CommandLineOptions struct {
 	ResetCache bool   `short:"E" long:"reset-cache" description:"Drop all database tables used in storing computed cache data"`
 	ConfigFile string `short:"C" long:"configfile" description:"Path to Configuration file"`
 	HttpMode   string `long:"http" description:"Launch http server"`
+	Migrate    string `long:"migrate" description:"Do migrate database"`
 }
 
 type CommunityStatOptions struct {

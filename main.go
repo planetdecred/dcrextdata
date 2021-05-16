@@ -128,25 +128,14 @@ func _main(ctx context.Context) error {
 		}
 	}(db)
 
-	if cfg.Reset {
-		resetTables, err := helpers.RequestYesNoConfirmation("Are you sure you want to reset the dcrextdata db?", "")
-		if err != nil {
-			return fmt.Errorf("error reading your response: %s", err.Error())
+	if len(cfg.Migrate) > 0 {
+		err = db.MigrateDatabase(cfg.Migrate)
+		if err == nil {
+			log.Info("Migrate database successfully")
+		} else {
+			log.Error("Migrate database fail: ", err)
 		}
-
-		if resetTables {
-			err = db.DropAllTables()
-			if err != nil {
-				db.Close()
-				log.Error("Could not drop tables: ", err)
-				return err
-			}
-
-			fmt.Println("Done. You can restart the server now.")
-			return nil
-		}
-
-		return nil
+		return err
 	}
 
 	if cfg.ResetCache {
@@ -158,24 +147,20 @@ func _main(ctx context.Context) error {
 		if resetTables {
 			err = db.DropCacheTables()
 			if err != nil {
-				db.Close()
 				log.Error("Could not drop tables: ", err)
 				return err
 			}
 
-			fmt.Println("Done. You can restart the server now.")
+			log.Info("Done. You can restart the server now.")
 			return nil
+		} else {
+			log.Error("Migrate database fail: ", err)
 		}
-
-		return nil
+		return err
 	}
 
 	// Display app version.
 	log.Infof("%s version %v (Go version %s)", app.AppName, app.Version(), runtime.Version())
-
-	if err = createTablesAndIndex(db); err != nil {
-		return err
-	}
 
 	syncCoordinator := datasync.NewCoordinator(!cfg.DisableSync, cfg.SyncInterval)
 
@@ -188,23 +173,6 @@ func _main(ctx context.Context) error {
 		if err != nil {
 			log.Errorf("Error in open database connection for the sync instance, %s, %s", source, err.Error())
 			continue
-		}
-
-		if !db.BlockTableExits() {
-			if err := db.CreateBlockTable(); err != nil {
-				log.Error("Error creating block table for sync source, %s: ", source, err)
-				return err
-			}
-			log.Info("Blocks table created successfully.")
-
-		}
-
-		if !db.VoteTableExits() {
-			if err := db.CreateVoteTable(); err != nil {
-				log.Error("Error creating vote table for sync source, %s: ", source, err)
-				return err
-			}
-			log.Info("Votes table created successfully.")
 		}
 		syncDbs[databaseName] = db
 		syncCoordinator.AddSource(source, db, databaseName)
@@ -432,212 +400,4 @@ func executeHelpCommand() (err error) {
 	}
 
 	return fmt.Errorf(config.Hint)
-}
-
-func createTablesAndIndex(db *postgres.PgDb) error {
-	if !db.MempoolDataTableExits() {
-		if err := db.CreateMempoolDataTable(); err != nil {
-			log.Error("Error creating mempool table: ", err)
-			return err
-		}
-		log.Info("Mempool table created successfully.")
-	}
-
-	if !db.MempoolBinDataTableExits() {
-		if err := db.CreateMempoolDayBinTable(); err != nil {
-			log.Error("Error creating mempool_bin table: ", err)
-			return err
-		}
-		log.Info("Mempool bin table created successfully.")
-	}
-
-	if !db.PropagationTableExists() {
-		if err := db.CreatePropagationTable(); err != nil {
-			log.Error("Error creating propagation table: ", err)
-			return err
-		}
-		log.Info("Propagation table created successfully.")
-	}
-
-	if !db.BlockTableExits() {
-		if err := db.CreateBlockTable(); err != nil {
-			log.Error("Error creating block table: ", err)
-			return err
-		}
-		log.Info("Blocks table created successfully.")
-
-	}
-
-	if !db.BlockBinTableExits() {
-		if err := db.CreateBlockBinTable(); err != nil {
-			log.Error("Error creating block bin table: ", err)
-			return err
-		}
-		log.Info("Blocks bin table created successfully.")
-
-	}
-
-	if !db.VoteTableExits() {
-		if err := db.CreateVoteTable(); err != nil {
-			log.Error("Error creating vote table: ", err)
-			return err
-		}
-		log.Info("Votes table created successfully.")
-	}
-
-	if !db.VoteReceiveTimeDeviationTableExits() {
-		if err := db.CreateVoteReceiveTimeDeviationTable(); err != nil {
-			log.Error("Error creating vote receive time deviation table: ", err)
-			return err
-		}
-		log.Info("Vote receive time deviation table created successfully.")
-	}
-
-	if exists := db.VSPInfoTableExits(); !exists {
-		if err := db.CreateVSPInfoTables(); err != nil {
-			log.Error("Error creating vsp info table: ", err)
-			return err
-		}
-
-		log.Info("VSP table created successfully.")
-	}
-
-	if exists := db.VSPTickTableExits(); !exists {
-		if err := db.CreateVSPTickTables(); err != nil {
-			log.Error("Error creating vsp data table: ", err)
-			return err
-		}
-		log.Info("VSPTicks table created successfully.")
-
-		if err := db.CreateVSPTickIndex(); err != nil {
-			log.Error("Error creating vsp data index: ", err)
-			return err
-		}
-	}
-
-	if exists := db.VSPTickBinTableExits(); !exists {
-		if err := db.CreateVSPTickBinTable(); err != nil {
-			log.Error("Error creating vsp tick bin table: ", err)
-			return err
-		}
-		log.Info("VSPTicks bin table created successfully.")
-	}
-
-	if exists := db.ExchangeTableExits(); !exists {
-		if err := db.CreateExchangeTable(); err != nil {
-			log.Error("Error creating exchange table: ", err)
-			return err
-		}
-		log.Info("Exchange table created successfully.")
-	}
-
-	if exists := db.ExchangeTickTableExits(); !exists {
-		if err := db.CreateExchangeTickTable(); err != nil {
-			log.Error("Error creating exchange tick table: ", err)
-			return err
-		}
-		log.Info("ExchangeTicks table created successfully.")
-
-		if err := db.CreateExchangeTickIndex(); err != nil {
-			log.Error("Error creating exchange tick index: ", err)
-			return err
-		}
-	}
-
-	if exists := db.PowDataTableExits(); !exists {
-		if err := db.CreatePowDataTable(); err != nil {
-			log.Error("Error creating PoW data table: ", err)
-			return err
-		}
-		log.Info("Pow table created successfully.")
-	}
-
-	if exists := db.PowBInTableExits(); !exists {
-		if err := db.CreatePowBinTable(); err != nil {
-			log.Error("Error creating PoW bin table: ", err)
-			return err
-		}
-		log.Info("Pow bin table created successfully.")
-	}
-
-	if exists := db.RedditTableExits(); !exists {
-		if err := db.CreateRedditTable(); err != nil {
-			log.Error("Error creating reddit table: ", err)
-			return err
-		}
-		log.Info("reddit table created successfully.")
-	}
-
-	if exists := db.TwitterTableExits(); !exists {
-		if err := db.CreateTwitterTable(); err != nil {
-			log.Error("Error creating twitter table: ", err)
-			return err
-		}
-		log.Info("twitter table created successfully.")
-	}
-
-	if exists := db.YoutubeTableExits(); !exists {
-		if err := db.CreateYoutubeTable(); err != nil {
-			log.Error("Error creating youtube table: ", err)
-			return err
-		}
-		log.Info("youtube table created successfully.")
-	}
-
-	if exists := db.GithubTableExits(); !exists {
-		if err := db.CreateGithubTable(); err != nil {
-			log.Error("Error creating github table: ", err)
-			return err
-		}
-		log.Info("github table created successfully.")
-	}
-
-	if exists := db.NetworkSnapshotTableExists(); !exists {
-		if err := db.CreateNetworkSnapshotTable(); err != nil {
-			log.Error("Error creating network snapshot table: ", err)
-			return err
-		}
-		log.Info("snapshot table created successfully.")
-	}
-
-	if exists := db.NetworkSnapshotBinTableExists(); !exists {
-		if err := db.CreateNetworkSnapshotBinTable(); err != nil {
-			log.Error("Error creating network snapshot bin table: ", err)
-			return err
-		}
-		log.Info("snapshot bin table created successfully.")
-	}
-
-	if exists := db.NodeVersionTableExists(); !exists {
-		if err := db.CreateNodeVersoinTable(); err != nil {
-			log.Error("Error creating node version table: ", err)
-			return err
-		}
-		log.Info("node version table created successfully.")
-	}
-
-	if exists := db.NodeLocationTableExists(); !exists {
-		if err := db.CreateNodeLocationTable(); err != nil {
-			log.Error("Error creating node location table: ", err)
-			return err
-		}
-		log.Info("node location table created successfully.")
-	}
-
-	if exists := db.NetworkNodeTableExists(); !exists {
-		if err := db.CreateNetworkNodeTable(); err != nil {
-			log.Error("Error creating node table: ", err)
-			return err
-		}
-		log.Info("node table created successfully.")
-	}
-
-	if exists := db.HeartbeatTableExists(); !exists {
-		if err := db.CreateHeartbeatTable(); err != nil {
-			log.Error("Error creating heartbeat table: ", err)
-			return err
-		}
-		log.Info("heartbeat table created successfully.")
-	}
-	return nil
 }
